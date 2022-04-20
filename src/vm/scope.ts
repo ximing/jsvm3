@@ -18,4 +18,14 @@ export class Scope {
     return (this.data[i] = value);
   }
 
+  // 获取 name 对应的索引
+  name(name: any) {
+    for (const k of Object.keys(this.names || {})) {
+      const v = this.names[k];
+      if (v === name) {
+        return parseInt(k);
+      }
+    }
+    return -1;
+  }
 }
