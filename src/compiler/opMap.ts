@@ -1,0 +1,31 @@
+export const unaryOp = {
+  '-': 'INV',
+  '+': 'PLU',
+  '!': 'LNOT',
+  '~': 'NOT',
+  typeof: 'TYPEOF',
+  void: 'VOID',
+};
+
+export const binaryOp = {
+  '==': 'CEQ',
+  '!=': 'CNEQ',
+  '===': 'CID',
+  '!==': 'CNID',
+  '<': 'LT',
+  '<=': 'LTE',
+  '>': 'GT',
+  '>=': 'GTE',
+  '<<': 'SHL',
+  '>>': 'SAR',
+  '>>>': 'SHR',
+  '+': 'ADD',
+  '-': 'SUB',
+  '*': 'MUL',
+  '/': 'DIV',
+  '%': 'MOD',
+  '|': 'OR',
+  '&': 'AND',
+  '^': 'XOR',
+  '**': 'EXP',
+};
