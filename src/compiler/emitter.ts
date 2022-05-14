@@ -1,12 +1,16 @@
+import * as t from '@babel/types';
 import { Visitor } from './visitor';
 import { hasProp } from '../utils/helper';
 import { Instruction } from '../opcodes/types';
 import {
   COLUMN,
+  DECLG,
   GETG,
   GETL,
   LINE,
   LITERAL,
+  SETG,
+  SETL,
   STRING_LITERAL,
   UNDEF,
 } from '../opcodes';
@@ -130,6 +134,43 @@ export class Emitter extends Visitor {
     return this.globalNames.push(name) - 1;
   }
 
+  scopeSet(name, isDecl = false) {
+    const scope = this.scope(name);
+    if (scope) {
+      return this.createINS(SETL, ...scope);
+    }
+    const idx = this.globalIdx(name);
+    if (isDecl) {
+      return this.createINS(DECLG, idx);
+    } else {
+      return this.createINS(SETG, idx);
+    }
+  }
+
+  declareVar(name, kind = 'let') {
+    let scope;
+    if (kind === 'var') {
+      scope = this.scriptScope;
+    } else {
+      // 最新的scope
+      scope = this.scopes[0];
+    }
+    if (scope && !scope[name]) {
+      this.localNames[this.varIndex] = name;
+      return (scope[name] = this.varIndex++);
+    }
+  }
+
+  declarePattern(node, kind = 'let') {
+    if (['ArrayPattern', 'ArrayExpression'].includes(node.type)) {
+    } else if (['ObjectPattern', 'ObjectExpression'].includes(node.type)) {
+    } else if (t.isIdentifier(node)) {
+      return this.declareVar(node.name, kind);
+    } else {
+      throw new Error('assertion error');
+    }
+  }
+
   newLabel() {
     return new Label(this);
   }
@@ -243,6 +284,46 @@ export class Emitter extends Visitor {
       }
     }
     return super.visit(node);
+  }
+
+  VariableDeclaration(node) {
+    for (const decl of node.declarations) {
+      decl.kind = node.kind;
+    }
+    this.visit(node.declarations);
+    return node;
+  }
+
+  VariableDeclarator(node: t.VariableDeclarator & { kind: string }) {
+    this.declarePattern(node.id, node.kind);
+    if (node.init) {
+      // 处理这种情况 var t1 = function(){ return typeof t1 };
+      if (t.isFunctionExpression(node.init) && t.isIdentifier(node.id)) {
+        if (!node.init.id) {
+          // @ts-ignore
+          node.init.id = {
+            type: 'Identifier',
+            name: node.id.name,
+          };
+        }
+      }
+      const assign = {
+        type: 'ExpressionStatement',
+        expression: {
+          loc: node.loc,
+          type: 'AssignmentExpression',
+          operator: '=',
+          left: node.id,
+          right: node.init,
+        },
+      };
+      this.visit(assign);
+    } else if (t.isIdentifier(node.id)) {
+      this.scopeSet(node.id.name, true);
+    } else {
+      throw new Error(`VariableDeclarator 不支持类型${node.type}`);
+    }
+    return node;
   }
 
   Identifier(node) {
