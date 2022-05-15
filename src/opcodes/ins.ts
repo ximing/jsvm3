@@ -95,3 +95,171 @@ export const LLHS = createOP(
   },
   () => 2
 );
+/*
+ * invert signal
+ * */
+export const INV = createOP(OPCodeIdx.INV, function (frame, evalStack, scope, realm, args) {
+  evalStack.push(-evalStack.pop());
+});
+
+export const PLU = createOP(OPCodeIdx.PLU, function (frame, evalStack, scope, realm, args) {
+  evalStack.push(+evalStack.pop());
+});
+
+/*
+ * logical NOT
+ * */
+export const LNOT = createOP(OPCodeIdx.LNOT, function (frame, evalStack, scope, realm, args) {
+  evalStack.push(!evalStack.pop());
+});
+
+/*
+ * bitwise NOT
+ * */
+export const NOT = createOP(OPCodeIdx.NOT, function (frame, evalStack, scope, realm, args) {
+  evalStack.push(~evalStack.pop());
+});
+
+/*
+ * increment
+ * */
+export const INC = createOP(OPCodeIdx.INC, function (frame, evalStack, scope, realm, args) {
+  evalStack.push(evalStack.pop() + 1);
+});
+
+/*
+ * decrement
+ * */
+export const DEC = createOP(OPCodeIdx.DEC, function (frame, evalStack, scope, realm, args) {
+  evalStack.push(evalStack.pop() - 1);
+});
+
+/*
+ * sum
+ * */
+export const ADD = createOP(OPCodeIdx.ADD, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l + r);
+});
+export const SUB = createOP(OPCodeIdx.SUB, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l - r);
+});
+export const MUL = createOP(OPCodeIdx.MUL, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l * r);
+});
+export const DIV = createOP(OPCodeIdx.DIV, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l / r);
+});
+
+export const MOD = createOP(OPCodeIdx.MOD, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l % r);
+});
+
+// left shift
+export const SHL = createOP(OPCodeIdx.SHL, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l << r);
+});
+// right shift
+export const SAR = createOP(OPCodeIdx.SAR, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l >> r);
+});
+// unsigned shift
+export const SHR = createOP(OPCodeIdx.SHR, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l >>> r);
+});
+
+export const OR = createOP(OPCodeIdx.OR, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l | r);
+});
+export const AND = createOP(OPCodeIdx.AND, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l & r);
+});
+// bitwise XOR
+export const XOR = createOP(OPCodeIdx.XOR, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l ^ r);
+});
+export const EXP = createOP(OPCodeIdx.EXP, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(Math.pow(l, r));
+});
+
+export const CEQ = createOP(OPCodeIdx.CEQ, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l == r);
+});
+export const CNEQ = createOP(OPCodeIdx.CNEQ, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l != r);
+});
+
+// 全等
+export const CID = createOP(OPCodeIdx.CID, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l === r);
+});
+export const CNID = createOP(OPCodeIdx.CNID, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l !== r);
+});
+export const LT = createOP(OPCodeIdx.LT, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l < r);
+});
+export const LTE = createOP(OPCodeIdx.LTE, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l <= r);
+});
+export const GT = createOP(OPCodeIdx.GT, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l > r);
+});
+export const GTE = createOP(OPCodeIdx.GTE, function (frame, evalStack, scope, realm, args) {
+  const [l, r] = evalStack.tail(2);
+  evalStack.push(l >= r);
+});
+
+export const TYPEOF = createOP(OPCodeIdx.TYPEOF, function (frame, evalStack, scope, realm, args) {
+  evalStack.push(typeof evalStack.pop());
+});
+export const VOID = createOP(OPCodeIdx.VOID, function (frame, evalStack, scope, realm, args) {
+  evalStack.pop();
+  // eslint-disable-next-line no-void
+  evalStack.push(void 0);
+});
+
+export const UNDEF = createOP(
+  OPCodeIdx.UNDEF,
+  function (frame, evalStack, scope, realm, args) {
+    // eslint-disable-next-line no-void
+    evalStack.push(void 0);
+  },
+  () => 1
+);
+
+// push 字面值
+export const LITERAL = createOP(
+  OPCodeIdx.LITERAL,
+  function (frame, evalStack, scope, realm, args) {
+    evalStack.push(args[0]);
+  },
+  () => 1
+);
+
+// string对象
+export const STRING_LITERAL = createOP(
+  OPCodeIdx.STRING_LITERAL,
+  function (frame, evalStack, scope, realm, args) {
+    evalStack.push(frame.script.strings[args[0]]);
+  },
+  () => 1
+);

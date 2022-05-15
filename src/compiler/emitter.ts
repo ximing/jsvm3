@@ -5,8 +5,10 @@ import { Instruction } from '../opcodes/types';
 import {
   COLUMN,
   DECLG,
+  DEL,
   GETG,
   GETL,
+  GLOBAL,
   LINE,
   LITERAL,
   SETG,
@@ -14,8 +16,10 @@ import {
   STRING_LITERAL,
   UNDEF,
 } from '../opcodes';
+import * as OPCODES from '../opcodes';
 import { Label } from '../opcodes/label';
 import { Script } from '../vm/script';
+import { binaryOp, unaryOp } from './opMap';
 import { Guard } from '../vm/types';
 
 type EmitterLabel = {
@@ -286,6 +290,20 @@ export class Emitter extends Visitor {
     return super.visit(node);
   }
 
+  visitProperty(memberExpression) {
+    if (memberExpression.computed) {
+      return this.visit(memberExpression.property);
+    } else if (memberExpression.property.type === 'Identifier') {
+      return this.createLiteral(memberExpression.property.name);
+      // return this.createINS(LITERAL, memberExpression.property.name);
+    } else if (t.isLiteral(memberExpression.property)) {
+      return this.createLiteral(memberExpression.property.value);
+      // return this.createINS(LITERAL, memberExpression.property.value);
+    } else {
+      throw new Error('invalid assert');
+    }
+  }
+
   VariableDeclaration(node) {
     for (const decl of node.declarations) {
       decl.kind = node.kind;
@@ -323,6 +341,39 @@ export class Emitter extends Visitor {
     } else {
       throw new Error(`VariableDeclarator 不支持类型${node.type}`);
     }
+    return node;
+  }
+
+  UnaryExpression(node) {
+    if (node.operator === 'delete') {
+      if (node.argument.type === 'MemberExpression') {
+        this.visitProperty(node.argument);
+        this.visit(node.argument.object);
+        this.createINS(DEL);
+      } else if (node.argument.type === 'Identifier' && !this.scopes.length) {
+        // global property
+        this.createLiteral(node.argument.name);
+        // this.createINS(LITERAL, node.argument.name);
+        this.createINS(GLOBAL);
+        this.createINS(DEL);
+      } else {
+        super.UnaryExpression(node);
+        // @TODO 严格模式
+        this.createINS(LITERAL, true);
+      }
+    } else {
+      if (node.operator === 'typeof' && node.argument.type === 'Identifier') {
+        this.ignoreNotDefined = 1;
+      }
+      super.UnaryExpression(node);
+      this.createINS(OPCODES[unaryOp[node.operator]]);
+    }
+    return node;
+  }
+
+  BinaryExpression(node) {
+    super.BinaryExpression(node);
+    this.createINS(OPCODES[binaryOp[node.operator]]);
     return node;
   }
 
