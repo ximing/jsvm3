@@ -18,6 +18,7 @@ export class Fiber {
   r3: any;
   rexp: any;
   timeout: number;
+  maxDepth: number;
   maxTraceDepth: number;
   callStack: any[];
   evalStack: any;
@@ -30,6 +31,7 @@ export class Fiber {
     const t = this;
     t.realm = realm;
     t.timeout = timeout;
+    t.maxDepth = 1000;
     t.maxTraceDepth = 50;
     t.callStack = [];
     t.evalStack = null;
@@ -159,6 +161,9 @@ export class Fiber {
     name = '<s>',
     construct = false
   ) {
+    if (!this.checkCallStack()) {
+      return;
+    }
     const scope = new Scope(parent, script.localNames, script.localLength);
     // 设置 顶部对象 首次运行的时候是  global对象
     scope.set(0, globalObj);
@@ -173,12 +178,26 @@ export class Fiber {
     return frame;
   }
 
+  checkCallStack() {
+    if (this.depth === this.maxDepth) {
+      this.callStack[this.depth].evalError = new JSVMError('maximum cStack size.');
+      this.suspend();
+      return false;
+    }
+    return true;
+  }
+
   popFrame() {
     const frame = this.callStack[--this.depth];
     if (frame) {
       frame.suspended = false;
     }
     return frame;
+  }
+
+  suspend() {
+    // eslint-disable-next-line no-return-assign
+    return (this.suspended = this.callStack[this.depth].suspended = true);
   }
 
   timedOut() {
