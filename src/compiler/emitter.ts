@@ -6,6 +6,8 @@ import {
   COLUMN,
   DECLG,
   DEL,
+  ENTER_SCOPE,
+  EXIT_SCOPE,
   GETG,
   GETL,
   GLOBAL,
@@ -13,6 +15,7 @@ import {
   LITERAL,
   SETG,
   SETL,
+  SREXP,
   STRING_LITERAL,
   UNDEF,
 } from '../opcodes';
@@ -148,6 +151,21 @@ export class Emitter extends Visitor {
       return this.createINS(DECLG, idx);
     } else {
       return this.createINS(SETG, idx);
+    }
+  }
+
+  enterScope() {
+    if (!this.scopes.length) {
+      // 运行全局代码时仅进入嵌套范围，因为局部变量由整数而非名称标识
+      this.createINS(ENTER_SCOPE);
+    }
+    return this.scopes.unshift({});
+  }
+
+  exitScope() {
+    this.scopes.shift();
+    if (!this.scopes.length) {
+      return this.createINS(EXIT_SCOPE);
     }
   }
 
@@ -302,6 +320,31 @@ export class Emitter extends Visitor {
     } else {
       throw new Error('invalid assert');
     }
+  }
+
+  BlockStatement(node) {
+    this.enterScope();
+    if (node.blockInit) {
+      node.blockInit();
+    }
+    this.visit(node.body);
+    if (node.blockCleanup) {
+      node.blockCleanup();
+    }
+    this.exitScope();
+    return node;
+  }
+
+  ExpressionStatement(node) {
+    super.ExpressionStatement(node);
+    // remove the expression value from the stack and save it
+    this.createINS(SREXP);
+    return node;
+  }
+
+  DebuggerStatement(node) {
+    // this.createINS(DEBUG);
+    return node;
   }
 
   VariableDeclaration(node) {

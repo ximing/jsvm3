@@ -43,4 +43,68 @@ export class Visitor {
     node.body = this.visit(node.body);
     return node;
   }
+
+  EmptyStatement(_: t.EmptyStatement) {
+    return null;
+  }
+
+  BlockStatement(node: t.BlockStatement) {
+    node.body = this.visit(node.body);
+    return node;
+  }
+
+  ExpressionStatement(node: t.ExpressionStatement) {
+    node.expression = this.visit(node.expression);
+    return node;
+  }
+
+  DebuggerStatement(node: t.DebuggerStatement) {
+    return node;
+  }
+
+  VariableDeclaration(node: t.VariableDeclaration) {
+    node.declarations = this.visit(node.declarations);
+    return node;
+  }
+
+  VariableDeclarator(node: t.VariableDeclarator) {
+    node.id = this.visit(node.id);
+    node.init = this.visit(node.init);
+    return node;
+  }
+
+  UnaryExpression(node: t.UnaryExpression) {
+    node.argument = this.visit(node.argument);
+    return node;
+  }
+
+  BinaryExpression(node: t.BinaryExpression) {
+    node.left = this.visit(node.left);
+    node.right = this.visit(node.right);
+    return node;
+  }
+
+  Identifier(node: t.Identifier) {
+    return node;
+  }
+
+  StringLiteral(node: t.StringLiteral) {
+    return node;
+  }
+
+  NumericLiteral(node: t.NumericLiteral) {
+    return node;
+  }
+
+  BooleanLiteral(node: t.BooleanLiteral) {
+    return node;
+  }
+
+  NullLiteral(node: t.NullLiteral) {
+    return node;
+  }
+
+  Literal(node: t.Literal) {
+    return node;
+  }
 }
