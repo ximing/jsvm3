@@ -33,3 +33,10 @@ export const transform = (
   ast = emitter.visit(ast.program);
   return emitter.end();
 };
+
+export const transformEXP = (exp: string) => {
+  const ast = parseExpression(exp);
+  const emitter = new Emitter(null, '<e>', null, exp.split('\n'), exp);
+  emitter.visit(ast);
+  return emitter.end();
+};

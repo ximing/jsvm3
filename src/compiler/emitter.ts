@@ -1,4 +1,5 @@
 import * as t from '@babel/types';
+import { parse } from '@babel/parser';
 import { Visitor } from './visitor';
 import { hasProp } from '../utils/helper';
 import { Instruction } from '../opcodes/types';
@@ -8,11 +9,15 @@ import {
   DEL,
   ENTER_SCOPE,
   EXIT_SCOPE,
+  FUNCTION,
+  FUNCTION_SETUP,
   GETG,
   GETL,
   GLOBAL,
   LINE,
   LITERAL,
+  POP,
+  RETV,
   SETG,
   SETL,
   SREXP,
@@ -217,6 +222,65 @@ export class Emitter extends Visitor {
 
   popLabel() {
     return this.labels.pop();
+  }
+
+  declareFunction(name, index, generator = false) {
+    let opcode;
+    this.declareVar(name);
+    const scope = this.scope(name);
+    if (scope) {
+      opcode = SETL(scope);
+    } else {
+      const idx = this.globalIdx(name);
+      opcode = SETG([idx]);
+    }
+    // 通过将名称绑定到函数 ref 来声明函数,  在其他不是函数声明的语句之前
+    const codes = [FUNCTION([index, generator === false ? 0 : 1]), opcode, POP(null)];
+    this.instructions = codes.concat(this.instructions);
+    const processedLabels = {};
+    const result: any[] = [];
+
+    for (let i = 0, end = this.instructions.length; i < end; i++) {
+      const code: any = this.instructions[i];
+      /*
+      * var C = function () {
+          console.log(C); <---  考虑这种情况
+          function C() {}
+          return C;
+        }();
+      * */
+      // 用local scope内匹配索引的 GETL 替换parent scope内声明名称匹配的所有 GETG/GETL 指令
+      if (this.scopes.length && code?.name === 'GETG') {
+        const idx = this.globalIdx(name);
+        if (code.args[0] === idx) {
+          this.instructions[i] = GETL(scope);
+        }
+      }
+      if (code?.name === 'GETL') {
+        if (code.args[0] !== 0) {
+          const s = this.scopes[code.args[0]];
+          if (s[name] === code.args[1]) {
+            this.instructions[i] = GETL(scope);
+          }
+        }
+      }
+      // 更新所有标签偏移量
+      result.push(
+        code.forEachLabel(function (l) {
+          if (hasProp(processedLabels, l.id)) {
+            // 相同的标签可以在指令之间重复使用，这将确保我们只访问每个标签一次
+            return l;
+          }
+          processedLabels[l.id] = null;
+          if (l.ip != null) {
+            // only offset marked labels
+            l.ip += 3;
+          }
+          return l;
+        })
+      );
+    }
+    return result;
   }
 
   end() {
@@ -476,4 +540,126 @@ export class Emitter extends Visitor {
     }
   }
 
+
+  VmFunction(
+    node: t.FunctionExpression & {
+      lexicalThis: boolean;
+      expression: boolean;
+      isExpression: boolean;
+      declare: boolean;
+    }
+  ) {
+    const {
+      start: { line: sline, column: scol },
+      end: { line: eline, column: ecol },
+    } = node.loc!;
+    const original: string[] = this.original.slice(sline - 1, eline);
+    original[0] = original[0].slice(scol);
+    original[original.length - 1] = original[original.length - 1].slice(0, ecol);
+    const source = original.join('\n');
+    let name = '<a>';
+    let functionType = '';
+    if (node.id) {
+      // @ts-ignore
+      ({ name, functionType } = node.id);
+    }
+    // 仅在最后生成函数代码，以便它可以访问所有在其后定义的变量
+    const emit = () => {
+      let i;
+      let end;
+      const initialScope = { this: 0, arguments: 1 };
+      /*
+      * var d = {
+          fy: function() {
+              return typeof fy
+          }
+        };
+        [d.fy.name, d.fy()] => [fy,undefined]
+      * */
+      if (node.id && !functionType) {
+        // 具有name的函数可以引用自身
+        initialScope[name] = 2;
+      }
+      if (node.lexicalThis) {
+        // @ts-ignore
+        delete initialScope.this;
+      }
+      const fn = new Emitter(
+        [initialScope].concat(this.scopes),
+        this.fName,
+        name,
+        this.original,
+        source
+      );
+      fn.globalNames = this.globalNames;
+      const len = node.params.length;
+      // console.log(node.expression, node.isExpression, node.declare);
+      // perform initial function call setup
+      fn.createINS(FUNCTION_SETUP, node.id != null);
+      // @TODO restElement
+      // if (node.rest) {
+      //   // 初始化剩余参数
+      //   fn.declareVar(node.rest.name);
+      //   const scope = fn.scope(node.rest.name);
+      //   fn.createINS(REST, len, scope![1]);
+      // }
+      // 初始化参数
+      for (i = 0, end = len; i < end; i++) {
+        const param = node.params[i];
+        // @TODO 默认值
+        // const def = node.defaults[i];
+        const declaration = parse(`var placeholder = arguments[${i}] || 0;`, {
+          sourceType: 'module',
+          plugins: [],
+        }).program.body[0] as t.VariableDeclaration;
+        const declarator = declaration.declarations[0];
+        declarator.id = param;
+        // if (def) {
+        // @ts-ignore
+        // declarator!.init!.right! = def;
+        // } else {
+        // @ts-ignore
+        declarator.init = declarator.init.left;
+        // }
+        fn.visit(declaration);
+      }
+      // emit function body
+      if (node.expression) {
+        // 箭头表达式
+        fn.visit(node.body);
+        fn.createINS(RETV);
+      } else {
+        fn.visit(node.body.body);
+      }
+      // console.log(fn.instructions);
+      const script = fn.end();
+      script.paramsSize = len;
+      return script;
+    };
+    const functionIndex = this.children.length;
+    this.children.push(emit);
+    if (node.isExpression) {
+      // push function on the stack
+      this.createINS(FUNCTION, functionIndex, node.generator === false ? 0 : 1);
+    }
+    if (node.declare) {
+      // 声明以便函数可以绑定到最开始的context上
+      this.declareFunction(node.declare, functionIndex, node.generator);
+    }
+    return node;
+  }
+
+  FunctionDeclaration(node) {
+    node.isExpression = false;
+    node.declare = node.id.name;
+    this.VmFunction(node);
+    return node;
+  }
+
+  FunctionExpression(node) {
+    node.isExpression = true;
+    node.declare = false;
+    this.VmFunction(node);
+    return node;
+  }
 }
