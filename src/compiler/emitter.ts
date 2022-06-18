@@ -4,6 +4,8 @@ import { Visitor } from './visitor';
 import { hasProp } from '../utils/helper';
 import { Instruction } from '../opcodes/types';
 import {
+  CALL,
+  CALLM,
   COLUMN,
   DECLG,
   DEL,
@@ -16,10 +18,13 @@ import {
   GLOBAL,
   LINE,
   LITERAL,
+  LR1,
   POP,
+  RET,
   RETV,
   SETG,
   SETL,
+  SR1,
   SREXP,
   STRING_LITERAL,
   UNDEF,
@@ -541,6 +546,18 @@ export class Emitter extends Visitor {
   }
 
 
+  ReturnStatement(node) {
+    // for hook in @returnHooks
+    //   hook()
+    if (node.argument) {
+      this.visit(node.argument);
+      this.createINS(RETV);
+    } else {
+      this.createINS(RET);
+    }
+    return node;
+  }
+
   VmFunction(
     node: t.FunctionExpression & {
       lexicalThis: boolean;
@@ -660,6 +677,32 @@ export class Emitter extends Visitor {
     node.isExpression = true;
     node.declare = false;
     this.VmFunction(node);
+    return node;
+  }
+
+  CallExpression(node) {
+    let fName;
+    const len = node.arguments.length;
+    if (node.callee.type === 'MemberExpression') {
+      this.visit(node.callee.object); // push target
+      this.createINS(SR1); // save target
+      this.createINS(LR1); // load target
+      this.visitProperty(node.callee); // push property
+      if (node.callee.property.type === 'Identifier') {
+        fName = node.callee.property.name;
+      }
+      this.visit(node.arguments); // push arguments
+      const idx = this.createString(fName);
+      this.createINS(CALLM, len, idx);
+    } else {
+      this.visit(node.callee);
+      if (node.callee.type === 'Identifier') {
+        fName = node.callee.name;
+      }
+      this.visit(node.arguments); // push arguments
+      const idx = this.createString(fName);
+      this.createINS(CALL, len, idx);
+    }
     return node;
   }
 }

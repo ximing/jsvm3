@@ -263,3 +263,72 @@ export const STRING_LITERAL = createOP(
   },
   () => 1
 );
+// @if CURRENT != 'exp'
+// 创建函数
+export const FUNCTION = createOP(
+  OPCodeIdx.FUNCTION,
+  function (frame, evalStack, scope, realm, args) {
+    const scriptIndex = args[0];
+    // frame.script.children[scriptIndex]  函数的body 指令集
+    evalStack.push(createFunction(frame.script.children[scriptIndex], scope, realm, args[1]));
+  },
+  () => 1
+);
+
+export const FUNCTION_SETUP = createOP(
+  OPCodeIdx.FUNCTION_SETUP,
+  function (frame, evalStack, scope, realm, args) {
+    // 当前栈 情况 [fn, [Arguments] { '0': 2 },]
+    scope.set(1, evalStack.pop());
+    const fn = evalStack.pop();
+    if (args[0]) {
+      scope.set(2, fn);
+    }
+  }
+);
+
+// initialize 'rest' param
+export const REST = createOP(OPCodeIdx.REST, function (frame, evalStack, scope, realm, args) {
+  const index = args[0];
+  const varIndex = args[1];
+  const params = scope.get(1);
+  if (index < params.length) {
+    scope.set(varIndex, Array.prototype.slice.call(params, index));
+  }
+});
+
+//  from function
+export const RET = createOP(OPCodeIdx.RET, function (frame, evalStack, scope, realm, args) {
+  ret(frame);
+});
+
+//  value from Function
+export const RETV = createOP(OPCodeIdx.RETV, function (frame, evalStack, scope, realm, args) {
+  frame.fiber.rv = evalStack.pop();
+  ret(frame);
+});
+
+
+// 调用函数
+export const CALL = createOP(
+  OPCodeIdx.CALL,
+  function (frame, evalStack, scope, realm, args) {
+    call(frame, args[0], frame.script.strings[args[1]]);
+  },
+  function () {
+    // pop弹出 n 个参数加上函数并压入返回值
+    return 1 - (this.args[0] + 1);
+  }
+);
+// call method
+export const CALLM = createOP(
+  OPCodeIdx.CALLM,
+  function (frame, evalStack, scope, realm, args) {
+    callm(frame, args[0], null, null, frame.script.strings[args[1]]);
+  },
+  function () {
+    // 弹出 n 个参数加上函数加上目标并推送返回值
+    return 1 - (this.args[0] + 1 + 1);
+  }
+);
+// @endif
