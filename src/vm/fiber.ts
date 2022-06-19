@@ -56,6 +56,11 @@ export class Fiber {
         this.injectStackTrace(err);
       }
       if (frame.isDone()) {
+      } else {
+        // 可能是函数调用，确保“frame”指向顶部
+        frame = this.callStack[this.depth];
+        err = frame.evalError;
+        continue;
       }
       frame = this.popFrame();
       if (frame && !err) {
@@ -198,6 +203,18 @@ export class Fiber {
   suspend() {
     // eslint-disable-next-line no-return-assign
     return (this.suspended = this.callStack[this.depth].suspended = true);
+  }
+
+  resume(timeout = -1) {
+    this.timeout = timeout;
+    this.suspended = false;
+    const frame = this.callStack[this.depth];
+    frame.suspended = false;
+    // const { evalStack } = this.callStack[0];
+    this.run();
+    if (!this.suspended) {
+      return this.rexp;
+    }
   }
 
   timedOut() {

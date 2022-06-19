@@ -3,6 +3,7 @@ import { Scope } from './scope';
 import { Realm } from './realm';
 import { EvaluationStack } from './stack';
 import type { Script } from './script';
+import { Guard } from './types';
 
 /*
  * 在 JavaScript 的执行环境中，每当一个函数被调用时，都会创建一个新的执行上下文，这个上下文就是 Frame。
@@ -25,6 +26,18 @@ export class Frame {
   ip: number; // Instruction Pointer
   exitIp: number;
 
+  // 通常指的是一个在对象销毁或资源回收之前执行的清理函数或代码块。它的目的是在对象不再需要时释放或清理分配给该对象的资源，
+  finalizer: any;
+
+  /*
+   * 用于管理异常处理和资源清理的机制。用于确保在执行过程中，即使发生错误或异常，资源也能被正确释放，且程序能够恢复到一个稳定的状态。
+   * 异常处理路由：指向异常处理代码的指针，当函数执行过程中抛出异常时，可以根据这些信息跳转到相应的异常处理代码块。
+   * 清理回调函数：在函数结束（无论正常结束还是异常结束）时需要调用的清理函数或代码块的引用。
+   * */
+  guards: Guard[];
+
+  rv: any; // return value
+
   line: number;
   column: number;
 
@@ -45,6 +58,9 @@ export class Frame {
     t.ip = 0;
     t.exitIp = t.script.instructions.length;
     t.suspended = false;
+    t.finalizer = null;
+    t.guards = [];
+    t.rv = undefined;
     t.line = t.column = -1;
   }
 
