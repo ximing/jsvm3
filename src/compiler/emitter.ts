@@ -9,6 +9,7 @@ import {
   COLUMN,
   DECLG,
   DEL,
+  DUP,
   ENTER_SCOPE,
   EXIT_SCOPE,
   FUNCTION,
@@ -16,6 +17,9 @@ import {
   GETG,
   GETL,
   GLOBAL,
+  JMP,
+  JMPF,
+  JMPT,
   LINE,
   LITERAL,
   LR1,
@@ -489,6 +493,27 @@ export class Emitter extends Visitor {
     return node;
   }
 
+  LogicalExpression(node) {
+    const evalEnd = this.newLabel();
+    this.visit(node.left);
+    this.createINS(DUP);
+    // 短路逻辑
+    if (node.operator === '||') {
+      this.createINS(JMPT, evalEnd);
+    } else {
+      this.createINS(JMPF, evalEnd);
+    }
+    this.createINS(POP);
+    this.visit(node.right);
+    evalEnd.mark();
+    return node;
+  }
+
+  ConditionalExpression(node) {
+    this.IfStatement(node);
+    return node;
+  }
+
   Identifier(node) {
     // 一个标识符。请注意，标识符可以是表达式(expression)或解构模式(destructuring pattern)
     this.scopeGet(node.name);
@@ -543,6 +568,19 @@ export class Emitter extends Visitor {
     } else {
       this.createINS(LITERAL, val);
     }
+  }
+
+  IfStatement(node) {
+    const ifTrue = this.newLabel();
+    const end = this.newLabel();
+    this.visit(node.test);
+    this.createINS(JMPT, ifTrue);
+    this.visit(node.alternate);
+    this.createINS(JMP, end);
+    ifTrue.mark();
+    this.visit(node.consequent);
+    end.mark();
+    return node;
   }
 
 
