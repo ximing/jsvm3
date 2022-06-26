@@ -22,12 +22,15 @@ import {
   JMPT,
   LINE,
   LITERAL,
+  LLHS,
   LR1,
   POP,
   RET,
   RETV,
+  SET,
   SETG,
   SETL,
+  SLHS,
   SR1,
   SREXP,
   STRING_LITERAL,
@@ -511,6 +514,37 @@ export class Emitter extends Visitor {
 
   ConditionalExpression(node) {
     this.IfStatement(node);
+    return node;
+  }
+
+  AssignmentExpression(node) {
+    // 参考 variableDeclaration.test.ts 下  continuous define continuous assignment  测试用例
+    if (node.left.type === 'MemberExpression') {
+      this.visitProperty(node.left);
+      this.visit(node.left.object);
+      this.createINS(SLHS);
+      // this.createINS(SR2);
+      // this.createINS(SR1);
+    }
+    if (node.right) {
+      if (node.right.type === 'MemberExpression' && !node.right.object) {
+      } else {
+        this.visit(node.right);
+      }
+    }
+    if (node.left.type === 'MemberExpression') {
+      if (node.operator !== '=') {
+      } else {
+        // this.createINS(LR1); // load property
+        // this.createINS(LR2); // load object
+        this.createINS(LLHS);
+        this.createINS(SET); // set
+      }
+    } else {
+      if (node.operator !== '=') {
+      }
+      this.scopeSet(node.left.name); // set value
+    }
     return node;
   }
 
