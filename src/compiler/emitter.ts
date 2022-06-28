@@ -14,6 +14,7 @@ import {
   EXIT_SCOPE,
   FUNCTION,
   FUNCTION_SETUP,
+  GET,
   GETG,
   GETL,
   GLOBAL,
@@ -24,6 +25,7 @@ import {
   LITERAL,
   LLHS,
   LR1,
+  LR2,
   POP,
   RET,
   RETV,
@@ -34,6 +36,7 @@ import {
   SR1,
   SREXP,
   STRING_LITERAL,
+  SWAP,
   UNDEF,
 } from '../opcodes';
 import * as OPCODES from '../opcodes';
@@ -534,6 +537,18 @@ export class Emitter extends Visitor {
     }
     if (node.left.type === 'MemberExpression') {
       if (node.operator !== '=') {
+        this.createINS(LLHS);
+        // this.createINS(SR2); // object
+        // this.createINS(SR1); // property
+        // this.createINS(LR1); // property
+        // this.createINS(LR2); // object
+        this.createINS(GET); // get current value
+        this.createINS(SWAP);
+        const op = node.operator.slice(0, node.operator.length - 1);
+        this.createINS(OPCODES[binaryOp[op]]);
+        this.createINS(LR1); // load property
+        this.createINS(LR2); // load object
+        this.createINS(SET); // set
       } else {
         // this.createINS(LR1); // load property
         // this.createINS(LR2); // load object
@@ -542,6 +557,11 @@ export class Emitter extends Visitor {
       }
     } else {
       if (node.operator !== '=') {
+        this.scopeGet(node.left.name);
+        this.createINS(SWAP);
+        const op = node.operator.slice(0, node.operator.length - 1);
+        // apply operator
+        this.createINS(OPCODES[binaryOp[op]]);
       }
       this.scopeSet(node.left.name); // set value
     }
