@@ -7,6 +7,7 @@ import {
   CALL,
   CALLM,
   COLUMN,
+  DEC,
   DECLG,
   DEL,
   DUP,
@@ -18,6 +19,7 @@ import {
   GETG,
   GETL,
   GLOBAL,
+  INC,
   JMP,
   JMPF,
   JMPT,
@@ -26,6 +28,7 @@ import {
   LLHS,
   LR1,
   LR2,
+  LR3,
   POP,
   RET,
   RETV,
@@ -34,6 +37,7 @@ import {
   SETL,
   SLHS,
   SR1,
+  SR3,
   SREXP,
   STRING_LITERAL,
   SWAP,
@@ -496,6 +500,45 @@ export class Emitter extends Visitor {
   BinaryExpression(node) {
     super.BinaryExpression(node);
     this.createINS(OPCODES[binaryOp[node.operator]]);
+    return node;
+  }
+
+  UpdateExpression(node) {
+    if (node.argument.type === 'MemberExpression') {
+      this.visitProperty(node.argument);
+      this.visit(node.argument.object);
+      this.createINS(SLHS);
+      this.createINS(LLHS);
+      // this.createINS(SR2);
+      // this.createINS(SR1);
+      // this.createINS(LR1);
+      // this.createINS(LR2);
+      this.createINS(GET); // get current
+      this.createINS(SR3); // save current
+      this.createINS(LR3); // load current
+      if (node.operator === '++') {
+        this.createINS(INC);
+      } else {
+        this.createINS(DEC);
+      } // apply operator
+      this.createINS(LR1); // load property
+      this.createINS(LR2); // load object
+      this.createINS(SET); // load object
+    } else {
+      this.scopeGet(node.argument.name);
+      this.createINS(SR3);
+      this.createINS(LR3);
+      if (node.operator === '++') {
+        this.createINS(INC);
+      } else {
+        this.createINS(DEC);
+      }
+      this.scopeSet(node.argument.name);
+    }
+    if (!node.prefix) {
+      this.createINS(POP);
+      this.createINS(LR3);
+    }
     return node;
   }
 
