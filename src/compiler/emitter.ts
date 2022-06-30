@@ -470,6 +470,16 @@ export class Emitter extends Visitor {
     return node;
   }
 
+  SequenceExpression(node) {
+    let i, end;
+    for (i = 0, end = node.expressions.length - 1; i < end; i++) {
+      this.visit(node.expressions[i]);
+      this.createINS(POP);
+    }
+    this.visit(node.expressions[i]);
+    return node;
+  }
+
   UnaryExpression(node) {
     if (node.operator === 'delete') {
       if (node.argument.type === 'MemberExpression') {
