@@ -263,6 +263,30 @@ export const STRING_LITERAL = createOP(
   },
   () => 1
 );
+
+/*
+ * 无条件跳转
+ * */
+export const JMP = createOP(OPCodeIdx.JMP, function (frame, evalStack, scope, realm, args) {
+  frame.ip = args[0];
+});
+/*
+ * true 跳转
+ * */
+export const JMPT = createOP(OPCodeIdx.JMPT, function (frame, evalStack, scope, realm, args) {
+  if (evalStack.pop()) {
+    frame.ip = args[0];
+  }
+});
+
+/*
+ * false 跳转
+ * */
+export const JMPF = createOP(OPCodeIdx.JMPF, function (frame, evalStack, scope, realm, args) {
+  if (!evalStack.pop()) {
+    frame.ip = args[0];
+  }
+});
 // @if CURRENT != 'exp'
 // 创建函数
 export const FUNCTION = createOP(
@@ -332,3 +356,24 @@ export const CALLM = createOP(
   }
 );
 // @endif
+export const THROW = createOP(OPCodeIdx.THROW, function (frame, evalStack, scope, realm, args) {
+  throwErr(frame, evalStack.pop());
+});
+
+export const ENTER_GUARD = createOP(
+  OPCodeIdx.ENTER_GUARD,
+  function (frame, evalStack, scope, realm, args) {
+    frame.guards.push(frame.script.guards[args[0]]);
+  }
+);
+
+export const EXIT_GUARD = createOP(
+  OPCodeIdx.EXIT_GUARD,
+  function (frame, evalStack, scope, realm, args) {
+    const currentGuard = frame.guards[frame.guards.length - 1];
+    const specifiedGuard = frame.script.guards[args[0]];
+    if (specifiedGuard === currentGuard) {
+      frame.guards.pop();
+    }
+  }
+);

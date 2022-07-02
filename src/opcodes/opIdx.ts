@@ -54,6 +54,10 @@ export const OPCodeIdx = {
   LITERAL: 60,
   STRING_LITERAL: 61,
 
+  JMP: 69,
+  JMPT: 70,
+  JMPF: 71,
+
   FUNCTION_SETUP: 72,
   FUNCTION: 73,
   REST: 74,
@@ -61,4 +65,7 @@ export const OPCodeIdx = {
   RETV: 76,
   CALL: 78,
   CALLM: 79,
+  THROW: 82,
+  ENTER_GUARD: 83,
+  EXIT_GUARD: 84,
 };
