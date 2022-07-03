@@ -691,6 +691,95 @@ export class Emitter extends Visitor {
   }
 
 
+  // break 参考：https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/break#description
+  // continue 参考：https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/continue#description
+  // In contrast to the break statement, continue does not terminate the execution of the loop entirely, but instead:
+  // In a while loop, it jumps back to the condition.
+  // In a for loop, it jumps to the update expression.
+  VmLoop(node, emitInit, emitBeforeTest, emitUpdate?, emitAfterTest?) {
+    const blockInit = () => {
+      if (emitInit) {
+        emitInit(brk);
+      }
+      if (emitUpdate) {
+        start.mark();
+      } else {
+        // 排除 do while，因为continue 要跳转到 condition语句
+        // if (!emitAfterTest) {
+        //   cont.mark();
+        // }
+        cont.mark();
+      }
+      if (emitBeforeTest) {
+        emitBeforeTest();
+        return this.createINS(JMPF, brk);
+      }
+    };
+
+    const blockCleanup = () => {
+      if (emitUpdate) {
+        cont.mark();
+        emitUpdate(brk);
+        this.createINS(POP);
+        this.createINS(JMP, start);
+      }
+      if (emitAfterTest) {
+        // do while case
+        // cont.mark();
+        currentLabel?.cont?.mark();
+        emitAfterTest();
+        this.createINS(JMPF, brk);
+      }
+      return this.createINS(JMP, cont);
+    };
+
+    const currentLabel = this.label();
+    const start = this.newLabel();
+    const cont = this.newLabel();
+    const brk = this.newLabel();
+
+    if ((currentLabel != null ? currentLabel.stmt : undefined) === node) {
+      // 调整当前标签 'cont' 以便 'continue label' 起作用
+      currentLabel!.cont = cont;
+      if (emitAfterTest) {
+        currentLabel!.cont = this.newLabel();
+      }
+    }
+    this.pushLabel(null, node, brk, cont);
+    if (node.body.type === 'BlockStatement') {
+      node.body.blockInit = blockInit;
+      node.body.blockCleanup = blockCleanup;
+      this.visit(node.body);
+    } else {
+      this.enterScope();
+      blockInit();
+      this.visit(node.body);
+      blockCleanup();
+      this.exitScope();
+    }
+    brk.mark();
+    this.popLabel();
+    return node;
+  }
+
+  WhileStatement(node) {
+    const emitBeforeTest = () => {
+      return this.visit(node.test);
+    };
+
+    this.VmLoop(node, null, emitBeforeTest);
+    return node;
+  }
+
+  DoWhileStatement(node) {
+    const emitAfterTest = () => {
+      return this.visit(node.test);
+    };
+
+    this.VmLoop(node, null, null, null, emitAfterTest);
+    return node;
+  }
+
   ReturnStatement(node) {
     // for hook in @returnHooks
     //   hook()
