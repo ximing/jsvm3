@@ -29,3 +29,18 @@ export const binaryOp = {
   '^': 'XOR',
   '**': 'EXP',
 };
+
+export const assignOp = {
+  '+=': 'ADD',
+  '-=': 'SUB',
+  '*=': 'MUL',
+  '/=': 'DIV',
+  '%=': 'MOD',
+  '<<=': 'SHL',
+  '>>=': 'SAR',
+  '>>>=': 'SHR',
+  '**=': 'EXP',
+  '|=': 'OR',
+  '&=': 'AND',
+  '^=': 'XOR',
+};

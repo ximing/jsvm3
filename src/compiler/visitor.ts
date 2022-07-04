@@ -58,6 +58,38 @@ export class Visitor {
     return node;
   }
 
+  IfStatement(node: t.IfStatement) {
+    node.test = this.visit(node.test);
+    node.consequent = this.visit(node.consequent);
+    node.alternate = this.visit(node.alternate);
+    return node;
+  }
+
+  ReturnStatement(node: t.ReturnStatement) {
+    node.argument = this.visit(node.argument);
+    return node;
+  }
+
+  WhileStatement(node: t.WhileStatement) {
+    node.test = this.visit(node.test);
+    node.body = this.visit(node.body);
+    return node;
+  }
+
+  DoWhileStatement(node: t.DoWhileStatement) {
+    node.body = this.visit(node.body);
+    node.test = this.visit(node.test);
+    return node;
+  }
+
+  ForStatement(node: t.ForStatement) {
+    node.test = this.visit(node.test);
+    node.body = this.visit(node.body);
+    node.init = this.visit(node.init);
+    node.update = this.visit(node.update);
+    return node;
+  }
+
   DebuggerStatement(node: t.DebuggerStatement) {
     return node;
   }
