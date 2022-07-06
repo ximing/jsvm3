@@ -425,6 +425,16 @@ export class Emitter extends Visitor {
     return node;
   }
 
+  LabeledStatement(node) {
+    const brk = this.newLabel();
+    // const cont = this.newLabel();
+    this.pushLabel(node.label.name, node.body, brk);
+    this.visit(node.body);
+    brk.mark();
+    this.popLabel();
+    return node;
+  }
+
   DebuggerStatement(node) {
     // this.createINS(DEBUG);
     return node;
@@ -690,6 +700,40 @@ export class Emitter extends Visitor {
     return node;
   }
 
+
+  BreakStatement(node) {
+    let label;
+    if (node.label) {
+      label = this.label(node.label.name);
+      if (label.cleanup) {
+        for (const cleanup of label.cleanup) {
+          cleanup(label, true);
+        }
+      }
+    } else {
+      label = this.label();
+    }
+    this.createINS(JMP, label.brk);
+    return node;
+  }
+
+  ContinueStatement(node: t.ContinueStatement) {
+    let label;
+    // 具名标签跳转
+    if (node.label) {
+      label = this.label(node.label.name);
+      // console.log(label);
+      if (label.cleanup) {
+        for (const cleanup of label.cleanup) {
+          cleanup!(label, false);
+        }
+      }
+    } else {
+      label = this.label();
+    }
+    this.createINS(JMP, label.cont);
+    return node;
+  }
 
   // break 参考：https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/break#description
   // continue 参考：https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/continue#description
