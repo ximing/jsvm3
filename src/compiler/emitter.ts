@@ -6,6 +6,7 @@ import { Instruction } from '../opcodes/types';
 import {
   CALL,
   CALLM,
+  CID,
   COLUMN,
   DEC,
   DECLG,
@@ -241,6 +242,20 @@ export class Emitter extends Visitor {
 
   popLabel() {
     return this.labels.pop();
+  }
+
+  addCleanupHook(cleanup: (label?: EmitterLabel, isBreak?: boolean) => any) {
+    // 向所有命名标签添加清理指令
+    for (const label of this.labels) {
+      if (label.name) {
+        if (!label.cleanup) {
+          label.cleanup = [];
+        }
+        label.cleanup.push(cleanup);
+      }
+    }
+    // 还添加到所有可能退出块的封闭块(try/catch/finally)
+    return this.tryStatements.map((tryStatement) => tryStatement.hooks.push(cleanup));
   }
 
   declareFunction(name, index, generator = false) {
@@ -700,6 +715,50 @@ export class Emitter extends Visitor {
     return node;
   }
 
+  /*
+  * switch(a){
+      case 1:
+        a = 2
+      default:
+        a = 3
+    }
+    discriminant: a
+    cases:[SwitchCase{consequent,test}]
+  * */
+  SwitchStatement(node: t.SwitchStatement) {
+    const brk = this.newLabel();
+    this.pushLabel(null, node, brk);
+    this.addCleanupHook(() => {
+      this.createINS(POP);
+      return this.exitScope();
+    });
+    this.enterScope();
+    this.visit(node.discriminant);
+    let nextBlock = this.newLabel();
+    for (const clause of node.cases) {
+      const nextTest = this.newLabel();
+      if (clause.test) {
+        this.createINS(DUP);
+        this.visit(clause.test);
+        this.createINS(CID);
+        this.createINS(JMPF, nextTest);
+        this.createINS(JMP, nextBlock);
+      }
+      if (clause.consequent.length) {
+        nextBlock.mark();
+        this.visit(clause.consequent);
+        nextBlock = this.newLabel();
+        this.createINS(JMP, nextBlock); // fall to the next block
+      }
+      nextTest.mark();
+    }
+    nextBlock.mark();
+    this.popLabel();
+    brk.mark();
+    this.createINS(POP);
+    this.exitScope();
+    return node;
+  }
 
   BreakStatement(node) {
     let label;
