@@ -12,7 +12,9 @@ import {
   DECLG,
   DEL,
   DUP,
+  ENTER_GUARD,
   ENTER_SCOPE,
+  EXIT_GUARD,
   EXIT_SCOPE,
   FUNCTION,
   FUNCTION_SETUP,
@@ -30,6 +32,7 @@ import {
   LR1,
   LR2,
   LR3,
+  PAUSE,
   POP,
   RET,
   RETV,
@@ -42,6 +45,7 @@ import {
   SREXP,
   STRING_LITERAL,
   SWAP,
+  THROW,
   UNDEF,
 } from '../opcodes';
 import * as OPCODES from '../opcodes';
@@ -919,6 +923,69 @@ export class Emitter extends Visitor {
     } else {
       this.createINS(RET);
     }
+    return node;
+  }
+
+  ThrowStatement(node) {
+    super.ThrowStatement(node);
+    this.createINS(THROW);
+    return node;
+  }
+
+  TryStatement(node: t.TryStatement) {
+    this.tryStatements.push({ hooks: [] });
+    const start = this.newLabel();
+    const handler = this.newLabel();
+    const finalizer = this.newLabel();
+    const end = this.newLabel();
+    const guard = {
+      start,
+      handler: node.handler ? handler : null,
+      finalizer: node.finalizer ? finalizer : null,
+      end,
+    };
+    this.guards.push(guard);
+    const guardId = this.guards.length - 1;
+    this.createINS(ENTER_GUARD, guardId);
+    start.mark();
+    this.visit(node.block);
+    this.createINS(JMP, finalizer);
+    handler.mark();
+    if (node.handler) {
+      (node.handler.body as any).blockInit = () => {
+        // bind error to the declared pattern
+        const { param } = node.handler!;
+        this.declarePattern(param);
+        const assign = {
+          type: 'ExpressionStatement',
+          expression: {
+            loc: param!.loc,
+            type: 'AssignmentExpression',
+            operator: '=',
+            left: param,
+          },
+        };
+        this.visit(assign);
+        // run cleanup hooks
+        return this.tryStatements[this.tryStatements.length - 1].hooks.map((hook) => hook());
+      };
+      this.visit(node.handler.body);
+    }
+    finalizer.mark();
+    if (node.finalizer) {
+      this.visit(node.finalizer);
+      if (!node.handler) {
+        for (const hook of this.tryStatements[this.tryStatements.length - 1].hooks) {
+          hook();
+        }
+        // exit guard and pause to rethrow exception
+        this.createINS(EXIT_GUARD, guardId);
+        this.createINS(PAUSE);
+      }
+    }
+    end.mark();
+    this.createINS(EXIT_GUARD, guardId);
+    this.tryStatements.pop();
     return node;
   }
 
