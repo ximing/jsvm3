@@ -14,6 +14,7 @@ import {
   DUP,
   ENTER_GUARD,
   ENTER_SCOPE,
+  ENUMERATE,
   EXIT_GUARD,
   EXIT_SCOPE,
   FUNCTION,
@@ -32,6 +33,7 @@ import {
   LR1,
   LR2,
   LR3,
+  NEXT,
   PAUSE,
   POP,
   RET,
@@ -869,6 +871,46 @@ export class Emitter extends Visitor {
     return node;
   }
 
+  VmIteratorLoop(node, pushIterator) {
+    const labelCleanup = (label, isBreak) => {
+      if (!label || label.stmt !== node || isBreak) {
+        return this.createINS(POP);
+      }
+    };
+
+    const emitInit = (brk) => {
+      if (node.left.type === 'VariableDeclaration') {
+        this.visit(node.left);
+      }
+      this.visit(node.right);
+      pushIterator();
+      emitUpdate(brk);
+      return this.createINS(POP);
+    };
+
+    const emitUpdate = (brk) => {
+      this.createINS(DUP);
+      this.createINS(NEXT, brk);
+      return this.visit(assignNext()); // assign next to the iteration variable
+    };
+
+    const assignNext = () => ({
+      loc: node.left.loc,
+      type: 'AssignmentExpression',
+      operator: '=',
+      left: assignTarget,
+    });
+
+    this.addCleanupHook(labelCleanup);
+    let assignTarget = node.left;
+    if (assignTarget.type === 'VariableDeclaration') {
+      assignTarget = node.left.declarations[0].id;
+    }
+    this.VmLoop(node, emitInit, null, emitUpdate);
+    this.createINS(POP);
+    return node;
+  }
+
   WhileStatement(node) {
     const emitBeforeTest = () => {
       return this.visit(node.test);
@@ -911,6 +953,15 @@ export class Emitter extends Visitor {
     }
 
     this.VmLoop(node, emitInit, emitBeforeTest, emitUpdate);
+    return node;
+  }
+
+  ForInStatement(node) {
+    const pushIterator = () => {
+      return this.createINS(ENUMERATE);
+    };
+
+    this.VmIteratorLoop(node, pushIterator);
     return node;
   }
 

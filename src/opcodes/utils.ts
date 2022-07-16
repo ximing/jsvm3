@@ -61,6 +61,92 @@ export const createOP = function (
   return (args: any) => Object.assign({ args }, base) as Instruction;
 };
 
+// const createGenerator = function (caller, script, scope, realm, target, args, fn, callname) {
+//   let timeout;
+//   if (caller) {
+//     ({ timeout } = caller);
+//   }
+//   const fiber = new Fiber(realm, timeout);
+//   let frame = fiber.pushFrame(script, target, scope, args, fn, callname, false);
+//   let newborn = true;
+//
+//   const send = function (obj) {
+//     if (newborn && obj !== undefined) {
+//       throw new JSVMTypeError('no argument must be passed when starting generator');
+//     }
+//     if (fiber.done()) {
+//       throw new JSVMError('generator closed');
+//     }
+//     frame = fiber.callStack[fiber.depth];
+//     if (newborn) {
+//       newborn = false;
+//       fiber.run();
+//     } else {
+//       frame!.evalStack.push(obj);
+//       fiber.resume();
+//     }
+//     if (caller) {
+//       // transfer timeout back to the caller fiber
+//       caller.timeout = fiber.timeout;
+//     }
+//     if (fiber.done()) {
+//       rv.closed = true;
+//       throw new StopIteration(fiber.rv, 'generator has stopped');
+//     }
+//     return fiber.yielded;
+//   };
+//
+//   const thrw = function (e) {
+//     if (newborn) {
+//       close();
+//       return e;
+//     }
+//     if (fiber.done()) {
+//       throw new JSVMError('generator closed');
+//     }
+//     frame = fiber.callStack[fiber.depth];
+//     frame!.evalError = e;
+//     fiber.resume();
+//     if (caller) {
+//       caller.timeout = fiber.timeout;
+//     }
+//     if (fiber.done()) {
+//       return fiber.rv;
+//     }
+//     return fiber.yielded;
+//   };
+//
+//   const close = function () {
+//     if (fiber.done()) {
+//       return;
+//     }
+//     if (newborn) {
+//       fiber.depth = -1;
+//     }
+//     // force a return
+//     frame = fiber.callStack[fiber.depth];
+//     frame!.evalStack.clear();
+//     frame!.ip = frame!.exitIp;
+//     fiber.resume();
+//     if (caller) {
+//       caller.timeout = fiber.timeout;
+//     }
+//     return fiber.rv;
+//   };
+//
+//   const rv = {
+//     next: send,
+//     send,
+//     throw: thrw,
+//     close,
+//     closed: false,
+//     iterator() {
+//       return rv;
+//     },
+//   };
+//
+//   return rv;
+// };
 
 export const createFunction = function (
   script: Script,
