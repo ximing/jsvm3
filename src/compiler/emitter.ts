@@ -34,6 +34,7 @@ import {
   LR2,
   LR3,
   NEXT,
+  OBJECT_LITERAL,
   PAUSE,
   POP,
   RET,
@@ -498,6 +499,65 @@ export class Emitter extends Visitor {
     } else {
       throw new Error(`VariableDeclarator 不支持类型${node.type}`);
     }
+    return node;
+  }
+
+  ObjectExpression(node: t.ObjectExpression) {
+    for (const property of node.properties) {
+      let value: any;
+      if (property.type === 'SpreadElement') {
+        throw new Error('not implemented SpreadElement');
+      }
+      if (property.type === 'ObjectMethod') {
+        value = {
+          type: 'FunctionExpression',
+          start: property.start,
+          end: property.end,
+          loc: property.loc,
+          id: null,
+          generator: property.generator,
+          async: property.async,
+          params: property.params,
+          body: property.body,
+        };
+      } else {
+        value = property.value;
+      }
+      // 重写 function name
+      if (!value.id && t.isFunctionExpression(value)) {
+        let id: any = null;
+        if (t.isLiteral(property.key)) {
+          // @ts-ignore
+          id = `${property.key.value}`;
+        }
+        if (t.isIdentifier(property.key) && !property.computed) {
+          id = (property.key as t.Identifier).name;
+        }
+        // @ts-ignore
+        value.id = {
+          type: 'Identifier',
+          name: id,
+          // @ts-ignore
+          functionType: property.type,
+        };
+      }
+      this.visit(value);
+      if (t.isLiteral(property.key)) {
+        this.visit(property.key);
+      } else if (t.isIdentifier(property.key)) {
+        if (property.computed) {
+          this.visit(property.key);
+        } else {
+          // Identifier. use the name to create a literal string
+          this.visit({ type: 'Literal', value: (property.key as t.Identifier).name });
+        }
+      } else if (t.isExpression(property.key)) {
+        this.visit(property.key);
+      } else {
+        throw new Error(`ObjectExpression not implemented ${property.key}`);
+      }
+    }
+    this.createINS(OBJECT_LITERAL, node.properties.length);
     return node;
   }
 
@@ -1186,5 +1246,9 @@ export class Emitter extends Visitor {
       this.createINS(CALL, len, idx);
     }
     return node;
+  }
+
+  Property(_) {
+    throw new Error('not implemented');
   }
 }

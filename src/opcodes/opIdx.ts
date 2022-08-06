@@ -9,14 +9,22 @@ export const OPCodeIdx = {
 
   SREXP: 7,
 
+  GETL: 3,
+  SETL: 6,
   POP: 10,
   DUP: 11,
   SWAP: 14,
 
   GLOBAL: 15,
 
+  GET: 1,
+  SET: 2,
+  DEL: 18,
+  GETG: 4,
+  SETG: 5,
   SLHS: 21,
   LLHS: 22,
+  DECLG: 23,
   PLU: 25,
   INV: 26,
   LNOT: 27,
@@ -53,6 +61,7 @@ export const OPCodeIdx = {
 
   LITERAL: 60,
   STRING_LITERAL: 61,
+  ENUMERATE: 67,
 
   JMP: 69,
   JMPT: 70,
@@ -63,6 +72,7 @@ export const OPCodeIdx = {
   REST: 74,
   RET: 75,
   RETV: 76,
+  NEW: 77,
   CALL: 78,
   CALLM: 79,
   THROW: 82,

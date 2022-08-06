@@ -1,3 +1,7 @@
+// @if CURRENT != 'exp'
+import { ArrayIterator } from '../vm/builtin';
+// @endif
+
 import { hasProp } from '../utils/helper';
 
 export function has(obj, key) {
@@ -27,3 +31,20 @@ export function set(obj, key, val) {
   Reflect.set(obj, key, val);
   return val;
 }
+
+export function del(obj, key) {
+  Reflect.deleteProperty(obj, key);
+  return true;
+}
+
+// @if CURRENT != 'exp'
+export function enumerateKeys(obj) {
+  const keys: string[] = [];
+  for (const key in obj) {
+    if (key !== '__mdid__') {
+      keys.push(key);
+    }
+  }
+  return new ArrayIterator(keys);
+}
+// @endif

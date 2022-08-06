@@ -1,7 +1,12 @@
 /* eslint @typescript-eslint/no-unused-vars: 0 */
+import { hasProp } from '../utils/helper';
+import { throwErr } from '../utils/opcodes';
+import { JSVMReferenceError, JSVMTypeError } from '../utils/errors';
+import { del, enumerateKeys, has, set } from './op';
 import { call, callm, createFunction, createOP, ret } from './utils';
 // @ifdef COMPILER
 import { OPCodeIdx } from './opIdx';
+import { Cannot, property } from './contants';
 // @endif
 export const InsMap = new Map();
 /*
@@ -95,6 +100,122 @@ export const LLHS = createOP(
   },
   () => 2
 );
+/*
+ * 从对象中获取属性
+ * */
+export const GET = createOP(OPCodeIdx.GET, function (frame, evalStack, scope, realm, args) {
+  // const obj = evalStack.pop();
+  // const key = evalStack.pop();
+  const [key, obj] = evalStack.tail(2);
+  // console.log('--->GET', obj, key);
+  if (obj == null) {
+    // console.trace();
+    throwErr(frame, new JSVMTypeError(`[JSVM] ${Cannot} get ${property} ${key} of ${obj}`));
+  } else {
+    evalStack.push(obj[key]);
+  }
+  // return evalStack.push(obj[key]);
+  // return evalStack.push(get(obj, key));
+});
+
+// @if CURRENT != 'exp'
+/*
+ * 设置对象属性
+ * */
+export const SET = createOP(OPCodeIdx.SET, function (frame, evalStack, scope, realm, args) {
+  // const obj = evalStack.pop();
+  // const key = evalStack.pop();
+  // const val = evalStack.pop();
+  const [val, key, obj] = evalStack.tail(3);
+  if (obj == null) {
+    throwErr(frame, new JSVMTypeError(`${Cannot} set ${property} ${key} of ${obj}`));
+  } else {
+    evalStack.push(set(obj, key, val));
+  }
+  // return evalStack.push(set(obj, key, val));
+});
+/*
+ * 删除对象属性
+ * */
+export const DEL = createOP(OPCodeIdx.DEL, function (frame, evalStack, scope, realm, args) {
+  // const obj = evalStack.pop();
+  // const key = evalStack.pop();
+  const [key, obj] = evalStack.tail(2);
+  if (obj == null) {
+    throwErr(frame, new JSVMTypeError(`${Cannot} convert null to object`));
+  } else {
+    evalStack.push(del(obj, key));
+  }
+  // return evalStack.push(del(obj, key));
+});
+// @endif
+
+/*
+ * 获取局部变量
+ * */
+export const GETL = createOP(
+  OPCodeIdx.GETL,
+  function (frame, evalStack, scope, realm, args) {
+    let scopeIndex = args[0];
+    const varIndex = args[1];
+    while (scopeIndex--) {
+      scope = scope.parentScope!;
+    }
+    // console.log(scope, args, varIndex, scopeIndex, scope.get(varIndex));
+    evalStack.push(scope.get(varIndex));
+  },
+  () => 1
+);
+// @if CURRENT != 'exp'
+/*
+ * 设置局部变量
+ * */
+export const SETL = createOP(OPCodeIdx.SETL, function (frame, evalStack, scope, realm, args) {
+  let scopeIndex = args[0];
+  const varIndex = args[1];
+  let _scope = scope;
+  while (scopeIndex--) {
+    _scope = _scope.parentScope!;
+  }
+  evalStack.push(_scope.set(varIndex, evalStack.pop()));
+});
+// @endif
+
+/*
+ * 获取全局变量
+ * */
+export const GETG = createOP(
+  OPCodeIdx.GETG,
+  function (frame, evalStack, scope, realm, args) {
+    const k = frame.script.globalNames[args[0]];
+    // args: [name, ignoreNotDefined]
+    // console.log(args[0], args[1]);
+    if (!hasProp(realm.globalObj, k) && !args[1]) {
+      throwErr(frame, new JSVMReferenceError(`GETG ${k} not def`));
+    } else {
+      return evalStack.push(realm.globalObj[k]);
+    }
+  },
+  () => 1
+);
+// @if CURRENT != 'exp'
+/*
+ * 设置全局变量
+ * */
+export const SETG = createOP(OPCodeIdx.SETG, function (frame, evalStack, scope, realm, args) {
+  const k = frame.script.globalNames[args[0]];
+  evalStack.push((realm.globalObj[k] = evalStack.pop()));
+});
+// @endif
+/*
+ * 声明全局变量，考虑 __tests__/es5/global.test.ts case
+ * */
+export const DECLG = createOP(OPCodeIdx.DECLG, function (frame, evalStack, scope, realm, args) {
+  const k = frame.script.globalNames[args[0]];
+  if (!hasProp(realm.globalObj, k)) {
+    realm.globalObj[k] = undefined;
+  }
+});
 /*
  * invert signal
  * */
@@ -332,6 +453,10 @@ export const RETV = createOP(OPCodeIdx.RETV, function (frame, evalStack, scope, 
   ret(frame);
 });
 
+// call as constructor
+export const NEW = createOP(OPCodeIdx.NEW, function (frame, evalStack, scope, realm, args) {
+  call(frame, args[0], null, true);
+});
 
 // 调用函数
 export const CALL = createOP(
@@ -356,6 +481,16 @@ export const CALLM = createOP(
   }
 );
 // @endif
+
+/*
+ * 产生对象的可枚举属性
+ * */
+export const ENUMERATE = createOP(
+  OPCodeIdx.ENUMERATE,
+  function (frame, evalStack, scope, realm, args) {
+    evalStack.push(enumerateKeys(evalStack.pop()));
+  }
+);
 export const THROW = createOP(OPCodeIdx.THROW, function (frame, evalStack, scope, realm, args) {
   throwErr(frame, evalStack.pop());
 });
