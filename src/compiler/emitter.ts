@@ -664,6 +664,13 @@ export class Emitter extends Visitor {
     return node;
   }
 
+  MemberExpression(node) {
+    this.visitProperty(node);
+    this.visit(node.object);
+    this.createINS(GET);
+    return node;
+  }
+
   AssignmentExpression(node) {
     // 参考 variableDeclaration.test.ts 下  continuous define continuous assignment  测试用例
     if (node.left.type === 'MemberExpression') {
