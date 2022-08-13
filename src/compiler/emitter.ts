@@ -4,6 +4,7 @@ import { Visitor } from './visitor';
 import { hasProp } from '../utils/helper';
 import { Instruction } from '../opcodes/types';
 import {
+  ARRAY_LITERAL,
   CALL,
   CALLM,
   CID,
@@ -499,6 +500,19 @@ export class Emitter extends Visitor {
     } else {
       throw new Error(`VariableDeclarator 不支持类型${node.type}`);
     }
+    return node;
+  }
+
+  ArrayExpression(node: t.ArrayExpression) {
+    // super.ArrayExpression(node);
+    node.elements = node.elements.map((ele) => {
+      if (ele === null) {
+        this.createINS(UNDEF);
+        return undefined;
+      }
+      return this.visit(ele);
+    });
+    this.createINS(ARRAY_LITERAL, node.elements.length);
     return node;
   }
 
