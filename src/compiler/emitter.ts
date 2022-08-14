@@ -1121,6 +1121,15 @@ export class Emitter extends Visitor {
     return node;
   }
 
+  ThisExpression(node) {
+    if (this.scopes.length) {
+      this.scopeGet('this');
+    } else {
+      this.createINS(GLOBAL);
+    }
+    return node;
+  }
+
   VmFunction(
     node: t.FunctionExpression & {
       lexicalThis: boolean;
