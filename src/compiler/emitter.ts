@@ -34,6 +34,7 @@ import {
   LR1,
   LR2,
   LR3,
+  NEW,
   NEXT,
   OBJECT_LITERAL,
   PAUSE,
@@ -1249,6 +1250,13 @@ export class Emitter extends Visitor {
     node.isExpression = true;
     node.declare = false;
     this.VmFunction(node);
+    return node;
+  }
+
+  NewExpression(node) {
+    this.visit(node.callee);
+    this.visit(node.arguments); // push arguments
+    this.createINS(NEW, node.arguments.length);
     return node;
   }
 
