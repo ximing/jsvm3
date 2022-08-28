@@ -22,6 +22,7 @@ export class Frame {
   // frame name
   fName: any;
   evalStack: EvaluationStack;
+  construct: any;
 
   ip: number; // Instruction Pointer
   exitIp: number;
@@ -47,6 +48,7 @@ export class Frame {
     s: Scope,
     realm: Realm,
     fName: string,
+    construct = false
   ) {
     const t = this;
     t.fiber = fiber;
@@ -54,6 +56,7 @@ export class Frame {
     t._scope = s;
     t.realm = realm;
     t.fName = fName;
+    t.construct = construct;
     t.evalStack = new EvaluationStack(t.script.stackSize, t.fiber);
     t.ip = 0;
     t.exitIp = t.script.instructions.length;
@@ -91,6 +94,15 @@ export class Frame {
 
   isDone() {
     return this.ip === this.exitIp;
+  }
+
+  // 方便terser 压缩 scope
+  getScope() {
+    return this._scope;
+  }
+
+  setScope(__s: Scope) {
+    return (this._scope = __s);
   }
 
   // 后续，会使用这些方法去触发listeners(eg: debugger)
