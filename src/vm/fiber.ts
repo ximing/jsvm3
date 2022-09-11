@@ -56,11 +56,31 @@ export class Fiber {
         this.injectStackTrace(err);
       }
       if (frame.isDone()) {
+        if (frame.guards.length) {
+          const guard = frame.guards.pop();
+          // @ts-ignore
+          if (guard.finalizer) {
+            // we returned in the middle of a 'try' statement.
+            // if there's a finalizer, it be executed before returning
+            // @ts-ignore
+            frame.ip = guard.finalizer;
+            // @ts-ignore
+            frame.exitIp = guard.end;
+            frame.suspended = false;
+            continue;
+          }
+        }
       } else {
         // 可能是函数调用，确保“frame”指向顶部
         frame = this.callStack[this.depth];
         err = frame.evalError;
         continue;
+      }
+      // 返回的函数，检查这是否是构造函数调用并采取相应措施
+      if (frame.construct) {
+        if (!['object', 'function'].includes(typeof this.rv)) {
+          this.rv = frame.getScope()!.get(0); // return this
+        }
       }
       frame = this.popFrame();
       if (frame && !err) {
