@@ -270,6 +270,10 @@ export const callFun = function (frame, func, args, target, name, construct = fa
   if (typeof func !== 'function') {
     return throwErr(frame, new JSVMTypeError(`${name || 'obj'} is not a function`));
   }
+  // "" 字符串情况 @TODO 严格模式？
+  if (target == null) {
+    target = realm.globalObj;
+  }
   let push = true;
   // args = Array.prototype.slice.call(args);
   if (hasProp(func, '__JSVMFun__')) {
