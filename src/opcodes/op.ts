@@ -37,6 +37,9 @@ export function del(obj, key) {
   return true;
 }
 
+export function instanceOf(klass, obj) {
+  return obj instanceof klass;
+}
 // @if CURRENT != 'exp'
 export function enumerateKeys(obj) {
   const keys: string[] = [];
