@@ -28,4 +28,19 @@ export class Scope {
     }
     return -1;
   }
+
+  // name 展开
+  namesHash() {
+    const rv: { this: number; arguments: number; [key: string]: number } = {
+      this: 0,
+      arguments: 1,
+    };
+    for (const k of Object.keys(this.names || {})) {
+      const v = this.names[k];
+      if (typeof v === 'string') {
+        rv[v] = parseInt(k);
+      }
+    }
+    return rv;
+  }
 }

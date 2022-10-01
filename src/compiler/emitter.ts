@@ -220,6 +220,7 @@ export class Emitter extends Visitor {
   declarePattern(node, kind = 'let') {
     if (['ArrayPattern', 'ArrayExpression'].includes(node.type)) {
     } else if (['ObjectPattern', 'ObjectExpression'].includes(node.type)) {
+      return Array.from(node.properties).map((prop: any) => this.declarePattern(prop.value, kind));
     } else if (t.isIdentifier(node)) {
       return this.declareVar(node.name, kind);
     } else {
