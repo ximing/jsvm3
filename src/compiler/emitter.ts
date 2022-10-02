@@ -1254,6 +1254,14 @@ export class Emitter extends Visitor {
     return node;
   }
 
+  ArrowFunctionExpression(node) {
+    node.isExpression = true;
+    node.declare = false;
+    node.lexicalThis = true;
+    this.VmFunction(node);
+    return node;
+  }
+
   NewExpression(node) {
     this.visit(node.callee);
     this.visit(node.arguments); // push arguments

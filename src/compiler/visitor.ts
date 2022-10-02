@@ -139,4 +139,14 @@ export class Visitor {
   Literal(node: t.Literal) {
     return node;
   }
+
+  ArrowFunctionExpression(node: t.ArrowFunctionExpression) {
+    node.params = this.visit(node.params);
+    // node.defaults = this.visit(node.defaults);
+    // node.rest = this.visit(node.rest);
+    node.body = this.visit(node.body);
+    return node;
+
+    throw new Error('not implemented');
+  }
 }
