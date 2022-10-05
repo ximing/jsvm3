@@ -25,6 +25,7 @@ import {
   GETL,
   GLOBAL,
   INC,
+  ITER,
   JMP,
   JMPF,
   JMPT,
@@ -1042,6 +1043,15 @@ export class Emitter extends Visitor {
   ForInStatement(node) {
     const pushIterator = () => {
       return this.createINS(ENUMERATE);
+    };
+
+    this.VmIteratorLoop(node, pushIterator);
+    return node;
+  }
+
+  ForOfStatement(node) {
+    const pushIterator = () => {
+      return this.createINS(ITER);
     };
 
     this.VmIteratorLoop(node, pushIterator);

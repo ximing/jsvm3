@@ -4,6 +4,9 @@ import { throwErr } from '../utils/opcodes';
 import { JSVMReferenceError, JSVMTypeError } from '../utils/errors';
 import { del, enumerateKeys, has, set } from './op';
 import { call, callm, createFunction, createOP, ret } from './utils';
+// @if CURRENT != 'exp'
+import { StopIteration } from '../vm/builtin';
+// @endif
 // @ifdef COMPILER
 import { OPCodeIdx } from './opIdx';
 import { Cannot, property } from './contants';
@@ -482,6 +485,11 @@ export const CALLM = createOP(
 );
 // @endif
 
+// @if CURRENT != 'exp'
+// calls 'iterator' method
+export const ITER = createOP(OPCodeIdx.ITER, function (frame, evalStack, scope, realm, args) {
+  callm(frame, 0, 'iterator', evalStack.pop());
+});
 /*
  * 产生对象的可枚举属性
  * */
@@ -491,6 +499,16 @@ export const ENUMERATE = createOP(
     evalStack.push(enumerateKeys(evalStack.pop()));
   }
 );
+// 调用迭代器 'next'
+export const NEXT = createOP(OPCodeIdx.NEXT, function (frame, evalStack, scope, realm, args) {
+  callm(frame, 0, 'next', evalStack.pop());
+  if (frame.evalError instanceof StopIteration) {
+    frame.evalError = null;
+    frame.suspended = false;
+    frame.ip = args[0];
+  }
+});
+
 export const THROW = createOP(OPCodeIdx.THROW, function (frame, evalStack, scope, realm, args) {
   throwErr(frame, evalStack.pop());
 });
