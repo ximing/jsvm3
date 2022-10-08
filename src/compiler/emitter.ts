@@ -1308,4 +1308,8 @@ export class Emitter extends Visitor {
   Property(_) {
     throw new Error('not implemented');
   }
+
+  SpreadElement(_) {
+    throw new Error('not implemented');
+  }
 }
