@@ -220,6 +220,15 @@ export class Emitter extends Visitor {
 
   declarePattern(node, kind = 'let') {
     if (['ArrayPattern', 'ArrayExpression'].includes(node.type)) {
+      const result: any[] = [];
+      for (const el of Array.from(node.elements)) {
+        if (el) {
+          result.push(this.declarePattern(el, kind));
+        } else {
+          result.push(undefined);
+        }
+      }
+      return result;
     } else if (['ObjectPattern', 'ObjectExpression'].includes(node.type)) {
       return Array.from(node.properties).map((prop: any) => this.declarePattern(prop.value, kind));
     } else if (t.isIdentifier(node)) {
@@ -699,9 +708,62 @@ export class Emitter extends Visitor {
     }
     if (node.right) {
       if (node.right.type === 'MemberExpression' && !node.right.object) {
+        // destructuring pattern, need to adjust the stack before getting the value
+        this.visitProperty(node.right);
+        this.createINS(SWAP);
+        this.createINS(GET);
       } else {
         this.visit(node.right);
       }
+    }
+    // else, assume value is already on the stack
+    if (
+      ['ArrayPattern', 'ArrayExpression', 'ObjectPattern', 'ObjectExpression'].includes(
+        node.left.type
+      )
+    ) {
+      let childAssignment;
+      if (['ArrayPattern', 'ArrayExpression'].includes(node.left.type)) {
+        let index = 0;
+        for (const element of Array.from(node.left.elements)) {
+          if (element) {
+            this.createINS(DUP);
+            // get the nth-item from the array
+            childAssignment = {
+              operator: node.operator,
+              type: 'AssignmentExpression',
+              left: element,
+              right: {
+                type: 'MemberExpression',
+                // omit the object since its already loaded on stack
+                property: { type: 'Literal', value: index },
+              },
+            };
+            this.visit(childAssignment);
+            this.createINS(POP);
+          }
+          index++;
+        }
+      } else {
+        for (const property of node.left.properties) {
+          this.createINS(DUP);
+          const source = property.key;
+          const target = property.value;
+          childAssignment = {
+            operator: node.operator,
+            type: 'AssignmentExpression',
+            left: target,
+            right: {
+              type: 'MemberExpression',
+              computed: true,
+              property: { type: 'Literal', value: source.name },
+            },
+          };
+          this.visit(childAssignment);
+          this.createINS(POP);
+        }
+      }
+      return;
     }
     if (node.left.type === 'MemberExpression') {
       if (node.operator !== '=') {
