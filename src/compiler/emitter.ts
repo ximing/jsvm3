@@ -40,6 +40,7 @@ import {
   OBJECT_LITERAL,
   PAUSE,
   POP,
+  REGEXP_LITERAL,
   RET,
   RETV,
   SET,
@@ -58,6 +59,7 @@ import * as OPCODES from '../opcodes';
 import { Label } from '../opcodes/label';
 import { Script } from '../vm/script';
 import { binaryOp, unaryOp } from './opMap';
+import { regexpFromString } from '../utils/convert';
 import { Guard } from '../vm/types';
 
 type EmitterLabel = {
@@ -801,6 +803,20 @@ export class Emitter extends Visitor {
   Identifier(node) {
     // 一个标识符。请注意，标识符可以是表达式(expression)或解构模式(destructuring pattern)
     this.scopeGet(node.name);
+    return node;
+  }
+
+  RegExpLiteral(node: t.RegExpLiteral) {
+    // this.Literal(node);
+    let idx;
+    const id = `${node.pattern}/${node.flags}`;
+    const val = regexpFromString(id);
+    if (!this.regexpIds.has(id)) {
+      idx = this.regexps.push(val) - 1;
+      this.regexpIds.set(id, idx);
+    }
+    idx = this.regexpIds.get(id);
+    this.createINS(REGEXP_LITERAL, idx);
     return node;
   }
 

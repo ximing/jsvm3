@@ -19,7 +19,7 @@ https://www.ecma-international.org/wp-content/uploads/ECMA-262_5th_edition_decem
 - [x] StringLiteral
 - [x] NumericLiteral
 - [x] BooleanLiteral
-- [ ] RegExpLiteral
+- [x] RegExpLiteral
 - [x] VariableDeclaration
 - [x] FunctionDeclaration
 - [x] FunctionExpression
@@ -35,57 +35,57 @@ https://www.ecma-international.org/wp-content/uploads/ECMA-262_5th_edition_decem
 - [x] LabeledStatement
 - [x] BreakStatement
 - [x] ContinueStatement
-- [ ] IfStatement
-- [ ] SwitchStatement
-- [ ] SwitchCase
-- [ ] ThrowStatement
-- [ ] TryStatement
-- [ ] CatchClause
-- [ ] ForStatement
-- [ ] WhileStatement
-- [ ] DoWhileStatement
-- [ ] ForInStatement
-- [ ] ThisExpression
-- [ ] ObjectExpression
-- [ ] ObjectProperty
-- [ ] ObjectMethod
-- [ ] UnaryExpression
-- [ ] UpdateExpression
-- [ ] BinaryExpression
-- [ ] AssignmentExpression
-- [ ] LogicalExpression
-- [ ] MemberExpression
-- [ ] CallExpression
-- [ ] NewExpression
-- [ ] SequenceExpression
+- [x] IfStatement
+- [x] SwitchStatement
+- [x] SwitchCase
+- [x] ThrowStatement
+- [x] TryStatement
+- [x] CatchClause
+- [x] ForStatement
+- [x] WhileStatement
+- [x] DoWhileStatement
+- [x] ForInStatement
+- [x] ThisExpression
+- [x] ObjectExpression
+- [x] ObjectProperty
+- [x] ObjectMethod
+- [x] UnaryExpression
+- [x] UpdateExpression
+- [x] BinaryExpression
+- [x] AssignmentExpression
+- [x] LogicalExpression
+- [x] MemberExpression
+- [x] CallExpression
+- [x] NewExpression
+- [x] SequenceExpression
 
 ### ES2015
 
-- [ ] VariableDeclaration (let/const)
-- [ ] ArrowFunctionExpression
+- [x] VariableDeclaration (let/const)
+- [x] ArrowFunctionExpression
 - [ ] TemplateLiteral
 - [ ] TaggedTemplateExpression
-- [ ] ForOfStatement
+- [x] ForOfStatement
 - [ ] ClassDeclaration
 - [ ] ClassExpression
 - [ ] ClassBody
 - [ ] ClassMethod
-- [ ] MetaProperty
+- [x] MetaProperty
 - [ ] Super
 - [ ] TemplateElement
-- [ ] SpreadElement
+- [x] SpreadElement
 - [ ] YieldExpression
-- [ ] ObjectPattern
+- [x] ObjectPattern
 - [ ] ArrayPattern
-- [ ] RestElement
-- [ ] AssignmentPattern
+- [x] RestElement
+- [x] AssignmentPattern
 - [ ] ImportDeclaration
 - [ ] ExportNamedDeclaration
 - [ ] ExportDefaultDeclaration
 
 ### ES2016
 
-- [ ] BinaryExpression
+- [x] BinaryExpression
 
 ### ES2017
 
@@ -99,3 +99,9 @@ https://www.ecma-international.org/wp-content/uploads/ECMA-262_5th_edition_decem
 - [ ] SpreadProperty
 - [ ] DoExpression
 - [ ]Decorator
+
+## Test
+- [es5-testsuite](https://github.com/kangax/es5-testsuite)
+- [ECMAScript Test262](http://test262.ecmascript.org/)
+- JS 面试题
+- 高程内 CASE
