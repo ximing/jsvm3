@@ -1,6 +1,6 @@
 {
   "name": "jsvm2",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "Javascript Interpreter implemented by Javascript",
   "main": "dist/index.js",
   "module": "dist/es.es6.js",
@@ -15,9 +15,11 @@
   "author": "ximing",
   "license": "MIT",
   "devDependencies": {
+    "@types/benchmark": "^2.1.1",
     "@types/jest": "^27.0.3",
     "@types/node": "^16.11.11",
     "babel-jest": "^27.4.2",
+    "benchmark": "^2.1.4",
     "jest": "^27.4.3",
     "require-from-string": "^2.0.2",
     "rollup": "^2.60.2",
@@ -29,5 +31,8 @@
     "@babel/core": "^7.18.6",
     "@babel/parser": "^7.16.4",
     "@babel/types": "^7.16.0"
+  },
+  "engines": {
+    "node": ">=10"
   }
 }
