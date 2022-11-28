@@ -4,6 +4,7 @@ import { Trace } from './types';
 import { isArray } from '../utils/helper';
 import { Realm } from './realm';
 import { XYZError, XYZTimeoutError } from '../utils/errors';
+import { Script } from './script';
 
 export class Fiber {
   realm: Realm;
@@ -21,11 +22,8 @@ export class Fiber {
   yielded: any;
   paused: boolean;
 
-  constructor(realm, timeout) {
+  constructor(realm: Realm, timeout = -1) {
     this.realm = realm;
-    if (timeout == null) {
-      timeout = -1;
-    }
     this.timeout = timeout;
     this.maxDepth = 1000;
     this.maxTraceDepth = 50;
@@ -34,8 +32,7 @@ export class Fiber {
     this.depth = -1;
     this.yielded = this.rv = undefined;
     this.paused = false;
-    // fiber-specific registers
-    // temporary registers
+    // fiber-specific registers temporary registers
     this.r1 = this.r2 = this.r3 = null;
     // expression register(last evaluated expression statement)
     this.rexp = null;
@@ -89,19 +86,18 @@ export class Fiber {
       this.injectStackTrace(err);
     }
     if (err) {
+      console.trace()
       throw err;
     }
   }
 
   unwind(err) {
-    // unwind the call stack searching for a guard
-    // 展开调用堆栈以寻找守卫
+    // 展开调用堆栈以寻找守卫guard
     let frame = this.callStack[this.depth];
     while (frame) {
-      // ensure the error is set on the current frame
       let len;
+      // 确保错误出现在栈帧上
       frame.error = err;
-      // ip is always pointing to the next instruction, so subtract one
       // ip 总是指向下一条指令，所以减去一条
       const ip = frame.ip - 1;
       if ((len = frame.guards.length)) {
@@ -110,15 +106,14 @@ export class Fiber {
           if (guard.handler !== null) {
             // try/catch
             if (ip <= guard.handler) {
-              // thrown inside the guarded region
+              // 扔到保护区内
               frame.evalStack.push(err);
               frame.error = null;
               frame.ip = guard.handler;
             } else {
-              // thrown outside the guarded region(eg: catch or finally block)
+              // 扔到保护区外(eg: catch or finally block)
               if (guard.finalizer && frame.ip <= guard.finalizer) {
-                // there's a finally block and it was thrown inside the
-                // catch block, make sure  executed
+                // 有一个 finally 块，它被扔进了 catch 块，确保执行
                 frame.ip = guard.finalizer;
               } else {
                 frame = this.popFrame();
@@ -178,17 +173,21 @@ export class Fiber {
     return (err.stack = err.toString());
   }
 
-  pushFrame(script, target, parent, args, self, name, construct) {
-    if (name == null) {
-      name = '<anonymous>';
-    }
-    if (construct == null) {
-      construct = false;
-    }
+  // <anonymous>
+  pushFrame(
+    script: Script,
+    target: any,
+    parent: Scope | null = null,
+    args = null,
+    self = null,
+    name = '<ano>',
+    construct = false
+  ) {
     if (!this.checkCallStack()) {
       return;
     }
     const scope = new Scope(parent, script.localNames, script.localLength);
+    // 设置 顶部对象 首次运行的时候是  global对象
     scope.set(0, target);
     const frame = new Frame(this, script, scope, this.realm, name, construct);
     if (self) {
@@ -199,13 +198,6 @@ export class Fiber {
     }
     this.callStack[++this.depth] = frame;
     return frame;
-  }
-
-  pushEvalFrame(frame, script) {
-    if (!this.checkCallStack()) {
-      return;
-    }
-    return (this.callStack[++this.depth] = new EvalFrame(frame, script));
   }
 
   checkCallStack() {
@@ -234,15 +226,12 @@ export class Fiber {
     return (this.paused = this.callStack[this.depth].paused = true);
   }
 
-  resume(timeout) {
-    if (timeout == null) {
-      timeout = -1;
-    }
+  resume(timeout = -1) {
     this.timeout = timeout;
     this.paused = false;
     const frame = this.callStack[this.depth];
     frame.paused = false;
-    const { evalStack } = this.callStack[0];
+    // const { evalStack } = this.callStack[0];
     this.run();
     if (!this.paused) {
       return this.rexp;

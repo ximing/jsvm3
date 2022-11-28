@@ -2,6 +2,7 @@ import type { Fiber } from './fiber';
 import type { Scope } from './scope';
 import { Realm } from './realm';
 import { EvaluationStack } from './stack';
+import type { Script } from './script';
 
 export class Frame {
   fiber: Fiber;
@@ -12,6 +13,7 @@ export class Frame {
   paused: boolean;
 
   realm: Realm;
+  // frame name
   fname: any;
   evalStack: EvaluationStack;
   construct: any;
@@ -25,15 +27,19 @@ export class Frame {
   line: number;
   column: number;
 
-  constructor(fiber, script, scope, realm, fname, construct) {
+  constructor(
+    fiber: Fiber,
+    script: Script,
+    scope: Scope,
+    realm: Realm,
+    fname: string,
+    construct = false
+  ) {
     this.fiber = fiber;
     this.script = script;
     this.scope = scope;
     this.realm = realm;
     this.fname = fname;
-    if (construct == null) {
-      construct = false;
-    }
     this.construct = construct;
     this.evalStack = new EvaluationStack(this.script.stackSize, this.fiber);
     this.ip = 0;

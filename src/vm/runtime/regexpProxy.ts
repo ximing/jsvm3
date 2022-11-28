@@ -1,4 +1,4 @@
-
+// @ts-nocheck
 const { CowObjectMetadata } = require("./metadata");
 const { defProp } = require("./util");
 

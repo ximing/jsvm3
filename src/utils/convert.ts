@@ -1,4 +1,4 @@
-import { Instruction } from '../opcodes/types';
+// @ts-nocheck
 import { Script } from '../vm/script';
 
 const scriptFromJson = function (json: any) {

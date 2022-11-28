@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { hasProp } from '../../utils/helper';
 import { ArrayIterator } from '../builtin';
 

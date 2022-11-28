@@ -1,12 +1,12 @@
 // convert compiled scripts from/to json-compatible structure
 import { Instruction } from '../opcodes/types';
+
 const instructionsToJson = function (instructions: Instruction[]) {
-  const rv: number[][] = [];
-  for (const inst of Array.from(instructions)) {
-    console.log(inst);
-    const code = [inst.id];
+  const rv: any[][] = [];
+  for (const inst of instructions) {
+    const code = [inst.name];
     if (inst.args) {
-      for (const a of Array.from(inst.args)) {
+      for (const a of inst.args) {
         if (a != null) {
           code.push(a);
         } else {
@@ -19,6 +19,7 @@ const instructionsToJson = function (instructions: Instruction[]) {
   }
   return rv;
 };
+
 export const regexpToString = function (regexp) {
   let rv = regexp.source + '/';
   rv += regexp.global ? 'g' : '';
@@ -26,6 +27,7 @@ export const regexpToString = function (regexp) {
   rv += regexp.multiline ? 'm' : '';
   return rv;
 };
+
 export const scriptToJson = function (script: Script) {
   const rv = [
     script.filename || 0,

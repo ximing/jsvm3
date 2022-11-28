@@ -34,6 +34,7 @@ import { Label } from '../opcodes/label';
 import { OPCodeIdx } from '../opcodes/opIdx';
 import { regexpToString, Script } from '../vm/script';
 import { binaryOp, unaryOp } from './opMap';
+import * as t from '@babel/types';
 
 export class Emitter extends Visitor {
   filename: string;
@@ -45,7 +46,7 @@ export class Emitter extends Visitor {
   tryStatements: any[];
   withLevel: number;
   scopes: any[];
-  scriptScope: any[];
+  scriptScope: any;
   localNames: any[];
   varIndex: number;
   guards: any[];
@@ -146,7 +147,7 @@ export class Emitter extends Visitor {
 
   declareVar(name, kind) {
     let scope;
-    if (['const', 'var'].includes(kind)) {
+    if (kind === 'var') {
       scope = this.scriptScope;
     } else {
       scope = this.scopes[0];
@@ -413,14 +414,14 @@ export class Emitter extends Visitor {
         this.ignoreNotDefined = 1;
       }
       super.UnaryExpression(node);
-      OPCODES[unaryOp[node.operator]]();
+      this.createINS(OPCODES[unaryOp[node.operator]]);
     }
     return node;
   }
 
   BinaryExpression(node) {
     super.BinaryExpression(node);
-    OPCODES[binaryOp[node.operator]]();
+    this.createINS(OPCODES[binaryOp[node.operator]]);
     return node;
   }
 
@@ -525,7 +526,7 @@ export class Emitter extends Visitor {
         // swap new/old values
         // @SWAP()
         // apply operator
-        OPCODES[binaryOp[node.operator.slice(0, node.operator.length - 1)]]();
+        this.createINS(OPCODES[binaryOp[node.operator.slice(0, node.operator.length - 1)]]);
         this.createINS(LR1); // load property
         this.createINS(LR2); // load object
         this.createINS(SET); // set
@@ -539,7 +540,7 @@ export class Emitter extends Visitor {
         this.scopeGet(node.left.name);
         this.createINS(SWAP);
         // apply operator
-        OPCODES[binaryOp[node.operator.slice(0, node.operator.length - 1)]]();
+        this.createINS(OPCODES[binaryOp[node.operator.slice(0, node.operator.length - 1)]]);
       }
       this.scopeSet(node.left.name); // set value
     }
@@ -549,6 +550,31 @@ export class Emitter extends Visitor {
   Identifier(node) {
     // 一个标识符。请注意，标识符可以是表达式(expression)或解构模式(destructuring pattern)
     this.scopeGet(node.name);
+    return node;
+  }
+
+  RegExpLiteral(node: t.RegExpLiteral) {
+    this.Literal(node);
+    return node;
+  }
+
+  StringLiteral(node: t.StringLiteral) {
+    this.Literal(node);
+    return node;
+  }
+
+  NumericLiteral(node: t.NumericLiteral) {
+    this.Literal(node);
+    return node;
+  }
+
+  BooleanLiteral(node: t.BooleanLiteral) {
+    this.Literal(node);
+    return node;
+  }
+
+  NullLiteral(node: t.NullLiteral) {
+    this.Literal(node);
     return node;
   }
 

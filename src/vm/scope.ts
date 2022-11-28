@@ -4,7 +4,7 @@ export class Scope {
   names: Record<string, any>;
   data: Array<any>;
 
-  constructor(parent: Scope | null, names: string[], len: number) {
+  constructor(parent: Scope | null, names: Record<string, any>, len: number) {
     this.parent = parent;
     this.names = names;
     this.data = new Array(len);

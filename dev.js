@@ -1,6 +1,5 @@
-import { transform } from './src/compiler';
-import { Vm } from './src/vm/vm';
-
+const { transform } = require('./lib/compiler');
+const { Vm } = require('./lib/vm/vm');
 const code = `
 let a = 4;
 let b = 1;

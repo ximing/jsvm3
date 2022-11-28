@@ -18,7 +18,7 @@
     "lib": ["es2015"]
   },
   "include": [
-    "old-src"
+    "src"
   ],
   "exclude": ["__tests__", "node_modules", "lib", "tests", "jest"],
   "compileOnSave": false
