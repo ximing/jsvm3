@@ -473,7 +473,7 @@ export class Emitter extends Visitor {
   }
 
   ObjectExpression(node: t.ObjectExpression) {
-    for (const property of node.properties) {
+    for (const property of node.properties.reverse()) {
       let value: any;
       if (property.type === 'SpreadElement') {
         throw new Error('not implemented SpreadElement');

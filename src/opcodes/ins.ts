@@ -342,6 +342,7 @@ export const LITERAL = createOP(
   () => 1
 );
 
+// string对象
 export const STRING_LITERAL = createOP(
   'STRING_LITERAL',
   function (f, s) {
@@ -357,10 +358,11 @@ export const REGEXP_LITERAL = createOP(
   },
   () => 1
 );
-
+// 对象字面量
 export const OBJECT_LITERAL = createOP(
   'OBJECT_LITERAL',
   function (f, s) {
+    // 对象里面有多少个属性
     let length = this.args[0];
     const rv = {};
     while (length--) {
@@ -430,7 +432,6 @@ export const FUNCTION_SETUP = createOP('FUNCTION_SETUP', function (f, s, l) {
     return l.set(2, fn);
   }
 });
-
 
 // initialize 'rest' param
 export const REST = createOP('REST', function (f, s, l) {
