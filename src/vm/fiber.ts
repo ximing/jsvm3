@@ -178,8 +178,8 @@ export class Fiber {
     script: Script,
     target: any,
     parent: Scope | null = null,
-    args = null,
-    self = null,
+    args: any = null,
+    self: any = null,
     name = '<ano>',
     construct = false
   ) {

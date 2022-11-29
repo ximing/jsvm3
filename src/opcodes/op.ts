@@ -1,4 +1,5 @@
 import { ArrayIterator } from '../vm/builtin';
+import { hasProp, prototypeOf } from '../utils/helper';
 
 export function inv(o) {
   return -o;
@@ -105,7 +106,21 @@ export function has(obj, key) {
 }
 
 export function get(obj, key) {
-  return Reflect.get(obj, key);
+  // "".concat
+  if (obj == null) {
+    return undefined;
+  }
+  const type = typeof obj;
+  if (type === 'object') {
+    return Reflect.get(obj, key);
+  }
+  if ((type === 'string' && typeof key === 'number') || key === 'length') {
+    return obj[key];
+  }
+  if (hasProp(obj, key)) {
+    return obj[key];
+  }
+  return get(prototypeOf(obj), key);
 }
 
 export function set(obj, key, val) {

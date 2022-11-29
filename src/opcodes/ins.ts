@@ -410,14 +410,7 @@ export const JMPF = createOP('JMPF', function (f, s) {
     return (f.ip = this.args[0]);
   }
 });
-export const FUNCTION_SETUP = createOP('FUNCTION_SETUP', function (f, s, l) {
-  // 当前栈 情况 [fn, [Arguments] { '0': 2 },]
-  l.set(1, s.pop());
-  const fn = s.pop();
-  if (this.args[0]) {
-    return l.set(2, fn);
-  }
-});
+
 // push function reference
 export const FUNCTION = createOP(
   'FUNCTION',
@@ -428,6 +421,16 @@ export const FUNCTION = createOP(
   },
   () => 1
 );
+
+export const FUNCTION_SETUP = createOP('FUNCTION_SETUP', function (f, s, l) {
+  // 当前栈 情况 [fn, [Arguments] { '0': 2 },]
+  l.set(1, s.pop());
+  const fn = s.pop();
+  if (this.args[0]) {
+    return l.set(2, fn);
+  }
+});
+
 
 // initialize 'rest' param
 export const REST = createOP('REST', function (f, s, l) {

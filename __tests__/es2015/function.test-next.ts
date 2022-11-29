@@ -1,6 +1,24 @@
 import { run } from '../helper';
 
 describe('es2015 function spec:', () => {
+  it('assignmentPattern function', function () {
+    expect(
+      run(`
+      function fn (name = 'ximing'){ return name;}
+      module.exports = fn();
+    `)
+    ).toEqual('ximing');
+  });
+
+  it('assignmentPattern function call', function () {
+    expect(
+      run(`
+      function fn (name = 'ximing'){ return name;}
+      module.exports = fn;
+    `)()
+    ).toEqual('ximing');
+  });
+
   it('new.target without new', function () {
     expect(
       run(`function Human(){ return new.target; }

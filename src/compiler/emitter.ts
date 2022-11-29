@@ -55,10 +55,9 @@ import * as OPCODES from '../opcodes';
 import { Label } from '../opcodes/label';
 import { OPCodeIdx } from '../opcodes/opIdx';
 import { regexpToString, Script } from '../vm/script';
-import { assignOp, binaryOp, unaryOp } from './opMap';
+import { binaryOp, unaryOp } from './opMap';
 import * as t from '@babel/types';
 import { parse } from '@babel/parser';
-import { StringLiteral } from '@babel/types';
 
 export class Emitter extends Visitor {
   filename: string;
@@ -431,9 +430,19 @@ export class Emitter extends Visitor {
     return node;
   }
 
-  VariableDeclarator(node) {
+  VariableDeclarator(node: t.VariableDeclarator & { kind: string }) {
     this.declarePattern(node.id, node.kind);
     if (node.init) {
+      // 处理这种情况 var t1 = function(){ return typeof t1 };
+      if (t.isFunctionExpression(node.init) && t.isIdentifier(node.id)) {
+        if (!node.init.id) {
+          // @ts-ignore
+          node.init.id = {
+            type: 'Identifier',
+            name: node.id.name,
+          };
+        }
+      }
       const assign = {
         type: 'ExpressionStatement',
         expression: {
@@ -482,6 +491,24 @@ export class Emitter extends Visitor {
         };
       } else {
         value = property.value;
+      }
+      // 重写 function name
+      if (!value.id && t.isFunctionExpression(value)) {
+        let id: any = null;
+        if (t.isLiteral(property.key)) {
+          // @ts-ignore
+          id = `${property.key.value}`;
+        }
+        if (t.isIdentifier(property.key) && !property.computed) {
+          id = (property.key as t.Identifier).name;
+        }
+        // @ts-ignore
+        value.id = {
+          type: 'Identifier',
+          name: id,
+          // @ts-ignore
+          functionType: property.type,
+        };
       }
       this.visit(value);
       if (t.isLiteral(property.key)) {
@@ -1110,15 +1137,25 @@ export class Emitter extends Visitor {
     original[original.length - 1] = original[original.length - 1].slice(0, ecol);
     const source = original.join('\n');
     let name = '<ano>';
+    let functionType = '';
     if (node.id) {
-      ({ name } = node.id);
+      // @ts-ignore
+      ({ name, functionType } = node.id);
     }
     // 仅在最后生成函数代码，以便它可以访问所有在其后定义的变量
     const emit = () => {
       let i;
       let end;
       const initialScope = { this: 0, arguments: 1 };
-      if (node.id) {
+      /*
+      * var d = {
+          fy: function() {
+              return typeof fy
+          }
+        };
+        [d.fy.name, d.fy()] => [fy,undefined]
+      * */
+      if (node.id && !functionType) {
         // 具有name的函数可以引用自身
         initialScope[name] = 2;
       }
@@ -1133,10 +1170,10 @@ export class Emitter extends Visitor {
         this.original,
         source
       );
+      const len = node.params.length;
       // console.log(node.expression, node.isExpression, node.declare);
       // perform initial function call setup
       fn.createINS(FUNCTION_SETUP, node.id != null);
-      const len = node.params.length;
       // @TODO restElement
       // if (node.rest) {
       //   // 初始化剩余参数
@@ -1173,7 +1210,9 @@ export class Emitter extends Visitor {
         fn.visit(node.body.body);
       }
       // console.log(fn.instructions);
-      return fn.end();
+      const script = fn.end();
+      script.paramsSize = len;
+      return script;
     };
     const functionIndex = this.scripts.length;
     this.scripts.push(emit);

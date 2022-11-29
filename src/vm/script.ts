@@ -50,6 +50,7 @@ export const scriptToJson = function (script: Script) {
     rv[8].push(regexpToString(regexp));
   }
   rv[9] = script.source || 0;
+  rv[10] = script.source || 0;
   return rv;
 };
 
@@ -66,6 +67,7 @@ export class Script {
   strings: any;
   regexps: any;
   source: any;
+  paramsSize = 0;
 
   constructor(
     filename,

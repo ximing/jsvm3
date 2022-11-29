@@ -144,48 +144,52 @@ export const createFunction = function (
   realm: Realm,
   generator = false
 ) {
-  let rv;
+  let fun;
   if (generator) {
-    rv = function () {
+    fun = function () {
       let fiber;
-      const name = rv.__callname__ || script.name;
-      const gen = createGenerator(rv.__fiber__, script, scope, realm, this, arguments, rv, name);
-      if (!(fiber = rv.__fiber__)) {
+      const name = fun.__callname__ || script.name;
+      const gen = createGenerator(fun.__fiber__, script, scope, realm, this, arguments, fun, name);
+      if (!(fiber = fun.__fiber__)) {
         return gen;
       }
       fiber.callStack[fiber.depth].evalStack.push(gen);
-      rv.__fiber__ = null;
-      return (rv.__callname__ = null);
+      fun.__fiber__ = null;
+      return (fun.__callname__ = null);
     };
   } else {
-    rv = function () {
-      let construct, fiber;
+    fun = function () {
+      let construct, fiber: Fiber;
       let run = false;
-      if ((fiber = rv.__fiber__)) {
+      if ((fiber = fun.__fiber__)) {
         fiber.callStack[fiber.depth].paused = true;
-        rv.__fiber__ = null;
-        construct = rv.__construct__;
-        rv.__construct__ = null;
+        fun.__fiber__ = null;
+        construct = fun.__construct__;
+        fun.__construct__ = null;
       } else {
         fiber = new Fiber(realm);
         run = true;
       }
-      const name = rv.__callname__ || script.name;
-      rv.__callname__ = null;
-      fiber.pushFrame(script, this, scope, arguments, rv, name, construct);
+      const name = fun.__callname__ || script.name;
+      fun.__callname__ = null;
+      // console.log('arguments', arguments);
+      fiber.pushFrame(script, this, scope, arguments, fun, name, construct);
       if (run) {
         fiber.run();
         return fiber.rv;
       }
     };
   }
-  defProp(rv, '__xyzFunction__', { value: true });
-  defProp(rv, '__source__', { value: script.source });
-  defProp(rv, '__name__', { value: script.name });
-  defProp(rv, '__construct__', { value: null, writable: true });
-  defProp(rv, '__fiber__', { value: null, writable: true });
-  defProp(rv, '__callname__', { value: null, writable: true });
-  return rv;
+  console.log(script);
+  defProp(fun, '__xyzFunction__', { value: true });
+  defProp(fun, 'length', { value: script.paramsSize });
+  defProp(fun, '__source__', { value: script.source });
+  defProp(fun, '__name__', { value: script.name });
+  defProp(fun, 'name', { value: script.name });
+  defProp(fun, '__construct__', { value: null, writable: true });
+  defProp(fun, '__fiber__', { value: null, writable: true });
+  defProp(fun, '__callname__', { value: null, writable: true });
+  return fun;
 };
 
 export const ret = function (frame) {
@@ -271,14 +275,17 @@ export const call = function (
   construct?
 ) {
   if (typeof func !== 'function') {
-    return throwErr(frame, new XYZTypeError('object is not a function'));
+    return throwErr(frame, new XYZTypeError(`${name || 'object'} is not a function`));
   }
   const { evalStack: stack, fiber, realm } = frame;
   let args = { length, callee: func };
   while (length) {
     args[--length] = stack.pop();
   }
-  target = target || realm.global;
+  // "" 字符串情况 @TODO 严格模式？
+  if (target == null) {
+    target = realm.global;
+  }
   let push = true;
   args = Array.prototype.slice.call(args);
   if (hasProp(func, '__xyzFunction__')) {
@@ -327,12 +334,12 @@ export const callm = function (
   }
   if (func == null) {
     stack.pop(); // pop target
-    return throwErr(frame, new XYZTypeError(`Object #<${targetName}> has no method '${key}'`));
+    return throwErr(frame, new XYZTypeError(`Object #<${name}> has no method '${key}'`));
   } else {
     stack.pop(); // pop target
     return throwErr(
       frame,
-      new XYZTypeError(`Property '${key}' of object #<${targetName}> is not a function`)
+      new XYZTypeError(`Property '${key}' of object #<${name}> is not a function`)
     );
   }
 };
