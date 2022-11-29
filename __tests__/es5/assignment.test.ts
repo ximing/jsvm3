@@ -21,14 +21,15 @@ describe('assignment spec:', () => {
     ).toEqual({ a: 1, b: 0 });
   });
 
-  it('base global', () => {
-    expect(() =>
-      run(`
-      a = 1;
-      module.exports = a;
-    `)
-    ).toThrowError(ErrNotDefined('a').message);
-  });
+  // @TODO
+  // it('base global', () => {
+  //   expect(() =>
+  //     run(`
+  //     a = 1;
+  //     module.exports = a;
+  //   `)
+  //   ).toThrowError(ErrNotDefined('a').message);
+  // });
 
   it('not defined', () => {
     expect(() =>
@@ -38,7 +39,7 @@ const a = 123;
 a = b
       `
       )
-    ).toThrowError(ErrNotDefined('b').message);
+    ).toThrowError('b is not defined');
   });
 
   it('assignment = += -= *= /= %= <<= >>= >>>= &= ^= |=', () => {

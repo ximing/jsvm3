@@ -1,4 +1,4 @@
-import { ENUMERATE, FUNCTION_SETUP, ITER, NEXT } from './ins';
+import {ENUMERATE, EXP, FUNCTION_SETUP, ITER, NEXT} from './ins';
 
 export const OPCodeIdx = {
   SR1: 1,
@@ -47,21 +47,22 @@ export const OPCodeIdx = {
   OR: 38,
   AND: 39,
   XOR: 40,
+  EXP:41,
 
-  CEQ: 41,
-  CNEQ: 42,
-  CID: 43,
-  CNID: 44,
-  LT: 45,
-  LTE: 46,
+  CEQ: 44,
+  CNEQ: 45,
+  CID: 46,
+  CNID: 47,
+  LT: 48,
+  LTE: 49,
 
-  GT: 47,
-  GTE: 48,
+  GT: 50,
+  GTE: 51,
 
-  IN: 49,
-  INSTANCEOF: 50,
-  TYPEOF: 51,
-  VOID: 52,
+  IN: 52,
+  INSTANCEOF: 53,
+  TYPEOF: 54,
+  VOID: 55,
 
   UNDEF: 59,
 

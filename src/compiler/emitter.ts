@@ -55,9 +55,10 @@ import * as OPCODES from '../opcodes';
 import { Label } from '../opcodes/label';
 import { OPCodeIdx } from '../opcodes/opIdx';
 import { regexpToString, Script } from '../vm/script';
-import { binaryOp, unaryOp } from './opMap';
+import { assignOp, binaryOp, unaryOp } from './opMap';
 import * as t from '@babel/types';
 import { parse } from '@babel/parser';
+import { StringLiteral } from '@babel/types';
 
 export class Emitter extends Visitor {
   filename: string;
@@ -113,6 +114,9 @@ export class Emitter extends Visitor {
   }
 
   createINS(op: (args: any[] | null) => Instruction, ...args) {
+    if (!op) {
+      throw new Error('op必传');
+    }
     if (!args.length) {
       // @ts-ignore
       args = null;
@@ -445,25 +449,54 @@ export class Emitter extends Visitor {
     return node;
   }
 
-  ArrayExpression(node) {
-    super.ArrayExpression(node);
+  ArrayExpression(node: t.ArrayExpression) {
+    // super.ArrayExpression(node);
+    node.elements = node.elements.map((ele) => {
+      if (ele === null) {
+        this.createINS(UNDEF);
+        return undefined;
+      }
+      return this.visit(ele);
+    });
     this.createINS(ARRAY_LITERAL, node.elements.length);
     return node;
   }
 
-  ObjectExpression(node) {
+  ObjectExpression(node: t.ObjectExpression) {
     for (const property of node.properties) {
-      if (property.kind === 'init') {
-        // object literal
-        this.visit(property.value);
-        if (property.key.type === 'Literal') {
+      let value: any;
+      if (property.type === 'SpreadElement') {
+        throw new Error('not implemented SpreadElement');
+      }
+      if (property.type === 'ObjectMethod') {
+        value = {
+          type: 'FunctionExpression',
+          start: property.start,
+          end: property.end,
+          loc: property.loc,
+          id: null,
+          generator: property.generator,
+          async: property.async,
+          params: property.params,
+          body: property.body,
+        };
+      } else {
+        value = property.value;
+      }
+      this.visit(value);
+      if (t.isLiteral(property.key)) {
+        this.visit(property.key);
+      } else if (t.isIdentifier(property.key)) {
+        if (property.computed) {
           this.visit(property.key);
         } else {
-          // identifier. use the name to create a literal string
-          this.visit({ type: 'Literal', value: property.key.name });
+          // Identifier. use the name to create a literal string
+          this.visit({ type: 'Literal', value: (property.key as t.Identifier).name });
         }
+      } else if (t.isExpression(property.key)) {
+        this.visit(property.key);
       } else {
-        throw new Error(`property kind '${property.kind}' not implemented`);
+        throw new Error(`ObjectExpression not implemented ${property.key}`);
       }
     }
     this.createINS(OBJECT_LITERAL, node.properties.length);
@@ -650,7 +683,8 @@ export class Emitter extends Visitor {
         // swap new/old values
         // @SWAP()
         // apply operator
-        this.createINS(OPCODES[binaryOp[node.operator.slice(0, node.operator.length - 1)]]);
+        const op = node.operator.slice(0, node.operator.length - 1);
+        this.createINS(OPCODES[binaryOp[op]]);
         this.createINS(LR1); // load property
         this.createINS(LR2); // load object
         this.createINS(SET); // set
@@ -663,8 +697,9 @@ export class Emitter extends Visitor {
       if (node.operator !== '=') {
         this.scopeGet(node.left.name);
         this.createINS(SWAP);
+        const op = node.operator.slice(0, node.operator.length - 1);
         // apply operator
-        this.createINS(OPCODES[binaryOp[node.operator.slice(0, node.operator.length - 1)]]);
+        this.createINS(OPCODES[binaryOp[op]]);
       }
       this.scopeSet(node.left.name); // set value
     }
@@ -698,7 +733,7 @@ export class Emitter extends Visitor {
   }
 
   NullLiteral(node: t.NullLiteral) {
-    this.Literal(node);
+    this.createINS(LITERAL, null);
     return node;
   }
 

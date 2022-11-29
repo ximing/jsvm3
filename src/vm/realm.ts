@@ -38,6 +38,7 @@ export class Realm {
     WeakSet,
     Proxy,
     console,
+    NaN,
   };
 
   constructor(merge: Record<string, any> = {}) {

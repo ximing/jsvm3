@@ -64,6 +64,10 @@ export function xor(r, l) {
   return l ^ r;
 }
 
+export function exp(r, l) {
+  return Math.pow(l, r);
+}
+
 export function ceq(r, l) {
   return l == r;
 }

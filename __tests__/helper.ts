@@ -5,7 +5,7 @@ export const run = function (code, ctx = {}, hoisting = true, convertES5 = false
   const script = transform(code, '', { hoisting, convertES5 });
   const vm = new Vm(ctx);
   const res = vm.run(script);
-  return res;
+  return (vm.realm.global as any).module.exports;
 };
 
 export const runExp = function (code: string, ctx = {}) {

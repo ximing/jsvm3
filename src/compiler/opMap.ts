@@ -26,6 +26,7 @@ export const binaryOp = {
   '|': 'OR',
   '&': 'AND',
   '^': 'XOR',
+  '**': 'EXP',
   in: 'IN',
   instanceof: 'INSTANCEOF',
 };
@@ -39,6 +40,7 @@ export const assignOp = {
   '<<=': 'SHL',
   '>>=': 'SAR',
   '>>>=': 'SHR',
+  '**=': 'EXP',
   '|=': 'OR',
   '&=': 'AND',
   '^=': 'XOR',

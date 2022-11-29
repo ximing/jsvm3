@@ -13,6 +13,7 @@ import {
   del,
   div,
   enumerateKeys,
+  exp,
   get,
   gt,
   gte,
@@ -277,6 +278,9 @@ export const AND = createOP('AND', function (f, s) {
 // bitwise XOR
 export const XOR = createOP('XOR', function (f, s) {
   return s.push(xor(s.pop(), s.pop()));
+});
+export const EXP = createOP('EXP', function (f, s) {
+  return s.push(exp(s.pop(), s.pop()));
 });
 
 export const CEQ = createOP('CEQ', function (f, s) {
