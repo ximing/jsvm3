@@ -106,12 +106,13 @@ export function has(obj, key) {
 }
 
 export function get(obj, key) {
+  // console.log('get', obj, key);
   // "".concat
   if (obj == null) {
     return undefined;
   }
   const type = typeof obj;
-  if (type === 'object') {
+  if (type === 'object' || type === 'function') {
     return Reflect.get(obj, key);
   }
   if ((type === 'string' && typeof key === 'number') || key === 'length') {

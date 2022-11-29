@@ -130,18 +130,25 @@ const { Vm } = require('./lib/vm/vm');
 //       }
 //       module.exports = isSayHi;`;
 
-const code = `const obj = {
-        a: false,
-        b: 0,
-        c: '123'
-      };
-      for(let attr in obj){
-        console.log(attr);
-        if(attr === 'a') continue;
-        if(attr === 'c') break;
-        obj[attr] = !!obj[attr];
-      }
-      module.exports = obj;`
+// const code = `const obj = {
+//         a: false,
+//         b: 0,
+//         c: '123'
+//       };
+//       for(let attr in obj){
+//         console.log(attr);
+//         if(attr === 'a') continue;
+//         if(attr === 'c') break;
+//         obj[attr] = !!obj[attr];
+//       }
+//       module.exports = obj;`
+
+// const code = `Function.__proto__.__proto__ === Object.prototype`
+const code = `var a = 1;
+      for(;;){
+        var a = 2;
+        break;
+      }`
 const script = transform(code, 'sum.js', { hoisting: true, convertES5: false });
 console.log(JSON.stringify(script.toJSON(), null, 2));
 console.log('===============+> run');

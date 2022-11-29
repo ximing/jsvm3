@@ -117,6 +117,7 @@ export const GLOBAL = createOP(
 export const GET = createOP('GET', function (frame, stack) {
   const obj = stack.pop();
   const key = stack.pop();
+  // console.log('--->GET', obj, key);
   if (obj == null) {
     // console.trace();
     return throwErr(frame, new XYZTypeError("[XYZ] Cannot read property '" + key + "' of " + obj));

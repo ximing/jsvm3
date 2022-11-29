@@ -1001,20 +1001,27 @@ export class Emitter extends Visitor {
   }
 
   ForStatement(node) {
-    const emitInit = () => {
-      this.visit(node.init);
-      if (node.init.type !== 'VariableDeclaration') {
-        return this.createINS(POP);
-      }
-    };
-
-    const emitBeforeTest = () => {
-      return this.visit(node.test);
-    };
-
-    const emitUpdate = () => {
-      return this.visit(node.update);
-    };
+    let emitInit: any = null;
+    if (node.init) {
+      emitInit = () => {
+        this.visit(node.init);
+        if (node.init.type !== 'VariableDeclaration') {
+          return this.createINS(POP);
+        }
+      };
+    }
+    let emitBeforeTest: any = null;
+    if (node.test) {
+      emitBeforeTest = () => {
+        return this.visit(node.test);
+      };
+    }
+    let emitUpdate: any = null;
+    if (node.update) {
+      emitUpdate = () => {
+        return this.visit(node.update);
+      };
+    }
 
     this.VmLoop(node, emitInit, emitBeforeTest, emitUpdate);
     return node;
