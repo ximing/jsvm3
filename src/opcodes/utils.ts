@@ -180,7 +180,6 @@ export const createFunction = function (
       }
     };
   }
-  console.log(script);
   defProp(fun, '__xyzFunction__', { value: true });
   defProp(fun, 'length', { value: script.paramsSize });
   defProp(fun, '__source__', { value: script.source });

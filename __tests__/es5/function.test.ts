@@ -67,6 +67,7 @@ describe('function spec:', () => {
     ).toThrow('a is not a function');
   });
 
+  // @TODO 优化报错提示
   it('object-property function call name', function () {
     expect(() =>
       run(`
@@ -75,9 +76,10 @@ describe('function spec:', () => {
       };
       module.exports = obj.a();
     `)
-    ).toThrow(ErrIsNotFunction('obj.a').message);
+    ).toThrow(`Property 'a' of object #<Object.a> is not a function`);
   });
 
+  // @TODO 优化报错提示
   it('object-property function call name computed', function () {
     expect(() =>
       run(`
@@ -86,7 +88,7 @@ describe('function spec:', () => {
       };
       module.exports = obj['a']();
     `)
-    ).toThrow(ErrIsNotFunction('obj["a"]').message);
+    ).toThrow(`Property 'a' of object #<Object.undefined> is not a function`);
   });
 
   it('function params should can be overwrite', function () {

@@ -1,32 +1,6 @@
 // convert compiled scripts from/to json-compatible structure
 import { Instruction } from '../opcodes/types';
-
-const instructionsToJson = function (instructions: Instruction[]) {
-  const rv: any[][] = [];
-  for (const inst of instructions) {
-    const code = [inst.name];
-    if (inst.args) {
-      for (const a of inst.args) {
-        if (a != null) {
-          code.push(a);
-        } else {
-          // @ts-ignore
-          code.push(null);
-        }
-      }
-    }
-    rv.push(code);
-  }
-  return rv;
-};
-
-export const regexpToString = function (regexp) {
-  let rv = regexp.source + '/';
-  rv += regexp.global ? 'g' : '';
-  rv += regexp.ignoreCase ? 'i' : '';
-  rv += regexp.multiline ? 'm' : '';
-  return rv;
-};
+import { instructionsToJson, regexpToString } from '../utils/convert';
 
 export const scriptToJson = function (script: Script) {
   const rv = [
@@ -46,7 +20,7 @@ export const scriptToJson = function (script: Script) {
   for (const guard of Array.from(script.guards)) {
     rv[5].push([guard.start || -1, guard.handler || -1, guard.finalizer || -1, guard.end || -1]);
   }
-  for (const regexp of Array.from(script.regexps)) {
+  for (const regexp of script.regexps) {
     rv[8].push(regexpToString(regexp));
   }
   rv[9] = script.source || 0;
@@ -65,7 +39,7 @@ export class Script {
   guards: any[];
   stackSize: number;
   strings: any;
-  regexps: any;
+  regexps: RegExp[];
   source: any;
   paramsSize = 0;
 

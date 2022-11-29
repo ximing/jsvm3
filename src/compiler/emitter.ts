@@ -54,10 +54,11 @@ import {
 import * as OPCODES from '../opcodes';
 import { Label } from '../opcodes/label';
 import { OPCodeIdx } from '../opcodes/opIdx';
-import { regexpToString, Script } from '../vm/script';
+import { Script } from '../vm/script';
 import { binaryOp, unaryOp } from './opMap';
 import * as t from '@babel/types';
 import { parse } from '@babel/parser';
+import { regexpFromString } from '../utils/convert';
 
 export class Emitter extends Visitor {
   filename: string;
@@ -740,7 +741,17 @@ export class Emitter extends Visitor {
   }
 
   RegExpLiteral(node: t.RegExpLiteral) {
-    this.Literal(node);
+    // this.Literal(node);
+    let idx;
+    const id = `${node.pattern}/${node.flags}`;
+    const val = regexpFromString(id);
+    if (!hasProp(this.regexpIds, id)) {
+      this.regexps.push(val);
+      idx = this.regexps.length - 1;
+      this.regexpIds[id] = idx;
+    }
+    idx = this.regexpIds[id];
+    this.createINS(REGEXP_LITERAL, idx);
     return node;
   }
 
@@ -779,15 +790,6 @@ export class Emitter extends Visitor {
       }
       idx = this.stringIds[val];
       this.createINS(STRING_LITERAL, idx);
-    } else if (val instanceof RegExp) {
-      const id = regexpToString(val);
-      if (!hasProp(this.regexpIds, id)) {
-        this.regexps.push(val);
-        idx = this.regexps.length - 1;
-        this.regexpIds[id] = idx;
-      }
-      idx = this.regexpIds[id];
-      this.createINS(REGEXP_LITERAL, idx);
     } else {
       this.createINS(LITERAL, val);
     }

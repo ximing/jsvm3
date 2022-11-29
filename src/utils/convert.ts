@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { Script } from '../vm/script';
+import { Instruction } from '../opcodes/types';
 
-const scriptFromJson = function (json: any) {
+export const scriptFromJson = function (json: any) {
   const filename = json[0] !== 0 ? json[0] : null;
   const name = json[1] !== 0 ? json[1] : null;
   const instructions = instructionsFromJson(json[2]);
@@ -42,8 +43,7 @@ const scriptFromJson = function (json: any) {
   );
 };
 
-
-const instructionsFromJson = function (instructions) {
+export const instructionsFromJson = function (instructions) {
   const rv = [];
   for (const inst of Array.from(instructions)) {
     const klass = opcodes[inst[0]];
@@ -57,9 +57,36 @@ const instructionsFromJson = function (instructions) {
   return rv;
 };
 
-const regexpFromString = function (str) {
+export const regexpToString = function (regexp: RegExp) {
+  let rv = regexp.source + '/';
+  rv += regexp.global ? 'g' : '';
+  rv += regexp.ignoreCase ? 'i' : '';
+  rv += regexp.multiline ? 'm' : '';
+  return rv;
+};
+
+export const regexpFromString = function (str) {
   const sliceIdx = str.lastIndexOf('/');
   const source = str.slice(0, sliceIdx);
   const flags = str.slice(sliceIdx + 1);
   return new RegExp(source, flags);
+};
+
+export const instructionsToJson = function (instructions: Instruction[]) {
+  const rv: any[][] = [];
+  for (const inst of instructions) {
+    const code = [inst.name];
+    if (inst.args) {
+      for (const a of inst.args) {
+        if (a != null) {
+          code.push(a);
+        } else {
+          // @ts-ignore
+          code.push(null);
+        }
+      }
+    }
+    rv.push(code);
+  }
+  return rv;
 };

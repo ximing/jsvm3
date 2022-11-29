@@ -117,14 +117,22 @@ const { Vm } = require('./lib/vm/vm');
 //         };
 //         module.exports = (0, da.func)();`;
 
-const code = `const obj = {
-        a:1
-      };
-      module.exports = obj.a();`
+// const code = `const obj = {
+//         a:1
+//       };
+//       module.exports = obj.a();`
+
+const code = `
+      const reg = /^hello/;
+      function isSayHi(word) {
+        console.log(reg, word)
+        return reg.test(word);
+      }
+      module.exports = isSayHi;`;
 const script = transform(code, 'sum.js', { hoisting: true, convertES5: false });
 console.log(JSON.stringify(script.toJSON(), null, 2));
 console.log('===============+> run');
 const vm = new Vm();
 const res = vm.run(script);
 console.log(script.toJSON());
-console.log(res);
+console.log(res, res('sss'));
