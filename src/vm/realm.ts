@@ -42,11 +42,15 @@ export class Realm {
 
   constructor(merge: Record<string, any> = {}) {
     // @ts-ignore
-    this.global.global = global;
+    this.global.global = this.global;
 
     for (const k of Object.keys(merge)) {
       const v = merge[k];
-      global[k] = v;
+      this.global[k] = v;
     }
+    const $exports = {};
+    const $module = { exports: $exports };
+    (this.global as any).module = $module;
+    (this.global as any).exports = $exports;
   }
 }

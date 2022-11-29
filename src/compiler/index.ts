@@ -1,5 +1,5 @@
 import * as babel from '@babel/core';
-import { parse } from '@babel/parser';
+import { parse, parseExpression } from '@babel/parser';
 import { Emitter } from './emitter';
 
 export const transform = (
@@ -72,5 +72,12 @@ export const transform = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ast = emitter.visit(ast.program);
   // console.log(ast);
+  return emitter.end();
+};
+
+export const transformEXP = (exp: string) => {
+  const ast = parseExpression(exp);
+  const emitter = new Emitter(null, '<e>', null, exp.split('\n'), exp);
+  emitter.visit(ast);
   return emitter.end();
 };

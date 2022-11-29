@@ -37,17 +37,20 @@ const { Vm } = require('./lib/vm/vm');
 //   console.log('---->',i);
 // }
 // `;
+//
+// const code = `
+// try{
+//   throw 1
+// }catch(err){
+//   console.log('err',err)
+// }finally{
+//   console.log('finally')
+// }
+// `;
 
 const code = `
-try{
-  throw 1
-}catch(err){
-  console.log('err',err)
-}finally{
-  console.log('finally')
-}
+module.exports = 1;
 `;
-
 const script = transform(code, 'sum.js');
 console.log(JSON.stringify(script.toJSON(), null, 2));
 console.log('===============+> run');
