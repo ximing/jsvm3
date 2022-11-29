@@ -1,5 +1,6 @@
 export const unaryOp = {
   '-': 'INV',
+  '+': 'PLU',
   '!': 'LNOT',
   '~': 'NOT',
   typeof: 'TYPEOF',

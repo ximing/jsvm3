@@ -144,11 +144,20 @@ const { Vm } = require('./lib/vm/vm');
 //       module.exports = obj;`
 
 // const code = `Function.__proto__.__proto__ === Object.prototype`
-const code = `var a = 1;
-      for(;;){
-        var a = 2;
-        break;
-      }`
+// const code = `var a = 1;
+//       for(;;){
+//         var a = 2;
+//         break;
+//       }`
+
+// const code = ` var num = 1;
+//     var obj = {a: ++num,b: num++,c:--num,d:num--,num};`;
+
+const code = ` var a = {n: 1};
+        var b = a;
+        a.x = a = {n: 2};
+        module.exports = {a, b};`;
+
 const script = transform(code, 'sum.js', { hoisting: true, convertES5: false });
 console.log(JSON.stringify(script.toJSON(), null, 2));
 console.log('===============+> run');

@@ -1,4 +1,4 @@
-import {ENUMERATE, EXP, FUNCTION_SETUP, ITER, NEXT} from './ins';
+import { ENUMERATE, EXP, FUNCTION_SETUP, ITER, NEXT, PLU } from './ins';
 
 export const OPCodeIdx = {
   SR1: 1,
@@ -30,6 +30,7 @@ export const OPCodeIdx = {
   GETG: 19,
   SETG: 20,
 
+  PLU: 24,
   INV: 25,
   LNOT: 26,
   NOT: 27,
@@ -47,7 +48,7 @@ export const OPCodeIdx = {
   OR: 38,
   AND: 39,
   XOR: 40,
-  EXP:41,
+  EXP: 41,
 
   CEQ: 44,
   CNEQ: 45,

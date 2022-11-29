@@ -82,7 +82,8 @@ describe('variable spec:', () => {
     });
   });
 
-  // https://segmentfault.com/a/1190000008475665
+  // https://segmentfault.com/a/1190000008475665 的评论 由于. 运算符优先级高于=，所以先运行 a.x，并等待赋值。很容易证明题主的错误：
+  // https://cloud.tencent.com/developer/article/1093667
   it('continuous define continuous assignment', function () {
     const res = run(
       `

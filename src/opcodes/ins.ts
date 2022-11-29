@@ -28,6 +28,7 @@ import {
   mul,
   not,
   or,
+  plu,
   sar,
   set,
   shl,
@@ -209,6 +210,10 @@ export const INV = createOP('INV', function (f, s) {
   return s.push(inv(s.pop()));
 });
 
+export const PLU = createOP('PLU', function (f, s) {
+  return s.push(plu(s.pop()));
+});
+
 /*
  * logical NOT
  * */
@@ -365,11 +370,16 @@ export const OBJECT_LITERAL = createOP(
   function (f, s) {
     // 对象里面有多少个属性
     let length = this.args[0];
-    const rv = {};
+    const rv: any[] = [];
+    const obj = {};
+    // 这里指令是反的，因为先进栈的后出栈，所以为了保持 for in 遍历对象的顺序，要再生成对象的时候做个revert
     while (length--) {
-      set(rv, s.pop(), s.pop());
+      rv.push([s.pop(), s.pop()]);
     }
-    return s.push(rv);
+    for (const [key, val] of rv.reverse()) {
+      set(obj, key, val);
+    }
+    return s.push(obj);
   },
   function () {
     return 1 - this.args[0] * 2;

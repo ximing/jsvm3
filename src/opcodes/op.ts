@@ -5,6 +5,10 @@ export function inv(o) {
   return -o;
 }
 
+export function plu(o) {
+  return +o;
+}
+
 export function lnot(o) {
   return !o;
 }

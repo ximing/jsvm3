@@ -473,7 +473,7 @@ export class Emitter extends Visitor {
   }
 
   ObjectExpression(node: t.ObjectExpression) {
-    for (const property of node.properties.reverse()) {
+    for (const property of node.properties) {
       let value: any;
       if (property.type === 'SpreadElement') {
         throw new Error('not implemented SpreadElement');
@@ -638,6 +638,13 @@ export class Emitter extends Visitor {
   }
 
   AssignmentExpression(node) {
+    // 参考 variableDeclaration.test.ts 下  continuous define continuous assignment  测试用例
+    if (node.left.type === 'MemberExpression') {
+      this.visitProperty(node.left);
+      this.visit(node.left.object);
+      this.createINS(SR2);
+      this.createINS(SR1);
+    }
     if (node.right) {
       if (node.right.type === 'MemberExpression' && !node.right.object) {
         // destructuring pattern, need to adjust the stack before
@@ -699,10 +706,6 @@ export class Emitter extends Visitor {
       return;
     }
     if (node.left.type === 'MemberExpression') {
-      this.visitProperty(node.left);
-      this.visit(node.left.object);
-      this.createINS(SR2);
-      this.createINS(SR1);
       if (node.operator !== '=') {
         this.createINS(LR1);
         this.createINS(LR2);
