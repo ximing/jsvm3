@@ -5,6 +5,7 @@ export class Label {
   emitter: Emitter;
   id: number;
   ip: number | null;
+
   constructor(emitter) {
     this.emitter = emitter;
     this.id = Label.id++;

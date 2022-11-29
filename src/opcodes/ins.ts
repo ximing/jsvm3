@@ -12,6 +12,7 @@ import {
   dec,
   del,
   div,
+  enumerateKeys,
   get,
   gt,
   gte,
@@ -33,7 +34,8 @@ import {
   sub,
   xor,
 } from './op';
-import { createOP } from './utils';
+import { call, callm, createFunction, createOP, ret } from './utils';
+import { StopIteration } from '../vm/builtin';
 
 /*
  * 存储到寄存器1
@@ -101,17 +103,6 @@ export const SWAP = createOP('SWAP', function (frame, stack) {
   return stack.push(bot);
 });
 
-export const ENTER_GUARD = createOP('ENTER_GUARD', function (f) {
-  return f.guards.push(f.script.guards[this.args[0]]);
-});
-export const EXIT_GUARD = createOP('EXIT_GUARD', function (f) {
-  const currentGuard = f.guards[f.guards.length - 1];
-  const specifiedGuard = f.script.guards[this.args[0]];
-  if (specifiedGuard === currentGuard) {
-    return f.guards.pop();
-  }
-});
-
 export const GLOBAL = createOP(
   'GLOBAL',
   function (f, s, l, r) {
@@ -126,6 +117,7 @@ export const GET = createOP('GET', function (frame, stack) {
   const obj = stack.pop();
   const key = stack.pop();
   if (obj == null) {
+    // console.trace();
     return throwErr(frame, new XYZTypeError("[XYZ] Cannot read property '" + key + "' of " + obj));
   }
   return stack.push(get(obj, key));
@@ -168,6 +160,7 @@ export const GETL = createOP(
     while (scopeIndex--) {
       scope = scope.parent!;
     }
+    // console.log(scope, this.args, varIndex, scopeIndex, scope.get(varIndex));
     return stack.push(scope.get(varIndex));
   },
   () => 1
@@ -292,6 +285,8 @@ export const CEQ = createOP('CEQ', function (f, s) {
 export const CNEQ = createOP('CNEQ', function (f, s) {
   return s.push(cneq(s.pop(), s.pop()));
 });
+
+// 全等
 export const CID = createOP('CID', function (f, s) {
   return s.push(cid(s.pop(), s.pop()));
 });
@@ -387,6 +382,142 @@ export const ARRAY_LITERAL = createOP(
     return 1 - this.args[0];
   }
 );
+
+/*
+ * 无条件跳转
+ * */
+export const JMP = createOP('JMP', function (f) {
+  return (f.ip = this.args[0]);
+});
+/*
+ * true 跳转
+ * */
+export const JMPT = createOP('JMPT', function (f, s) {
+  if (s.pop()) {
+    return (f.ip = this.args[0]);
+  }
+});
+
+/*
+ * false 跳转
+ * */
+export const JMPF = createOP('JMPF', function (f, s) {
+  if (!s.pop()) {
+    return (f.ip = this.args[0]);
+  }
+});
+export const FUNCTION_SETUP = createOP('FUNCTION_SETUP', function (f, s, l) {
+  // 当前栈 情况 [fn, [Arguments] { '0': 2 },]
+  l.set(1, s.pop());
+  const fn = s.pop();
+  if (this.args[0]) {
+    return l.set(2, fn);
+  }
+});
+// push function reference
+export const FUNCTION = createOP(
+  'FUNCTION',
+  function (f, s, l, r) {
+    const scriptIndex = this.args[0];
+    // f.script.scripts[scriptIndex]  函数的body 指令集
+    return s.push(createFunction(f.script.scripts[scriptIndex], l, r, this.args[1]));
+  },
+  () => 1
+);
+
+// initialize 'rest' param
+export const REST = createOP('REST', function (f, s, l) {
+  const index = this.args[0];
+  const varIndex = this.args[1];
+  const args = l.get(1);
+  if (index < args.length) {
+    return l.set(varIndex, Array.prototype.slice.call(args, index));
+  }
+});
+
+// return from function
+export const RET = createOP('RET', function (f) {
+  return ret(f);
+});
+
+// return value from Function
+export const RETV = createOP('RETV', function (f, s) {
+  f.fiber.rv = s.pop();
+  return ret(f);
+});
+
+// call as constructor
+export const NEW = createOP('NEW', function (f, s) {
+  return call(f, this.args[0], s.pop(), null, null, true);
+});
+
+// 调用函数
+export const CALL = createOP(
+  'CALL',
+  function (f, s) {
+    return call(f, this.args[0], s.pop(), null, this.args[1]);
+  },
+  function () {
+    // pop弹出 n 个参数加上函数并压入返回值
+    return 1 - (this.args[0] + 1);
+  }
+);
+// call method
+export const CALLM = createOP(
+  'CALLM',
+  function (f, s) {
+    return callm(f, this.args[0], s.pop(), s.pop(), this.args[1]);
+  },
+  function () {
+    // 弹出 n 个参数加上函数加上目标并推送返回值
+    return 1 - (this.args[0] + 1 + 1);
+  }
+);
+// calls 'iterator' method
+export const ITER = createOP('ITER', function (f, s, l) {
+  return callm(f, 0, 'iterator', s.pop());
+});
+/*
+ * 产生对象的可枚举属性
+ * */
+export const ENUMERATE = createOP('ENUMERATE', function (f, s, l, r) {
+  return s.push(enumerateKeys(s.pop()));
+});
+// calls iterator 'next'
+export const NEXT = createOP('NEXT', function (f, s, l) {
+  callm(f, 0, 'next', s.pop());
+  if (f.error instanceof StopIteration) {
+    f.error = null;
+    f.paused = false;
+    return (f.ip = this.args[0]);
+  }
+});
+// pause frame
+export const PAUSE = createOP('PAUSE', function (f) {
+  return (f.paused = true);
+});
+
+// yield value from generator
+export const YIELD = createOP('YIELD', function (f, s) {
+  f.fiber.yielded = s.pop();
+  return f.fiber.pause();
+});
+
+export const THROW = createOP('THROW', function (f, s) {
+  return throwErr(f, s.pop());
+});
+
+export const ENTER_GUARD = createOP('ENTER_GUARD', function (f) {
+  return f.guards.push(f.script.guards[this.args[0]]);
+});
+
+export const EXIT_GUARD = createOP('EXIT_GUARD', function (f) {
+  const currentGuard = f.guards[f.guards.length - 1];
+  const specifiedGuard = f.script.guards[this.args[0]];
+  if (specifiedGuard === currentGuard) {
+    return f.guards.pop();
+  }
+});
 
 /*
  * enter nested scope

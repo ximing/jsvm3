@@ -68,8 +68,9 @@ export const transform = (
     sourceType: 'module',
     plugins: [],
   });
-  const emitter = new Emitter(null, filename, null, transformCode.split('\n'));
+  const emitter = new Emitter(null, filename, null, transformCode.split('\n'), transformCode);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ast = emitter.visit(ast.program);
-  console.log(ast);
+  // console.log(ast);
   return emitter.end();
 };

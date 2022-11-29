@@ -1,4 +1,4 @@
-import { GLOBAL, UNDEF } from './index';
+import { ENUMERATE, FUNCTION_SETUP, ITER, NEXT } from './ins';
 
 export const OPCodeIdx = {
   SR1: 1,
@@ -70,6 +70,28 @@ export const OPCodeIdx = {
   REGEXP_LITERAL: 62,
   OBJECT_LITERAL: 63,
   ARRAY_LITERAL: 64,
+
+  ITER: 66,
+  ENUMERATE: 67,
+  NEXT: 68,
+
+  JMP: 69,
+  JMPT: 70,
+  JMPF: 71,
+
+  FUNCTION_SETUP: 72,
+  FUNCTION: 73,
+  REST: 74,
+  RET: 75,
+  RETV: 76,
+  NEW: 77,
+  CALL: 78,
+  CALLM: 79,
+  PAUSE: 80,
+  YIELD: 81,
+  THROW: 82,
+  ENTER_GUARD: 83,
+  EXIT_GUARD: 84,
 
   ENTER_SCOPE: 86,
   EXIT_SCOPE: 87,

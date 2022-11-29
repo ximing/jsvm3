@@ -37,6 +37,7 @@ export class Realm {
     Set,
     WeakSet,
     Proxy,
+    console,
   };
 
   constructor(merge: Record<string, any> = {}) {
