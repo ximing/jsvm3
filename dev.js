@@ -153,15 +153,141 @@ const { Vm } = require('./lib/vm/vm');
 // const code = ` var num = 1;
 //     var obj = {a: ++num,b: num++,c:--num,d:num--,num};`;
 
-const code = ` var a = {n: 1};
-        var b = a;
-        a.x = a = {n: 2};
-        module.exports = {a, b};`;
+// const code = ` var a = {n: 1};
+//         var b = a;
+//         a.x = a = {n: 2};
+//         module.exports = {a, b};`;
 
-const script = transform(code, 'sum.js', { hoisting: true, convertES5: false });
-console.log(JSON.stringify(script.toJSON(), null, 2));
+// const code = `var a = 1;
+//       doLoop:
+//       do {
+//         console.log('1',a);
+//         a++;
+//         continue doLoop;
+//         console.log('2',a);
+//       } while (a<10);
+//       module.exports = a;`;
+
+// const code = `function createPerson(name, age, job) {
+//       let person = new Object();
+//       person.name = name;
+//       person.age = age;
+//       person.job = job;
+//       person.sayName = function () {
+//         return name
+//       };
+//
+//       return person;
+//     }
+//     module.exports = {
+//       p : createPerson('Ben', 21, 'student')
+//     }`;
+
+// const code = `  var arr = [0, 1, undefined, null];
+//   arr[0]+=1;
+//   arr[1] = 100;
+//   arr[4] = 4;
+//   module.exports = arr;`;
+//
+// const script = transform(code, 'sum.js', { hoisting: true, convertES5: false });
+// console.log(JSON.stringify(script.toJSON(), null, 2));
+// console.log('===============+> run');
+// const vm = new Vm();
+// const res = vm.run(script);
+// // console.log(JSON.stringify(script.toJSON(), null, 2));
+// console.log(res);
+// 'use strict'
+
+// const code1 = `
+// var _PopLogic = /*#__PURE__*/ (function () {
+//   function _PopLogic() {}
+//   var _proto12 = _PopLogic.prototype;
+//   _proto12.useRenderFunc = function useRenderFunc(funcName) {
+//     var _this$popupController;
+//     return (_this$popupController = popupRender)[funcName].apply(_this$popupController, []);
+//   };
+//   return _PopLogic;
+// })();
+// module.exports = new _PopLogic().useRenderFunc('test');`;
+
+// const code1 = `let a = { b:2, c(){return this.b} };
+// let d;
+// module.exports = (d = a)['c'].apply(d,[])`
+
+// const code1 = `module.exports= new String('123')`
+
+// const code1 = `let count = {
+//         c1 : 0,
+//         c2 : 0
+//       };
+//       class A{
+//         async f1(){
+//           count.c1++;
+//           await Promise.resolve(1)
+//           return 1;
+//         }
+//         f2(){
+//           count.c2++;
+//           return this.f1();
+//         }
+//       }
+//       console.log(A)
+//       const a = new A();
+//       a.f2();
+//       module.exports = {count}`;
+//
+// const code1 = `
+// class A{
+// f2(){
+//           return 1;
+//         }
+// };
+// const a = new A();
+// module.exports = a.f2();;
+// `
+
+const code1 = `
+    var _Sequence;
+    (function (Sequence2) {
+    })(_Sequence);
+    `
+const code11 = `
+num = 6;
+      var num;
+      module.exports = num;
+    `
+
+const code12 = `
+var a = (get() , 2);
+var b;
+function get(){
+  b = 3;
+}
+module.exports = {a: a, b: b};
+`
+
+const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: true });
+console.log(JSON.stringify(script1.toJSON(), null, 2));
 console.log('===============+> run');
-const vm = new Vm();
-const res = vm.run(script);
-console.log(script.toJSON());
-console.log(res);
+const vm1 = new Vm({
+  popupRender: {
+    b: 1,
+    test() {
+      return this.b;
+    },
+    p: {
+      c() {
+        return {
+          b: 1,
+          test() {
+            return this.b;
+          },
+        };
+      },
+    },
+  },
+  regeneratorRuntime: require('regenerator-runtime/runtime.js'),
+});
+const res1 = vm1.run(script1);
+console.log(res1);
+console.log(vm1.realm.global);

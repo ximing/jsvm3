@@ -8,6 +8,7 @@ import {
   CID,
   COLUMN,
   DEC,
+  DECLG,
   DEL,
   DUP,
   ENTER_GUARD,
@@ -28,6 +29,7 @@ import {
   JMPT,
   LINE,
   LITERAL,
+  LLHS,
   LR1,
   LR2,
   LR3,
@@ -42,6 +44,7 @@ import {
   SET,
   SETG,
   SETL,
+  SLHS,
   SR1,
   SR2,
   SR3,
@@ -60,13 +63,21 @@ import * as t from '@babel/types';
 import { parse } from '@babel/parser';
 import { regexpFromString } from '../utils/convert';
 
+type EmitterLabel = {
+  name: string | null;
+  stmt: any;
+  brk?: Label;
+  cont?: Label;
+  cleanup?: any[] | null;
+};
+
 export class Emitter extends Visitor {
   filename: string;
   name: string | null;
   original: string[];
   source: string;
   instructions: Instruction[];
-  labels: { name: string | null; stmt: any; brk?: Label; cont?: Label; cleanup?: any[] | null }[];
+  labels: EmitterLabel[];
   scripts: any[];
   tryStatements: any[];
   withLevel: number;
@@ -151,12 +162,17 @@ export class Emitter extends Visitor {
     this.ignoreNotDefined = 0;
   }
 
-  scopeSet(name) {
+  scopeSet(name, isDecl = false) {
     const scope = this.scope(name);
     if (scope) {
       return this.createINS(SETL, ...scope);
     }
-    return this.createINS(SETG, name); // global object set
+    console.log('scrop set', name);
+    if (isDecl) {
+      return this.createINS(DECLG, name); // global object set
+    } else {
+      return this.createINS(SETG, name); // global object set
+    }
   }
 
   enterScope() {
@@ -179,6 +195,7 @@ export class Emitter extends Visitor {
     if (kind === 'var') {
       scope = this.scriptScope;
     } else {
+      // 最新的scope
       scope = this.scopes[0];
     }
     if (scope && !scope[name]) {
@@ -200,7 +217,7 @@ export class Emitter extends Visitor {
       return result;
     } else if (['ObjectPattern', 'ObjectExpression'].includes(node.type)) {
       return Array.from(node.properties).map((prop: any) => this.declarePattern(prop.value, kind));
-    } else if (node.type === 'Identifier') {
+    } else if (t.isIdentifier(node)) {
       return this.declareVar(node.name, kind);
     } else {
       throw new Error('assertion error');
@@ -211,11 +228,12 @@ export class Emitter extends Visitor {
     return new Label(this);
   }
 
-  label(name?) {
+  label(name?: string | null) {
     if (!name) {
       return this.labels[this.labels.length - 1];
     }
     for (const label of this.labels) {
+      // console.log('---->', label.name, name);
       if (label.name === name) {
         return label;
       }
@@ -223,7 +241,8 @@ export class Emitter extends Visitor {
     return null;
   }
 
-  pushLabel(name, stmt, brk?, cont?) {
+  pushLabel(name: string | null, stmt: any, brk?: Label, cont?: Label) {
+    // console.log('pushLabel', name, stmt, 'brk', brk, 'cont', cont);
     return this.labels.push({ name, stmt, brk, cont });
   }
 
@@ -231,7 +250,7 @@ export class Emitter extends Visitor {
     return this.labels.pop();
   }
 
-  addCleanupHook(cleanup) {
+  addCleanupHook(cleanup: (label?: EmitterLabel, isBreak?: boolean) => any) {
     // 向所有命名标签添加清理指令
     for (const label of this.labels) {
       if (label.name) {
@@ -382,7 +401,7 @@ export class Emitter extends Visitor {
       return this.visit(memberExpression.property);
     } else if (memberExpression.property.type === 'Identifier') {
       return this.createINS(LITERAL, memberExpression.property.name);
-    } else if (memberExpression.property.type === 'Literal') {
+    } else if (t.isLiteral(memberExpression.property)) {
       return this.createINS(LITERAL, memberExpression.property.value);
     } else {
       throw new Error('invalid assert');
@@ -411,6 +430,7 @@ export class Emitter extends Visitor {
 
   LabeledStatement(node) {
     const brk = this.newLabel();
+    // const cont = this.newLabel();
     this.pushLabel(node.label.name, node.body, brk);
     this.visit(node.body);
     brk.mark();
@@ -455,6 +475,10 @@ export class Emitter extends Visitor {
         },
       };
       this.visit(assign);
+    } else if (t.isIdentifier(node.id)) {
+      this.scopeSet(node.id.name, true);
+    } else {
+      throw new Error(`VariableDeclarator 不支持类型${node.type}`);
     }
     return node;
   }
@@ -642,8 +666,9 @@ export class Emitter extends Visitor {
     if (node.left.type === 'MemberExpression') {
       this.visitProperty(node.left);
       this.visit(node.left.object);
-      this.createINS(SR2);
-      this.createINS(SR1);
+      this.createINS(SLHS);
+      // this.createINS(SR2);
+      // this.createINS(SR1);
     }
     if (node.right) {
       if (node.right.type === 'MemberExpression' && !node.right.object) {
@@ -707,6 +732,9 @@ export class Emitter extends Visitor {
     }
     if (node.left.type === 'MemberExpression') {
       if (node.operator !== '=') {
+        this.createINS(LLHS);
+        this.createINS(SR2);
+        this.createINS(SR1);
         this.createINS(LR1);
         this.createINS(LR2);
         this.createINS(GET); // get current value
@@ -720,8 +748,9 @@ export class Emitter extends Visitor {
         this.createINS(LR2); // load object
         this.createINS(SET); // set
       } else {
-        this.createINS(LR1); // load property
-        this.createINS(LR2); // load object
+        // this.createINS(LR1); // load property
+        // this.createINS(LR2); // load object
+        this.createINS(LLHS);
         this.createINS(SET); // set
       }
     } else {
@@ -873,10 +902,12 @@ export class Emitter extends Visitor {
     return node;
   }
 
-  ContinueStatement(node) {
+  ContinueStatement(node: t.ContinueStatement) {
     let label;
+    // 具名标签跳转
     if (node.label) {
       label = this.label(node.label.name);
+      // console.log(label);
       if (label.cleanup) {
         for (const cleanup of label.cleanup) {
           cleanup!(label, false);
@@ -889,6 +920,11 @@ export class Emitter extends Visitor {
     return node;
   }
 
+  // break 参考：https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/break#description
+  // continue 参考：https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/continue#description
+  // In contrast to the break statement, continue does not terminate the execution of the loop entirely, but instead:
+  // In a while loop, it jumps back to the condition.
+  // In a for loop, it jumps to the update expression.
   VmLoop(node, emitInit, emitBeforeTest, emitUpdate?, emitAfterTest?) {
     const blockInit = () => {
       if (emitInit) {
@@ -897,6 +933,10 @@ export class Emitter extends Visitor {
       if (emitUpdate) {
         start.mark();
       } else {
+        // 排除 do while，因为continue 要跳转到 condition语句
+        // if (!emitAfterTest) {
+        //   cont.mark();
+        // }
         cont.mark();
       }
       if (emitBeforeTest) {
@@ -913,6 +953,9 @@ export class Emitter extends Visitor {
         this.createINS(JMP, start);
       }
       if (emitAfterTest) {
+        // do while case
+        // cont.mark();
+        currentLabel?.cont?.mark();
         emitAfterTest();
         this.createINS(JMPF, brk);
       }
@@ -927,6 +970,9 @@ export class Emitter extends Visitor {
     if ((currentLabel != null ? currentLabel.stmt : undefined) === node) {
       // 调整当前标签 'cont' 以便 'continue label' 起作用
       currentLabel!.cont = cont;
+      if (emitAfterTest) {
+        currentLabel!.cont = this.newLabel();
+      }
     }
     this.pushLabel(null, node, brk, cont);
     if (node.body.type === 'BlockStatement') {
@@ -1262,8 +1308,8 @@ export class Emitter extends Visitor {
   }
 
   NewExpression(node) {
-    this.visit(node.arguments); // push arguments
     this.visit(node.callee);
+    this.visit(node.arguments); // push arguments
     this.createINS(NEW, node.arguments.length);
     return node;
   }
@@ -1271,7 +1317,6 @@ export class Emitter extends Visitor {
   CallExpression(node) {
     let fname;
     const len = node.arguments.length;
-    this.visit(node.arguments); // push arguments
     if (node.callee.type === 'MemberExpression') {
       this.visit(node.callee.object); // push target
       this.createINS(SR1); // save target
@@ -1280,12 +1325,14 @@ export class Emitter extends Visitor {
       if (node.callee.property.type === 'Identifier') {
         fname = node.callee.property.name;
       }
+      this.visit(node.arguments); // push arguments
       this.createINS(CALLM, len, fname);
     } else {
       this.visit(node.callee);
       if (node.callee.type === 'Identifier') {
         fname = node.callee.name;
       }
+      this.visit(node.arguments); // push arguments
       this.createINS(CALL, len, fname);
     }
     return node;

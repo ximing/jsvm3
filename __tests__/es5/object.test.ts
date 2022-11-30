@@ -21,8 +21,9 @@ describe('object spec:', () => {
   `,
       {},
       true,
-      true
+      false
     );
+    console.log(res);
     expect(res.p.name).toEqual('Ben');
     expect(res.p.age).toEqual(21);
     expect(res.p.sayName()).toEqual('Ben');

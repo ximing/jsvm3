@@ -23,7 +23,7 @@ describe('warp', () => {
       a.f2();
       module.exports = {count}
   `,
-      { regeneratorRuntime: require('regenerator-runtime/runtime.js') },
+      { console, regeneratorRuntime: require('regenerator-runtime/runtime.js') },
       true,
       true
     );

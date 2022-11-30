@@ -11,6 +11,7 @@ import { defProp, hasProp } from '../utils/helper';
 import { throwErr } from '../utils/opcodes';
 import type { Frame } from '../vm/frame';
 import { get } from './op';
+import { EvaluationStack } from '../vm/stack';
 
 export const createOP = function (
   name,
@@ -253,33 +254,31 @@ const createNativeInstance = function (constructor, args) {
   } else if (constructor === Boolean) {
     return Boolean(args[0]);
   } else {
-    // create a new object linked to the function prototype by using
-    // a constructor proxy
-    const constructorProxy = function () {
-      return constructor.apply(this, args);
-    };
-    constructorProxy.prototype = constructor.prototype;
-    // @ts-ignore
-    const rv = new constructorProxy();
-    return rv;
+    return new constructor(...args);
+    // // create a new object linked to the function prototype by using
+    // // a constructor proxy
+    // const constructorProxy = function () {
+    //   return constructor.apply(this, args);
+    // };
+    // constructorProxy.prototype = constructor.prototype;
+    // // @ts-ignore
+    // const rv = new constructorProxy();
+    // return rv;
   }
 };
 
-export const call = function (
-  frame: Frame,
-  length: number,
-  func: any,
-  target: any,
-  name: string | null,
-  construct?
-) {
-  if (typeof func !== 'function') {
-    return throwErr(frame, new XYZTypeError(`${name || 'object'} is not a function`));
-  }
-  const { evalStack: stack, fiber, realm } = frame;
-  let args = { length, callee: func };
+export const getParams = function (length: number, stack: EvaluationStack) {
+  const args: any = { length };
   while (length) {
     args[--length] = stack.pop();
+  }
+  return args;
+};
+
+export const callFun = function (frame, func, args, target, name, construct = false) {
+  const { evalStack: stack, fiber, realm } = frame;
+  if (typeof func !== 'function') {
+    return throwErr(frame, new XYZTypeError(`${name || 'object'} is not a function`));
   }
   // "" 字符串情况 @TODO 严格模式？
   if (target == null) {
@@ -299,6 +298,7 @@ export const call = function (
       // create a native class instance
       val = createNativeInstance(func, args);
     } else {
+      // console.log('call---->', func, target, args);
       val = func.apply(target, args);
     }
     if (push && !fiber.paused) {
@@ -309,14 +309,30 @@ export const call = function (
   }
 };
 
+export const call = function (frame: Frame, length: number, name: string | null, construct?) {
+  const { evalStack: stack } = frame;
+  const args = { length, callee: null };
+  while (length) {
+    args[--length] = stack.pop();
+  }
+  const func = stack.pop();
+  args.callee = func;
+  return callFun(frame, func, args, null, name, construct);
+};
+
 export const callm = function (
   frame: Frame,
   length: number,
-  key: string,
+  key: string | null,
   target?: any,
   name?: string | null
 ) {
   const { evalStack: stack } = frame;
+  const args = getParams(length, stack);
+  if (!key) {
+    key = stack.pop();
+    target = stack.pop();
+  }
   if (target == null) {
     let id = 'null';
     if (target === undefined) {
@@ -329,7 +345,8 @@ export const callm = function (
   name = `${targetName}.${name}`;
   const func = get(target, key);
   if (func instanceof Function) {
-    return call(frame, length, func, target, name);
+    return callFun(frame, func, args, target, name);
+    // return call(frame, length, func, target, name);
   }
   if (func == null) {
     stack.pop(); // pop target

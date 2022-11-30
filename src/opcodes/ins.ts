@@ -112,6 +112,19 @@ export const GLOBAL = createOP(
   },
   () => 1
 );
+
+export const SLHS = createOP('SLHS', function (frame, stack) {
+  const obj = stack.pop();
+  const key = stack.pop();
+  // console.log('SLHS', obj, key);
+  return frame.lref.push([obj, key]);
+});
+
+export const LLHS = createOP('LLHS', function (frame, stack) {
+  const [obj, key] = frame.lref.pop();
+  stack.push(key);
+  return stack.push(obj);
+});
 /*
  * 从对象中获取属性
  * */
@@ -123,7 +136,8 @@ export const GET = createOP('GET', function (frame, stack) {
     // console.trace();
     return throwErr(frame, new XYZTypeError("[XYZ] Cannot read property '" + key + "' of " + obj));
   }
-  return stack.push(get(obj, key));
+  return stack.push(obj[key]);
+  // return stack.push(get(obj, key));
 });
 
 /*
@@ -188,9 +202,12 @@ export const SETL = createOP('SETL', function (frame, stack, s) {
 export const GETG = createOP(
   'GETG',
   function (frame, stack, scope, realm) {
+    // name, ignoreNotDefined
+    // console.log(this.args[0], this.args[1]);
     if (!hasProp(realm.global, this.args[0]) && !this.args[1]) {
       return throwErr(frame, new XYZReferenceError('' + this.args[0] + ' is not defined'));
     }
+    // console.log(realm.global[this.args[0]]);
     return stack.push(realm.global[this.args[0]]);
   },
   () => 1
@@ -201,6 +218,15 @@ export const GETG = createOP(
  * */
 export const SETG = createOP('SETG', function (frame, stack, scope, realm) {
   return stack.push((realm.global[this.args[0]] = stack.pop()));
+});
+
+/*
+ * 声明全局变量，考虑 __tests__/es5/global.test.ts case
+ * */
+export const DECLG = createOP('DECLG', function (frame, stack, scope, realm) {
+  if (!hasProp(realm.global, this.args[0])) {
+    realm.global[this.args[0]] = undefined;
+  }
 });
 
 /*
@@ -467,14 +493,14 @@ export const RETV = createOP('RETV', function (f, s) {
 
 // call as constructor
 export const NEW = createOP('NEW', function (f, s) {
-  return call(f, this.args[0], s.pop(), null, null, true);
+  return call(f, this.args[0], null, true);
 });
 
 // 调用函数
 export const CALL = createOP(
   'CALL',
-  function (f, s) {
-    return call(f, this.args[0], s.pop(), null, this.args[1]);
+  function (f) {
+    return call(f, this.args[0], this.args[1]);
   },
   function () {
     // pop弹出 n 个参数加上函数并压入返回值
@@ -485,7 +511,7 @@ export const CALL = createOP(
 export const CALLM = createOP(
   'CALLM',
   function (f, s) {
-    return callm(f, this.args[0], s.pop(), s.pop(), this.args[1]);
+    return callm(f, this.args[0], null, null, this.args[1]);
   },
   function () {
     // 弹出 n 个参数加上函数加上目标并推送返回值
@@ -493,17 +519,17 @@ export const CALLM = createOP(
   }
 );
 // calls 'iterator' method
-export const ITER = createOP('ITER', function (f, s, l) {
+export const ITER = createOP('ITER', function (f, s) {
   return callm(f, 0, 'iterator', s.pop());
 });
 /*
  * 产生对象的可枚举属性
  * */
-export const ENUMERATE = createOP('ENUMERATE', function (f, s, l, r) {
+export const ENUMERATE = createOP('ENUMERATE', function (f, s) {
   return s.push(enumerateKeys(s.pop()));
 });
 // calls iterator 'next'
-export const NEXT = createOP('NEXT', function (f, s, l) {
+export const NEXT = createOP('NEXT', function (f, s) {
   callm(f, 0, 'next', s.pop());
   if (f.error instanceof StopIteration) {
     f.error = null;
@@ -566,5 +592,6 @@ export const COLUMN = createOP('COLUMN', function (frame) {
   return frame.setColumn(this.args[0]);
 });
 
+// @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DEBUG = createOP('DEBUG', function (frame, stack, scope) {});

@@ -1,4 +1,4 @@
-import { ENUMERATE, EXP, FUNCTION_SETUP, ITER, NEXT, PLU } from './ins';
+import { DECLG } from './ins';
 
 export const OPCodeIdx = {
   SR1: 1,
@@ -29,26 +29,29 @@ export const OPCodeIdx = {
 
   GETG: 19,
   SETG: 20,
+  SLHS: 21,
+  LLHS: 22,
+  DECLG: 23,
 
-  PLU: 24,
-  INV: 25,
-  LNOT: 26,
-  NOT: 27,
-  INC: 28,
-  DEC: 29,
+  PLU: 25,
+  INV: 26,
+  LNOT: 27,
+  NOT: 28,
+  INC: 29,
+  DEC: 30,
 
-  ADD: 30,
-  SUB: 31,
-  MUL: 32,
-  DIV: 33,
-  MOD: 34,
-  SHL: 35,
-  SAR: 36,
-  SHR: 37,
-  OR: 38,
-  AND: 39,
-  XOR: 40,
-  EXP: 41,
+  ADD: 31,
+  SUB: 32,
+  MUL: 33,
+  DIV: 34,
+  MOD: 35,
+  SHL: 36,
+  SAR: 37,
+  SHR: 38,
+  OR: 39,
+  AND: 40,
+  XOR: 41,
+  EXP: 42,
 
   CEQ: 44,
   CNEQ: 45,

@@ -23,6 +23,7 @@ export class Frame {
   finalizer: any;
   guards: any[];
   rv: any;
+  lref: any[];
 
   line: number;
   column: number;
@@ -49,6 +50,7 @@ export class Frame {
     this.guards = [];
     this.rv = undefined;
     this.line = this.column = -1;
+    this.lref = [];
   }
 
   run() {

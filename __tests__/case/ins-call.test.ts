@@ -19,6 +19,8 @@ var _PopLogic = /*#__PURE__*/ (function () {
         popupRender: {
           b: 1,
           test() {
+            console.trace();
+            console.log(this);
             return this.b;
           },
           p: {
@@ -35,5 +37,16 @@ var _PopLogic = /*#__PURE__*/ (function () {
       }
     );
     expect(res).toEqual(1);
+  });
+
+  it('ins call', () => {
+    const res = run(
+      `
+let a = { b:2,c(){return this.b}};
+let d;
+module.exports = (d = a)['c'].apply(d,[])
+    `
+    );
+    expect(res).toEqual(2);
   });
 });

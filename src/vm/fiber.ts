@@ -39,7 +39,7 @@ export class Fiber {
   }
 
   run() {
-    let frame = this.callStack[this.depth];
+    let frame: Frame = this.callStack[this.depth];
     let err = frame.error;
     while (this.depth >= 0 && frame && !this.paused) {
       if (err) {
@@ -71,7 +71,7 @@ export class Fiber {
       // and act accordingly
       if (frame.construct) {
         if (!['object', 'function'].includes(typeof this.rv)) {
-          this.rv = frame.scope.get(0); // return this
+          this.rv = frame.scope!.get(0); // return this
         }
       }
       frame = this.popFrame();
@@ -86,7 +86,7 @@ export class Fiber {
       this.injectStackTrace(err);
     }
     if (err) {
-      console.trace()
+      console.trace();
       throw err;
     }
   }

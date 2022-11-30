@@ -11,7 +11,7 @@ var a = (1 , 2);
     expect(a).toEqual(2);
   });
 
-  test('with call expression', () => {
+  test('with call expression1', () => {
     const { a, b } = run(
       `
 var a = (get() , 2);
@@ -26,7 +26,7 @@ function get(){
     expect(b).toEqual(3);
   });
 
-  test('with call expression', () => {
+  test('with call expression2', () => {
     const { a, b } = run(
       `
 var b;    

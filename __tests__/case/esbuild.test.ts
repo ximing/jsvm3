@@ -88,7 +88,7 @@ describe('esbuild spec:', () => {
           enumerable: true
         });
       }
-    }; // projects/grocery-c-mp-exhibition/src/components/redPacketBar/interface.ts
+    };
   
   
     __export(exports, {
