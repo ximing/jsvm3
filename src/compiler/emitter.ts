@@ -167,7 +167,6 @@ export class Emitter extends Visitor {
     if (scope) {
       return this.createINS(SETL, ...scope);
     }
-    console.log('scrop set', name);
     if (isDecl) {
       return this.createINS(DECLG, name); // global object set
     } else {
@@ -577,8 +576,9 @@ export class Emitter extends Visitor {
         this.createINS(GLOBAL);
         this.createINS(DEL);
       } else {
-        // no-op
-        this.createINS(LITERAL, false);
+        super.UnaryExpression(node);
+        // @TODO 严格模式
+        this.createINS(LITERAL, true);
       }
     } else {
       if (node.operator === 'typeof' && node.argument.type === 'Identifier') {

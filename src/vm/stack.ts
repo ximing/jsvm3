@@ -19,6 +19,7 @@ export class EvaluationStack {
   }
 
   pop() {
+    // console.log('-----> idx', this.idx);
     return this.array[--this.idx];
   }
 

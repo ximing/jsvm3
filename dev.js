@@ -1,5 +1,6 @@
 const { transform } = require('./lib/compiler');
 const { Vm } = require('./lib/vm/vm');
+
 // const code = `
 // let a = 4;
 // let b = 1;
@@ -245,31 +246,60 @@ const { Vm } = require('./lib/vm/vm');
 // const a = new A();
 // module.exports = a.f2();;
 // `
+//
+// const code1 = `
+//     var _Sequence;
+//     (function (Sequence2) {
+//     })(_Sequence);
+//     `
+// const code11 = `
+// num = 6;
+//       var num;
+//       module.exports = num;
+//     `
+//
+// const code12 = `
+// var a = (get() , 2);
+// var b;
+// function get(){
+//   b = 3;
+// }
+// module.exports = {a: a, b: b};
+// `
+
+// const code1 = `
+// function testcase() {
+//   var bIsFooCalled = false;
+//   var foo = function(){bIsFooCalled = true;};
+//
+//   var d = delete foo();
+//   console.log(d,bIsFooCalled)
+//   if(d === true && bIsFooCalled === true)
+//     return true;
+//  }
+// module.exports = testcase();
+// `;
 
 const code1 = `
-    var _Sequence;
-    (function (Sequence2) {
-    })(_Sequence);
-    `
-const code11 = `
-num = 6;
-      var num;
-      module.exports = num;
-    `
-
-const code12 = `
-var a = (get() , 2);
-var b;
-function get(){
-  b = 3;
-}
-module.exports = {a: a, b: b};
-`
-
-const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: true });
+var freeProcess = { binding:1 };
+var nodeUtil=function(){
+  try{
+    return freeProcess&&freeProcess.binding&&freeProcess.binding('util');
+  }catch(e){
+    return 1;
+  }
+}();
+module.exports = nodeUtil
+`;
+const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: false });
 console.log(JSON.stringify(script1.toJSON(), null, 2));
 console.log('===============+> run');
 const vm1 = new Vm({
+  self: global,
+  global,
+  console,
+  require,
+  ArrayBuffer,
   popupRender: {
     b: 1,
     test() {
@@ -289,5 +319,43 @@ const vm1 = new Vm({
   regeneratorRuntime: require('regenerator-runtime/runtime.js'),
 });
 const res1 = vm1.run(script1);
-console.log(res1);
-console.log(vm1.realm.global);
+// console.log(res1);
+console.log(vm1.realm.global.module.exports);
+
+//
+// const code1 = require('fs').readFileSync(
+//   require('path').join(__dirname, './framework/lodash/lodash.out.js'),
+//   'utf-8'
+// );
+// const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: false });
+// // console.log(JSON.stringify(script1.toJSON(), null, 2));
+// console.log('===============+> run');
+// const vm1 = new Vm({
+//   self: global,
+//   global,
+//   console,
+//   require,
+//   ArrayBuffer,
+//   popupRender: {
+//     b: 1,
+//     test() {
+//       return this.b;
+//     },
+//     p: {
+//       c() {
+//         return {
+//           b: 1,
+//           test() {
+//             return this.b;
+//           },
+//         };
+//       },
+//     },
+//   },
+//   regeneratorRuntime: require('regenerator-runtime/runtime.js'),
+// });
+// const res1 = vm1.run(script1);
+// // console.log(res1);
+// console.log(vm1.realm.global.module.exports);
+// const { _ } = vm1.realm.global.module.exports;
+// console.log(_.chunk(['a', 'b', 'c', 'd'], 2));

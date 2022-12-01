@@ -173,7 +173,7 @@ export const createFunction = function (
       }
       const name = fun.__callname__ || script.name;
       fun.__callname__ = null;
-      // console.log('arguments', arguments);
+      // console.log('arguments', arguments, name);
       fiber.pushFrame(script, this, scope, arguments, fun, name, construct);
       if (run) {
         fiber.run();
@@ -349,10 +349,10 @@ export const callm = function (
     // return call(frame, length, func, target, name);
   }
   if (func == null) {
-    stack.pop(); // pop target
+    // stack.pop(); // pop target
     return throwErr(frame, new XYZTypeError(`Object #<${name}> has no method '${key}'`));
   } else {
-    stack.pop(); // pop target
+    // stack.pop(); // pop target
     return throwErr(
       frame,
       new XYZTypeError(`Property '${key}' of object #<${name}> is not a function`)

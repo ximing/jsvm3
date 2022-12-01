@@ -39,7 +39,8 @@ export class Realm {
     Proxy,
     console,
     NaN,
-    Promise
+    Promise,
+    Infinity
   };
 
   constructor(merge: Record<string, any> = {}) {

@@ -7,12 +7,7 @@ module.exports = {
   coverageReporters: ['lcovonly', 'text'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}'],
   coverageDirectory: 'coverage',
-  coveragePathIgnorePatterns: [
-    'node_modules',
-    '<rootDir>/src/index.ts',
-    '.mock.ts',
-    '<rootDir>/src/context.ts',
-  ],
+  coveragePathIgnorePatterns: ['node_modules', '<rootDir>/src/index.ts', '.mock.ts'],
   // moduleNameMapper: {
   //   'react-platform': 'react-dom',
   // },

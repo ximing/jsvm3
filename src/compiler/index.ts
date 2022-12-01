@@ -51,7 +51,7 @@ export const transform = (
     });
     transformCode = result!.code;
   }
-  console.log(transformCode);
+  // console.log(transformCode);
   // try {
   //   let ast = parse(transformCode, {
   //     sourceType: 'module',

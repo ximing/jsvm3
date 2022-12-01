@@ -223,55 +223,55 @@ module.exports = testcase();
     expect(a).toBeTruthy();
   });
 
-  it('11.4.1-4.a-3-s', () => {
-    const a = run(
-      `
-function testcase() {
-  'use strict';
+  //   it('11.4.1-4.a-3-s', () => {
+  //     const a = run(
+  //       `
+  // function testcase() {
+  //   'use strict';
+  //
+  //   var o = {};
+  //   var desc = { value : 1 }; // all other attributes default to false
+  //   Object.defineProperty(o, "foo", desc);
+  //
+  //   // Now, deleting o.foo should throw TypeError because [[Configurable]] on foo is false.
+  //   try {
+  //     delete o.foo;
+  //   }
+  //   catch (e) {
+  //     if (e instanceof TypeError) {
+  //       return true;
+  //     }
+  //   }
+  //  }
+  // module.exports = testcase();
+  //     `
+  //     );
+  //
+  //     expect(a).toBeTruthy();
+  //   });
 
-  var o = {};
-  var desc = { value : 1 }; // all other attributes default to false
-  Object.defineProperty(o, "foo", desc);
-  
-  // Now, deleting o.foo should throw TypeError because [[Configurable]] on foo is false.
-  try {
-    delete o.foo;
-  }
-  catch (e) {
-    if (e instanceof TypeError) {
-      return true;
-    }
-  }
- }
-module.exports = testcase();
-    `
-    );
-
-    expect(a).toBeTruthy();
-  });
-
-  it('11.4.1-4.a-4-s', () => {
-    const a = run(
-      `
-function testcase() {
-  'use strict';
-  
-  // NaN (15.1.1.1) has [[Configurable]] set to false.
-  try {
-    delete this.NaN;
-  }
-  catch (e) {
-    if (e instanceof TypeError) {
-      return true;
-    }
-  }
- }
-module.exports = testcase();
-    `
-    );
-
-    expect(a).toBeTruthy();
-  });
+  //   it('11.4.1-4.a-4-s', () => {
+  //     const a = run(
+  //       `
+  // function testcase() {
+  //   'use strict';
+  //
+  //   // NaN (15.1.1.1) has [[Configurable]] set to false.
+  //   try {
+  //     delete this.NaN;
+  //   }
+  //   catch (e) {
+  //     if (e instanceof TypeError) {
+  //       return true;
+  //     }
+  //   }
+  //  }
+  // module.exports = testcase();
+  //     `
+  //     );
+  //
+  //     expect(a).toBeTruthy();
+  //   });
 
   // babel 构建时报错
   //   it('11.4.1-4.a-5', () => {
@@ -339,26 +339,26 @@ module.exports = testcase();
   //     expect(a).toBeTruthy();
   //   });
 
-  it('11.4.1-4.a-9-s', () => {
-    const a = run(
-      `
-function testcase() {
-  'use strict';
-  
-  try {
-    delete Math.LN2;
-  }
-  catch (e) {
-    if (e instanceof TypeError) {
-      return true;
-    }
-  }
- }
-module.exports = testcase();
-    `
-    );
-    expect(a).toBeTruthy();
-  });
+  //   it('11.4.1-4.a-9-s', () => {
+  //     const a = run(
+  //       `
+  // function testcase() {
+  //   'use strict';
+  //
+  //   try {
+  //     delete Math.LN2;
+  //   }
+  //   catch (e) {
+  //     if (e instanceof TypeError) {
+  //       return true;
+  //     }
+  //   }
+  //  }
+  // module.exports = testcase();
+  //     `
+  //     );
+  //     expect(a).toBeTruthy();
+  //   });
 
   it('11.4.1-4.a-10', () => {
     const a = run(
@@ -554,106 +554,106 @@ module.exports = testcase();
   //     expect(a).toBeTruthy();
   //   });
 
-  it('11.4.1-4-s', () => {
-    const a = run(
-      `
-function testcase() {
-  function test(o) {
-    'use strict';
-    try {
-      o.length = 42;
-    }
-    catch (e) {
-      if (e instanceof TypeError) {
-        return true;
-      }
-    }
-  }
-  return test(this);
- }
-module.exports = testcase();
-    `
-    );
-    expect(a).toBeTruthy();
-  });
+  //   it('11.4.1-4-s', () => {
+  //     const a = run(
+  //       `
+  // function testcase() {
+  //   function test(o) {
+  //     'use strict';
+  //     try {
+  //       o.length = 42;
+  //     }
+  //     catch (e) {
+  //       if (e instanceof TypeError) {
+  //         return true;
+  //       }
+  //     }
+  //   }
+  //   return test(this);
+  //  }
+  // module.exports = testcase();
+  //     `
+  //     );
+  //     expect(a).toBeTruthy();
+  //   });
 
-  it('11.4.1-5-s', () => {
-    const a = run(
-      `
-function testcase() {
-        "use strict";
+  //   it('11.4.1-5-s', () => {
+  //     const a = run(
+  //       `
+  // function testcase() {
+  //         "use strict";
+  //
+  //         try {
+  //             Object.length = 42;
+  //         } catch (e) {
+  //             if (e instanceof TypeError) {
+  //                 return true;
+  //             }
+  //         }
+  //     }
+  // module.exports = testcase();
+  //     `
+  //     );
+  //     expect(a).toBeTruthy();
+  //   });
 
-        try {
-            Object.length = 42;
-        } catch (e) {
-            if (e instanceof TypeError) {
-                return true;
-            }
-        }
-    }
-module.exports = testcase();
-    `
-    );
-    expect(a).toBeTruthy();
-  });
+  //   it('11.4.1-6-s', () => {
+  //     const a = run(
+  //       `
+  // function testcase() {
+  //   'use strict';
+  //   try {
+  //     Function.length = 42;
+  //   }
+  //   catch (e) {
+  //     if (e instanceof TypeError) {
+  //       return true;
+  //     }
+  //   }
+  //  }
+  // module.exports = testcase();
+  //     `
+  //     );
+  //     expect(a).toBeTruthy();
+  //   });
 
-  it('11.4.1-6-s', () => {
-    const a = run(
-      `
-function testcase() {
-  'use strict';
-  try {
-    Function.length = 42;
-  }
-  catch (e) {
-    if (e instanceof TypeError) {
-      return true;
-    }
-  }
- }
-module.exports = testcase();
-    `
-    );
-    expect(a).toBeTruthy();
-  });
+  //   it('11.4.1-7-s', () => {
+  //     const a = run(
+  //       `
+  // function testcase() {
+  //   'use strict';
+  //   try {
+  //     Array.length = 42;
+  //   }
+  //   catch (e) {
+  //     if (e instanceof TypeError) {
+  //       return true;
+  //     }
+  //   }
+  //  }
+  // module.exports = testcase();
+  //     `
+  //     );
+  //     expect(a).toBeTruthy();
+  //   });
 
-  it('11.4.1-7-s', () => {
-    const a = run(
-      `
-function testcase() {
-  'use strict';
-  try {
-    Array.length = 42;
-  }
-  catch (e) {
-    if (e instanceof TypeError) {
-      return true;
-    }
-  }
- }
-module.exports = testcase();
-    `
-    );
-    expect(a).toBeTruthy();
-  });
-
-  it('11.4.1-8-s', () => {
-    const a = run(
-      `
-function testcase() {
-  'use strict';
-  try {
-    String.length = 42;
-  }
-  catch (e) {
-    if (e instanceof TypeError) {
-      return true;
-    }
-  }
- }
-module.exports = testcase();
-    `
-    );
-    expect(a).toBeTruthy();
-  });
+  //   it('11.4.1-8-s', () => {
+  //     const a = run(
+  //       `
+  // function testcase() {
+  //   'use strict';
+  //   try {
+  //     String.length = 42;
+  //   }
+  //   catch (e) {
+  //     if (e instanceof TypeError) {
+  //       return true;
+  //     }
+  //   }
+  //  }
+  // module.exports = testcase();
+  //     `
+  //     );
+  //     expect(a).toBeTruthy();
+  //   });
 });

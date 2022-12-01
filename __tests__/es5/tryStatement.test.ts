@@ -56,4 +56,19 @@ describe('if scope spec:', () => {
     expect(res.runError).not.toBeTruthy();
     expect(res.runFinally).toBeTruthy();
   });
+
+  it('throw function error', function () {
+    const res = run(`
+      var freeProcess = { binding:1 };
+      var nodeUtil=function(){
+        try{
+          return freeProcess&&freeProcess.binding&&freeProcess.binding('util');
+        }catch(e){
+          return 1;
+        }
+      }();
+      module.exports = nodeUtil
+    `);
+    expect(res).toBe(1);
+  });
 });

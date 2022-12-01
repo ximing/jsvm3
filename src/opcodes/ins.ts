@@ -120,11 +120,15 @@ export const SLHS = createOP('SLHS', function (frame, stack) {
   return frame.lref.push([obj, key]);
 });
 
-export const LLHS = createOP('LLHS', function (frame, stack) {
-  const [obj, key] = frame.lref.pop();
-  stack.push(key);
-  return stack.push(obj);
-});
+export const LLHS = createOP(
+  'LLHS',
+  function (frame, stack) {
+    const [obj, key] = frame.lref.pop();
+    stack.push(key);
+    return stack.push(obj);
+  },
+  () => 2
+);
 /*
  * 从对象中获取属性
  * */

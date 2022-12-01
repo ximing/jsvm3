@@ -6,7 +6,7 @@ import type { Script } from './script';
 
 export class Frame {
   fiber: Fiber;
-  script: any;
+  script: Script;
   scope: Scope | null;
 
   error: any;
@@ -58,7 +58,8 @@ export class Frame {
     const { instructions } = this.script;
     while (this.ip !== this.exitIp && !this.paused && this.fiber.timeout !== 0) {
       this.fiber.timeout--;
-      instructions[this.ip++].exec(this, this.evalStack, this.scope, this.realm);
+      instructions[this.ip++].exec(this, this.evalStack, this.scope!, this.realm);
+      // console.log(`\x1B[36m${instructions[this.ip - 1].name}\x1B[0m`, this.error, this.paused);
     }
     if (this.fiber.timeout === 0) {
       this.paused = this.fiber.paused = true;

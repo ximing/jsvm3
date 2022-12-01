@@ -62,13 +62,12 @@ export class Fiber {
           }
         }
       } else {
-        // possibly a function call, ensure 'frame' is pointing to the top
+        // 可能是函数调用，确保“frame”指向顶部
         frame = this.callStack[this.depth];
         err = frame.error;
         continue;
       }
-      // function returned, check if this was a constructor invocation
-      // and act accordingly
+      // 返回的函数，检查这是否是构造函数调用并采取相应措施
       if (frame.construct) {
         if (!['object', 'function'].includes(typeof this.rv)) {
           this.rv = frame.scope!.get(0); // return this
@@ -92,7 +91,7 @@ export class Fiber {
   }
 
   unwind(err) {
-    // 展开调用堆栈以寻找守卫guard
+    // 展开调用堆栈以寻找 guard
     let frame = this.callStack[this.depth];
     while (frame) {
       let len;
@@ -130,10 +129,11 @@ export class Fiber {
       }
       frame = this.popFrame();
     }
+    console.log('throw error');
     throw err;
   }
 
-  injectStackTrace(err) {
+  injectStackTrace(err: XYZError) {
     const trace: Trace[] = [];
     let minDepth = 0;
     if (this.depth > this.maxTraceDepth) {
@@ -159,7 +159,7 @@ export class Fiber {
       });
     }
     if (err.trace) {
-      let t = err.trace;
+      let t: any = err.trace;
       // error was rethrown, inject the current trace at the end of
       // the leaf trace
       while (isArray(t[t.length - 1])) {
@@ -170,6 +170,7 @@ export class Fiber {
       err.trace = trace;
     }
     // show stack trace on node.js
+    // @ts-ignore
     return (err.stack = err.toString());
   }
 
