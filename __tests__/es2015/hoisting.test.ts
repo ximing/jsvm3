@@ -10,7 +10,7 @@ describe('es2015 hoisting spec:', () => {
       fn(a);
       let a = 123;
     `)
-    ).toThrow('a is not defined');
+    ).toThrow('a is not def');
   });
 
   it('const should not Hoisting', function () {
@@ -20,6 +20,6 @@ describe('es2015 hoisting spec:', () => {
       fn(a);
       const a = 123;
     `)
-    ).toThrow('a is not defined');
+    ).toThrow('a is not def');
   });
 });

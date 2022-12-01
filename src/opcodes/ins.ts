@@ -39,6 +39,7 @@ import { call, callm, createFunction, createOP, ret } from './utils';
 import { StopIteration } from '../vm/builtin';
 // @ifdef COMPILER
 import { OPCodeIdx } from './opIdx';
+import { Cannot, property } from './contants';
 // @endif
 
 /*
@@ -140,7 +141,7 @@ export const GET = createOP(OPCodeIdx.GET, function (frame, _eStack) {
   // console.log('--->GET', obj, key);
   if (obj == null) {
     // console.trace();
-    return throwErr(frame, new XYZTypeError("[XYZ] Cannot read property '" + key + "' of " + obj));
+    return throwErr(frame, new XYZTypeError(`[XYZ] ${Cannot} get ${property} ${key} of ${obj}`));
   }
   return _eStack.push(obj[key]);
   // return _eStack.push(get(obj, key));
@@ -154,7 +155,7 @@ export const SET = createOP(OPCodeIdx.SET, function (frame, _eStack) {
   const key = _eStack.pop();
   const val = _eStack.pop();
   if (obj == null) {
-    return throwErr(frame, new XYZTypeError("Cannot set property '" + key + "' of " + obj));
+    return throwErr(frame, new XYZTypeError(`${Cannot} set ${property} ${key} of ${obj}`));
   }
   return _eStack.push(set(obj, key, val));
 });
@@ -166,7 +167,7 @@ export const DEL = createOP(OPCodeIdx.DEL, function (frame, _eStack) {
   const obj = _eStack.pop();
   const key = _eStack.pop();
   if (obj == null) {
-    return throwErr(frame, new XYZTypeError('Cannot convert null to object'));
+    return throwErr(frame, new XYZTypeError(`${Cannot} convert null to object`));
   }
   return _eStack.push(del(obj, key));
 });
@@ -211,7 +212,7 @@ export const GETG = createOP(
     // name, ignoreNotDefined
     // console.log(this.args[0], this.args[1]);
     if (!hasProp(realm.global, this.args[0]) && !this.args[1]) {
-      return throwErr(frame, new XYZReferenceError('' + this.args[0] + ' is not defined'));
+      return throwErr(frame, new XYZReferenceError('' + this.args[0] + ' is not def'));
     }
     // console.log(realm.global[this.args[0]]);
     return _eStack.push(realm.global[this.args[0]]);

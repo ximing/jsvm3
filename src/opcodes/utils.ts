@@ -12,6 +12,7 @@ import { EvaluationStack } from '../vm/stack';
 // @ifdef COMPILER
 import { OPCodeIdx } from './opIdx';
 import { Label } from './label';
+import { Cannot } from './contants';
 
 const OPCodeMap: any = Object.keys(OPCodeIdx).reduce((total: any, cur: string) => {
   total[OPCodeIdx[cur]] = cur;
@@ -154,14 +155,14 @@ export const createFunction = function (
     throw new Error('generator not work');
     // fun = function (this: any) {
     //   let fiber;
-    //   const name = fun.__callname__ || script.name;
+    //   const name = fun.__cname__ || script.name;
     //   const gen = createGenerator(fun.__fiber__, script, scope, realm, this, arguments, fun, name);
     //   if (!(fiber = fun.__fiber__)) {
     //     return gen;
     //   }
     //   fiber._cStack[fiber.depth]._eStack.push(gen);
     //   fun.__fiber__ = null;
-    //   return (fun.__callname__ = null);
+    //   return (fun.__cname__ = null);
     // };
   } else {
     fun = function (this: any) {
@@ -171,14 +172,14 @@ export const createFunction = function (
         // callStack
         fiber._cStack[fiber.depth].paused = true;
         fun.__fiber__ = null;
-        construct = fun.__construct__;
-        fun.__construct__ = null;
+        construct = fun.__con__;
+        fun.__con__ = null;
       } else {
         fiber = new Fiber(realm);
         run = true;
       }
-      const name = fun.__callname__ || script.name;
-      fun.__callname__ = null;
+      const name = fun.__cname__ || script.name;
+      fun.__cname__ = null;
       // console.log('arguments', arguments, name);
       fiber.pushFrame(script, this, scope, arguments, fun, name, construct);
       if (run) {
@@ -187,14 +188,14 @@ export const createFunction = function (
       }
     };
   }
-  defProp(fun, '__xyzFunction__', { value: true });
+  defProp(fun, '__xyzFun__', { value: true });
   defProp(fun, 'length', { value: script.paramsSize });
   defProp(fun, '__source__', { value: script.source });
   defProp(fun, '__name__', { value: script.name });
   defProp(fun, 'name', { value: script.name });
-  defProp(fun, '__construct__', { value: null, writable: true });
+  defProp(fun, '__con__', { value: null, writable: true });
   defProp(fun, '__fiber__', { value: null, writable: true });
-  defProp(fun, '__callname__', { value: null, writable: true });
+  defProp(fun, '__cname__', { value: null, writable: true });
   return fun;
 };
 
@@ -270,10 +271,10 @@ export const callFun = function (frame, func, args, target, name, construct = fa
   }
   let push = true;
   args = Array.prototype.slice.call(args);
-  if (hasProp(func, '__xyzFunction__')) {
-    func.__callname__ = name;
+  if (hasProp(func, '__xyzFun__')) {
+    func.__cname__ = name;
     func.__fiber__ = fiber;
-    func.__construct__ = construct;
+    func.__con__ = construct;
     push = false;
   }
   try {
@@ -322,7 +323,7 @@ export const callm = function (
     if (target === undefined) {
       id = 'undefined';
     }
-    return throwErr(frame, new XYZTypeError(`Cannot call method '${key}' of ${id}`));
+    return throwErr(frame, new XYZTypeError(`${Cannot} cal method '${key}' of ${id}`));
   }
   const { constructor } = target;
   const targetName = constructor.__name__ || constructor.name || 'Object';
@@ -339,7 +340,7 @@ export const callm = function (
     // stack.pop(); // pop target
     return throwErr(
       frame,
-      new XYZTypeError(`Property '${key}' of object #<${name}> is not a function`)
+      new XYZTypeError(`Prop '${key}' of object #<${name}> is not a function`)
     );
   }
 };

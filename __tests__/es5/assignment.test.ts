@@ -39,7 +39,7 @@ const a = 123;
 a = b
       `
       )
-    ).toThrowError('b is not defined');
+    ).toThrowError('b is not def');
   });
 
   it('assignment = += -= *= /= %= <<= >>= >>>= &= ^= |=', () => {

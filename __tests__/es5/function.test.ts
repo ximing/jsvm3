@@ -76,7 +76,7 @@ describe('function spec:', () => {
       };
       module.exports = obj.a();
     `)
-    ).toThrow(`Property 'a' of object #<Object.a> is not a function`);
+    ).toThrow(`Prop 'a' of object #<Object.a> is not a function`);
   });
 
   // @TODO 优化报错提示
@@ -88,7 +88,7 @@ describe('function spec:', () => {
       };
       module.exports = obj['a']();
     `)
-    ).toThrow(`Property 'a' of object #<Object.undefined> is not a function`);
+    ).toThrow(`Prop 'a' of object #<Object.undefined> is not a function`);
   });
 
   it('function params should can be overwrite', function () {
