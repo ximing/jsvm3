@@ -1,32 +1,8 @@
 // convert compiled scripts from/to json-compatible structure
 import { Instruction } from '../opcodes/types';
-import { instructionsToJson, regexpToString } from '../utils/convert';
-
-export const scriptToJson = function (script: Script) {
-  const rv = [
-    script.filename || 0,
-    script.name || 0,
-    instructionsToJson(script.instructions),
-    [],
-    script.localNames,
-    [],
-    script.stackSize,
-    script.strings,
-    [],
-  ];
-  for (const s of Array.from(script.scripts)) {
-    rv[3].push(scriptToJson(s));
-  }
-  for (const guard of Array.from(script.guards)) {
-    rv[5].push([guard.start || -1, guard.handler || -1, guard.finalizer || -1, guard.end || -1]);
-  }
-  for (const regexp of script.regexps) {
-    rv[8].push(regexpToString(regexp));
-  }
-  rv[9] = script.source || 0;
-  rv[10] = script.source || 0;
-  return rv;
-};
+// @ifdef COMPILER
+import { scriptToJson } from '../utils/convert';
+// @endif
 
 export class Script {
   filename: string;
@@ -69,7 +45,9 @@ export class Script {
     this.source = source;
   }
 
+  // @ifdef COMPILER
   toJSON() {
     return scriptToJson(this);
   }
+  // @endif
 }

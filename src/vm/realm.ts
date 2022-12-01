@@ -1,11 +1,9 @@
 import {
   XYZError,
-  XYZEvalError,
+  XYZTypeError,
   XYZRangeError,
   XYZReferenceError,
   XYZSyntaxError,
-  XYZTypeError,
-  XYZURIError,
 } from '../utils/errors';
 import { StopIteration } from './builtin';
 
@@ -21,12 +19,12 @@ export class Realm {
     Date,
     RegExp,
     Error: XYZError,
-    EvalError: XYZEvalError,
+    TypeError: XYZTypeError,
+    // EvalError: XYZEvalError,
     RangeError: XYZRangeError,
     ReferenceError: XYZReferenceError,
     SyntaxError: XYZSyntaxError,
-    TypeError: XYZTypeError,
-    URIError: XYZURIError,
+    // URIError: XYZURIError,
     StopIteration,
     Math,
     JSON,
@@ -40,7 +38,7 @@ export class Realm {
     console,
     NaN,
     Promise,
-    Infinity
+    Infinity,
   };
 
   constructor(merge: Record<string, any> = {}) {

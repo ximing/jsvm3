@@ -37,143 +37,146 @@ import {
 } from './op';
 import { call, callm, createFunction, createOP, ret } from './utils';
 import { StopIteration } from '../vm/builtin';
+// @ifdef COMPILER
+import { OPCodeIdx } from './opIdx';
+// @endif
 
 /*
  * 存储到寄存器1
  * */
 export const SR1 = createOP(
-  'SR1',
-  function (frame, stack) {
-    return (frame.fiber.r1 = stack.pop());
+  OPCodeIdx.SR1,
+  function (frame, _eStack) {
+    return (frame.fiber.r1 = _eStack.pop());
   },
   () => 0
 );
-export const SR2 = createOP('SR2', function (frame, stack) {
-  return (frame.fiber.r2 = stack.pop());
+export const SR2 = createOP(OPCodeIdx.SR2, function (frame, _eStack) {
+  return (frame.fiber.r2 = _eStack.pop());
 });
-export const SR3 = createOP('SR3', function (frame, stack) {
-  return (frame.fiber.r3 = stack.pop());
+export const SR3 = createOP(OPCodeIdx.SR3, function (frame, _eStack) {
+  return (frame.fiber.r3 = _eStack.pop());
 });
 /*
  * 从寄存器1读取
  * */
 export const LR1 = createOP(
-  'LR1',
-  function (frame, stack) {
-    return stack.push(frame.fiber.r1);
+  OPCodeIdx.LR1,
+  function (frame, _eStack) {
+    return _eStack.push(frame.fiber.r1);
   },
   () => 1
 );
 export const LR2 = createOP(
-  'LR2',
-  function (frame, stack) {
-    return stack.push(frame.fiber.r2);
+  OPCodeIdx.LR2,
+  function (frame, _eStack) {
+    return _eStack.push(frame.fiber.r2);
   },
   () => 1
 );
 export const LR3 = createOP(
-  'LR3',
-  function (frame, stack) {
-    return stack.push(frame.fiber.r3);
+  OPCodeIdx.LR3,
+  function (frame, _eStack) {
+    return _eStack.push(frame.fiber.r3);
   },
   () => 1
 );
 /*
  * 存储到表达式寄存器
  * */
-export const SREXP = createOP('SREXP', function (frame, stack) {
-  return (stack.fiber.rexp = stack.pop());
+export const SREXP = createOP(OPCodeIdx.SREXP, function (frame, _eStack) {
+  return (_eStack.fiber.rexp = _eStack.pop());
 });
 
-export const POP = createOP('POP', function (frame, stack) {
-  return stack.pop();
+export const POP = createOP(OPCodeIdx.POP, function (frame, _eStack) {
+  return _eStack.pop();
 });
 
 export const DUP = createOP(
-  'DUP',
-  function (frame, stack) {
-    return stack.push(stack.top());
+  OPCodeIdx.DUP,
+  function (frame, _eStack) {
+    return _eStack.push(_eStack.top());
   },
   () => 1
 );
 
-export const SWAP = createOP('SWAP', function (frame, stack) {
-  const top = stack.pop();
-  const bot = stack.pop();
-  stack.push(top);
-  return stack.push(bot);
+export const SWAP = createOP(OPCodeIdx.SWAP, function (frame, _eStack) {
+  const top = _eStack.pop();
+  const bot = _eStack.pop();
+  _eStack.push(top);
+  return _eStack.push(bot);
 });
 
 export const GLOBAL = createOP(
-  'GLOBAL',
-  function (f, s, l, r) {
-    return s.push(r.global);
+  OPCodeIdx.GLOBAL,
+  function (f, _eStack, l, r) {
+    return _eStack.push(r.global);
   },
   () => 1
 );
 
-export const SLHS = createOP('SLHS', function (frame, stack) {
-  const obj = stack.pop();
-  const key = stack.pop();
+export const SLHS = createOP(OPCodeIdx.SLHS, function (frame, _eStack) {
+  const obj = _eStack.pop();
+  const key = _eStack.pop();
   // console.log('SLHS', obj, key);
   return frame.lref.push([obj, key]);
 });
 
 export const LLHS = createOP(
-  'LLHS',
-  function (frame, stack) {
+  OPCodeIdx.LLHS,
+  function (frame, _eStack) {
     const [obj, key] = frame.lref.pop();
-    stack.push(key);
-    return stack.push(obj);
+    _eStack.push(key);
+    return _eStack.push(obj);
   },
   () => 2
 );
 /*
  * 从对象中获取属性
  * */
-export const GET = createOP('GET', function (frame, stack) {
-  const obj = stack.pop();
-  const key = stack.pop();
+export const GET = createOP(OPCodeIdx.GET, function (frame, _eStack) {
+  const obj = _eStack.pop();
+  const key = _eStack.pop();
   // console.log('--->GET', obj, key);
   if (obj == null) {
     // console.trace();
     return throwErr(frame, new XYZTypeError("[XYZ] Cannot read property '" + key + "' of " + obj));
   }
-  return stack.push(obj[key]);
-  // return stack.push(get(obj, key));
+  return _eStack.push(obj[key]);
+  // return _eStack.push(get(obj, key));
 });
 
 /*
  * 设置对象属性
  * */
-export const SET = createOP('SET', function (frame, stack) {
-  const obj = stack.pop();
-  const key = stack.pop();
-  const val = stack.pop();
+export const SET = createOP(OPCodeIdx.SET, function (frame, _eStack) {
+  const obj = _eStack.pop();
+  const key = _eStack.pop();
+  const val = _eStack.pop();
   if (obj == null) {
     return throwErr(frame, new XYZTypeError("Cannot set property '" + key + "' of " + obj));
   }
-  return stack.push(set(obj, key, val));
+  return _eStack.push(set(obj, key, val));
 });
 
 /*
  * 删除对象属性
  * */
-export const DEL = createOP('DEL', function (frame, stack) {
-  const obj = stack.pop();
-  const key = stack.pop();
+export const DEL = createOP(OPCodeIdx.DEL, function (frame, _eStack) {
+  const obj = _eStack.pop();
+  const key = _eStack.pop();
   if (obj == null) {
     return throwErr(frame, new XYZTypeError('Cannot convert null to object'));
   }
-  return stack.push(del(obj, key));
+  return _eStack.push(del(obj, key));
 });
 
 /*
  * 获取局部变量
  * */
 export const GETL = createOP(
-  'GETL',
-  function (frame, stack, s) {
+  OPCodeIdx.GETL,
+  function (frame, _eStack, s) {
     let scopeIndex = this.args[0];
     const varIndex = this.args[1];
     let scope = s;
@@ -181,7 +184,7 @@ export const GETL = createOP(
       scope = scope.parent!;
     }
     // console.log(scope, this.args, varIndex, scopeIndex, scope.get(varIndex));
-    return stack.push(scope.get(varIndex));
+    return _eStack.push(scope.get(varIndex));
   },
   () => 1
 );
@@ -189,29 +192,29 @@ export const GETL = createOP(
 /*
  * 设置局部变量
  * */
-export const SETL = createOP('SETL', function (frame, stack, s) {
+export const SETL = createOP(OPCodeIdx.SETL, function (frame, _eStack, s) {
   let scopeIndex = this.args[0];
   const varIndex = this.args[1];
   let scope = s;
   while (scopeIndex--) {
     scope = scope.parent!;
   }
-  return stack.push(scope.set(varIndex, stack.pop()));
+  return _eStack.push(scope.set(varIndex, _eStack.pop()));
 });
 
 /*
  * 获取全局变量
  * */
 export const GETG = createOP(
-  'GETG',
-  function (frame, stack, scope, realm) {
+  OPCodeIdx.GETG,
+  function (frame, _eStack, scope, realm) {
     // name, ignoreNotDefined
     // console.log(this.args[0], this.args[1]);
     if (!hasProp(realm.global, this.args[0]) && !this.args[1]) {
       return throwErr(frame, new XYZReferenceError('' + this.args[0] + ' is not defined'));
     }
     // console.log(realm.global[this.args[0]]);
-    return stack.push(realm.global[this.args[0]]);
+    return _eStack.push(realm.global[this.args[0]]);
   },
   () => 1
 );
@@ -219,14 +222,14 @@ export const GETG = createOP(
 /*
  * 设置全局变量
  * */
-export const SETG = createOP('SETG', function (frame, stack, scope, realm) {
-  return stack.push((realm.global[this.args[0]] = stack.pop()));
+export const SETG = createOP(OPCodeIdx.SETG, function (frame, _eStack, scope, realm) {
+  return _eStack.push((realm.global[this.args[0]] = _eStack.pop()));
 });
 
 /*
  * 声明全局变量，考虑 __tests__/es5/global.test.ts case
  * */
-export const DECLG = createOP('DECLG', function (frame, stack, scope, realm) {
+export const DECLG = createOP(OPCodeIdx.DECLG, function (frame, _eStack, scope, realm) {
   if (!hasProp(realm.global, this.args[0])) {
     realm.global[this.args[0]] = undefined;
   }
@@ -235,194 +238,194 @@ export const DECLG = createOP('DECLG', function (frame, stack, scope, realm) {
 /*
  * invert signal
  * */
-export const INV = createOP('INV', function (f, s) {
-  return s.push(inv(s.pop()));
+export const INV = createOP(OPCodeIdx.INV, function (f, _eStack) {
+  return _eStack.push(inv(_eStack.pop()));
 });
 
-export const PLU = createOP('PLU', function (f, s) {
-  return s.push(plu(s.pop()));
+export const PLU = createOP(OPCodeIdx.PLU, function (f, _eStack) {
+  return _eStack.push(plu(_eStack.pop()));
 });
 
 /*
  * logical NOT
  * */
-export const LNOT = createOP('LNOT', function (f, s) {
-  return s.push(lnot(s.pop()));
+export const LNOT = createOP(OPCodeIdx.LNOT, function (f, _eStack) {
+  return _eStack.push(lnot(_eStack.pop()));
 });
 
 /*
  * bitwise NOT
  * */
-export const NOT = createOP('NOT', function (f, s) {
-  return s.push(not(s.pop()));
+export const NOT = createOP(OPCodeIdx.NOT, function (f, _eStack) {
+  return _eStack.push(not(_eStack.pop()));
 });
 
 /*
  * increment
  * */
-export const INC = createOP('INC', function (f, s) {
-  return s.push(inc(s.pop()));
+export const INC = createOP(OPCodeIdx.INC, function (f, _eStack) {
+  return _eStack.push(inc(_eStack.pop()));
 });
 
 /*
  * decrement
  * */
-export const DEC = createOP('DEC', function (f, s) {
-  return s.push(dec(s.pop()));
+export const DEC = createOP(OPCodeIdx.DEC, function (f, _eStack) {
+  return _eStack.push(dec(_eStack.pop()));
 });
 
 /*
  * sum
  * */
-export const ADD = createOP('ADD', function (f, s) {
-  return s.push(add(s.pop(), s.pop()));
+export const ADD = createOP(OPCodeIdx.ADD, function (f, _eStack) {
+  return _eStack.push(add(_eStack.pop(), _eStack.pop()));
 });
-export const SUB = createOP('SUB', function (f, s) {
-  return s.push(sub(s.pop(), s.pop()));
+export const SUB = createOP(OPCodeIdx.SUB, function (f, _eStack) {
+  return _eStack.push(sub(_eStack.pop(), _eStack.pop()));
 });
-export const MUL = createOP('MUL', function (f, s) {
-  return s.push(mul(s.pop(), s.pop()));
+export const MUL = createOP(OPCodeIdx.MUL, function (f, _eStack) {
+  return _eStack.push(mul(_eStack.pop(), _eStack.pop()));
 });
-export const DIV = createOP('DIV', function (f, s) {
-  return s.push(div(s.pop(), s.pop()));
+export const DIV = createOP(OPCodeIdx.DIV, function (f, _eStack) {
+  return _eStack.push(div(_eStack.pop(), _eStack.pop()));
 });
 
-export const MOD = createOP('MOD', function (f, s) {
-  return s.push(mod(s.pop(), s.pop()));
+export const MOD = createOP(OPCodeIdx.MOD, function (f, _eStack) {
+  return _eStack.push(mod(_eStack.pop(), _eStack.pop()));
 });
 
 // left shift
-export const SHL = createOP('SHL', function (f, s) {
-  return s.push(shl(s.pop(), s.pop()));
+export const SHL = createOP(OPCodeIdx.SHL, function (f, _eStack) {
+  return _eStack.push(shl(_eStack.pop(), _eStack.pop()));
 });
 // right shift
-export const SAR = createOP('SAR', function (f, s) {
-  return s.push(sar(s.pop(), s.pop()));
+export const SAR = createOP(OPCodeIdx.SAR, function (f, _eStack) {
+  return _eStack.push(sar(_eStack.pop(), _eStack.pop()));
 });
 // unsigned shift
-export const SHR = createOP('SHR', function (f, s) {
-  return s.push(shr(s.pop(), s.pop()));
+export const SHR = createOP(OPCodeIdx.SHR, function (f, _eStack) {
+  return _eStack.push(shr(_eStack.pop(), _eStack.pop()));
 });
 
-export const OR = createOP('OR', function (f, s) {
-  return s.push(or(s.pop(), s.pop()));
+export const OR = createOP(OPCodeIdx.OR, function (f, _eStack) {
+  return _eStack.push(or(_eStack.pop(), _eStack.pop()));
 });
-export const AND = createOP('AND', function (f, s) {
-  return s.push(and(s.pop(), s.pop()));
+export const AND = createOP(OPCodeIdx.AND, function (f, _eStack) {
+  return _eStack.push(and(_eStack.pop(), _eStack.pop()));
 });
 // bitwise XOR
-export const XOR = createOP('XOR', function (f, s) {
-  return s.push(xor(s.pop(), s.pop()));
+export const XOR = createOP(OPCodeIdx.XOR, function (f, _eStack) {
+  return _eStack.push(xor(_eStack.pop(), _eStack.pop()));
 });
-export const EXP = createOP('EXP', function (f, s) {
-  return s.push(exp(s.pop(), s.pop()));
+export const EXP = createOP(OPCodeIdx.EXP, function (f, _eStack) {
+  return _eStack.push(exp(_eStack.pop(), _eStack.pop()));
 });
 
-export const CEQ = createOP('CEQ', function (f, s) {
-  return s.push(ceq(s.pop(), s.pop()));
+export const CEQ = createOP(OPCodeIdx.CEQ, function (f, _eStack) {
+  return _eStack.push(ceq(_eStack.pop(), _eStack.pop()));
 });
-export const CNEQ = createOP('CNEQ', function (f, s) {
-  return s.push(cneq(s.pop(), s.pop()));
+export const CNEQ = createOP(OPCodeIdx.CNEQ, function (f, _eStack) {
+  return _eStack.push(cneq(_eStack.pop(), _eStack.pop()));
 });
 
 // 全等
-export const CID = createOP('CID', function (f, s) {
-  return s.push(cid(s.pop(), s.pop()));
+export const CID = createOP(OPCodeIdx.CID, function (f, _eStack) {
+  return _eStack.push(cid(_eStack.pop(), _eStack.pop()));
 });
-export const CNID = createOP('CNID', function (f, s) {
-  return s.push(cnid(s.pop(), s.pop()));
+export const CNID = createOP(OPCodeIdx.CNID, function (f, _eStack) {
+  return _eStack.push(cnid(_eStack.pop(), _eStack.pop()));
 });
-export const LT = createOP('LT', function (f, s) {
-  return s.push(lt(s.pop(), s.pop()));
+export const LT = createOP(OPCodeIdx.LT, function (f, _eStack) {
+  return _eStack.push(lt(_eStack.pop(), _eStack.pop()));
 });
-export const LTE = createOP('LTE', function (f, s) {
-  return s.push(lte(s.pop(), s.pop()));
+export const LTE = createOP(OPCodeIdx.LTE, function (f, _eStack) {
+  return _eStack.push(lte(_eStack.pop(), _eStack.pop()));
 });
-export const GT = createOP('GT', function (f, s) {
-  return s.push(gt(s.pop(), s.pop()));
+export const GT = createOP(OPCodeIdx.GT, function (f, _eStack) {
+  return _eStack.push(gt(_eStack.pop(), _eStack.pop()));
 });
-export const GTE = createOP('GTE', function (f, s) {
-  return s.push(gte(s.pop(), s.pop()));
+export const GTE = createOP(OPCodeIdx.GTE, function (f, _eStack) {
+  return _eStack.push(gte(_eStack.pop(), _eStack.pop()));
 });
-export const IN = createOP('IN', function (f, s) {
-  return s.push(has(s.pop(), s.pop()));
+export const IN = createOP(OPCodeIdx.IN, function (f, _eStack) {
+  return _eStack.push(has(_eStack.pop(), _eStack.pop()));
 });
-export const INSTANCEOF = createOP('INSTANCEOF', function (f, s) {
-  return s.push(instanceOf(s.pop(), s.pop()));
+export const INSTANCEOF = createOP(OPCodeIdx.INSTANCEOF, function (f, _eStack) {
+  return _eStack.push(instanceOf(_eStack.pop(), _eStack.pop()));
 });
-export const TYPEOF = createOP('TYPEOF', function (f, s) {
-  return s.push(typeof s.pop());
+export const TYPEOF = createOP(OPCodeIdx.TYPEOF, function (f, _eStack) {
+  return _eStack.push(typeof _eStack.pop());
 });
-export const VOID = createOP('VOID', function (f, s) {
-  s.pop();
+export const VOID = createOP(OPCodeIdx.VOID, function (f, _eStack) {
+  _eStack.pop();
   // eslint-disable-next-line no-void
-  return s.push(void 0);
+  return _eStack.push(void 0);
 });
 
 export const UNDEF = createOP(
-  'UNDEF',
-  function (f, s) {
+  OPCodeIdx.UNDEF,
+  function (f, _eStack) {
     // eslint-disable-next-line no-void
-    return s.push(void 0);
+    return _eStack.push(void 0);
   },
   () => 1
 );
 
 // push 字面值
 export const LITERAL = createOP(
-  'LITERAL',
-  function (f, s) {
-    return s.push(this.args[0]);
+  OPCodeIdx.LITERAL,
+  function (f, _eStack) {
+    return _eStack.push(this.args[0]);
   },
   () => 1
 );
 
 // string对象
 export const STRING_LITERAL = createOP(
-  'STRING_LITERAL',
-  function (f, s) {
-    return s.push(f.script.strings[this.args[0]]);
+  OPCodeIdx.STRING_LITERAL,
+  function (f, _eStack) {
+    return _eStack.push(f.script.strings[this.args[0]]);
   },
   () => 1
 );
 
 export const REGEXP_LITERAL = createOP(
-  'REGEXP_LITERAL',
-  function (f, s) {
-    return s.push(f.script.regexps[this.args[0]]);
+  OPCodeIdx.REGEXP_LITERAL,
+  function (f, _eStack) {
+    return _eStack.push(f.script.regexps[this.args[0]]);
   },
   () => 1
 );
 // 对象字面量
 export const OBJECT_LITERAL = createOP(
-  'OBJECT_LITERAL',
-  function (f, s) {
+  OPCodeIdx.OBJECT_LITERAL,
+  function (f, _eStack) {
     // 对象里面有多少个属性
     let length = this.args[0];
     const rv: any[] = [];
     const obj = {};
     // 这里指令是反的，因为先进栈的后出栈，所以为了保持 for in 遍历对象的顺序，要再生成对象的时候做个revert
     while (length--) {
-      rv.push([s.pop(), s.pop()]);
+      rv.push([_eStack.pop(), _eStack.pop()]);
     }
     for (const [key, val] of rv.reverse()) {
       set(obj, key, val);
     }
-    return s.push(obj);
+    return _eStack.push(obj);
   },
   function () {
     return 1 - this.args[0] * 2;
   }
 );
 export const ARRAY_LITERAL = createOP(
-  'ARRAY_LITERAL',
-  function (frame, stack) {
+  OPCodeIdx.ARRAY_LITERAL,
+  function (frame, _eStack) {
     let length = this.args[0];
     const rv = new Array(length);
     while (length--) {
-      rv[length] = stack.pop();
+      rv[length] = _eStack.pop();
     }
-    return stack.push(rv);
+    return _eStack.push(rv);
   },
   function () {
     return 1 - this.args[0];
@@ -432,14 +435,14 @@ export const ARRAY_LITERAL = createOP(
 /*
  * 无条件跳转
  * */
-export const JMP = createOP('JMP', function (f) {
+export const JMP = createOP(OPCodeIdx.JMP, function (f) {
   return (f.ip = this.args[0]);
 });
 /*
  * true 跳转
  * */
-export const JMPT = createOP('JMPT', function (f, s) {
-  if (s.pop()) {
+export const JMPT = createOP(OPCodeIdx.JMPT, function (f, _eStack) {
+  if (_eStack.pop()) {
     return (f.ip = this.args[0]);
   }
 });
@@ -447,34 +450,34 @@ export const JMPT = createOP('JMPT', function (f, s) {
 /*
  * false 跳转
  * */
-export const JMPF = createOP('JMPF', function (f, s) {
-  if (!s.pop()) {
+export const JMPF = createOP(OPCodeIdx.JMPF, function (f, _eStack) {
+  if (!_eStack.pop()) {
     return (f.ip = this.args[0]);
   }
 });
 
 // push function reference
 export const FUNCTION = createOP(
-  'FUNCTION',
-  function (f, s, l, r) {
+  OPCodeIdx.FUNCTION,
+  function (f, _eStack, l, r) {
     const scriptIndex = this.args[0];
     // f.script.scripts[scriptIndex]  函数的body 指令集
-    return s.push(createFunction(f.script.scripts[scriptIndex], l, r, this.args[1]));
+    return _eStack.push(createFunction(f.script.scripts[scriptIndex], l, r, this.args[1]));
   },
   () => 1
 );
 
-export const FUNCTION_SETUP = createOP('FUNCTION_SETUP', function (f, s, l) {
+export const FUNCTION_SETUP = createOP(OPCodeIdx.FUNCTION_SETUP, function (f, _eStack, l) {
   // 当前栈 情况 [fn, [Arguments] { '0': 2 },]
-  l.set(1, s.pop());
-  const fn = s.pop();
+  l.set(1, _eStack.pop());
+  const fn = _eStack.pop();
   if (this.args[0]) {
     return l.set(2, fn);
   }
 });
 
 // initialize 'rest' param
-export const REST = createOP('REST', function (f, s, l) {
+export const REST = createOP(OPCodeIdx.REST, function (f, _eStack, l) {
   const index = this.args[0];
   const varIndex = this.args[1];
   const args = l.get(1);
@@ -484,24 +487,24 @@ export const REST = createOP('REST', function (f, s, l) {
 });
 
 // return from function
-export const RET = createOP('RET', function (f) {
+export const RET = createOP(OPCodeIdx.RET, function (f) {
   return ret(f);
 });
 
 // return value from Function
-export const RETV = createOP('RETV', function (f, s) {
-  f.fiber.rv = s.pop();
+export const RETV = createOP(OPCodeIdx.RETV, function (f, _eStack) {
+  f.fiber.rv = _eStack.pop();
   return ret(f);
 });
 
 // call as constructor
-export const NEW = createOP('NEW', function (f) {
+export const NEW = createOP(OPCodeIdx.NEW, function (f) {
   return call(f, this.args[0], null, true);
 });
 
 // 调用函数
 export const CALL = createOP(
-  'CALL',
+  OPCodeIdx.CALL,
   function (f) {
     return call(f, this.args[0], this.args[1]);
   },
@@ -512,7 +515,7 @@ export const CALL = createOP(
 );
 // call method
 export const CALLM = createOP(
-  'CALLM',
+  OPCodeIdx.CALLM,
   function (f) {
     return callm(f, this.args[0], null, null, this.args[1]);
   },
@@ -522,18 +525,18 @@ export const CALLM = createOP(
   }
 );
 // calls 'iterator' method
-export const ITER = createOP('ITER', function (f, s) {
-  return callm(f, 0, 'iterator', s.pop());
+export const ITER = createOP(OPCodeIdx.ITER, function (f, _eStack) {
+  return callm(f, 0, 'iterator', _eStack.pop());
 });
 /*
  * 产生对象的可枚举属性
  * */
-export const ENUMERATE = createOP('ENUMERATE', function (f, s) {
-  return s.push(enumerateKeys(s.pop()));
+export const ENUMERATE = createOP(OPCodeIdx.ENUMERATE, function (f, _eStack) {
+  return _eStack.push(enumerateKeys(_eStack.pop()));
 });
 // calls iterator 'next'
-export const NEXT = createOP('NEXT', function (f, s) {
-  callm(f, 0, 'next', s.pop());
+export const NEXT = createOP(OPCodeIdx.NEXT, function (f, _eStack) {
+  callm(f, 0, 'next', _eStack.pop());
   if (f.error instanceof StopIteration) {
     f.error = null;
     f.paused = false;
@@ -541,25 +544,25 @@ export const NEXT = createOP('NEXT', function (f, s) {
   }
 });
 // pause frame
-export const PAUSE = createOP('PAUSE', function (f) {
+export const PAUSE = createOP(OPCodeIdx.PAUSE, function (f) {
   return (f.paused = true);
 });
 
 // yield value from generator
-export const YIELD = createOP('YIELD', function (f, s) {
-  f.fiber.yielded = s.pop();
+export const YIELD = createOP(OPCodeIdx.YIELD, function (f, _eStack) {
+  f.fiber.yielded = _eStack.pop();
   return f.fiber.pause();
 });
 
-export const THROW = createOP('THROW', function (f, s) {
-  return throwErr(f, s.pop());
+export const THROW = createOP(OPCodeIdx.THROW, function (f, _eStack) {
+  return throwErr(f, _eStack.pop());
 });
 
-export const ENTER_GUARD = createOP('ENTER_GUARD', function (f) {
+export const ENTER_GUARD = createOP(OPCodeIdx.ENTER_GUARD, function (f) {
   return f.guards.push(f.script.guards[this.args[0]]);
 });
 
-export const EXIT_GUARD = createOP('EXIT_GUARD', function (f) {
+export const EXIT_GUARD = createOP(OPCodeIdx.EXIT_GUARD, function (f) {
   const currentGuard = f.guards[f.guards.length - 1];
   const specifiedGuard = f.script.guards[this.args[0]];
   if (specifiedGuard === currentGuard) {
@@ -570,31 +573,135 @@ export const EXIT_GUARD = createOP('EXIT_GUARD', function (f) {
 /*
  * enter nested scope
  * */
-export const ENTER_SCOPE = createOP('ENTER_SCOPE', function (frame) {
-  return (frame.scope = new Scope(frame.scope, frame.script.localNames, frame.script.localLength));
+export const ENTER_SCOPE = createOP(OPCodeIdx.ENTER_SCOPE, function (frame) {
+  return (frame.scp = new Scope(frame.scp, frame.script.localNames, frame.script.localLength));
 });
 
 /*
  * exit nested scope
  * */
-export const EXIT_SCOPE = createOP('EXIT_SCOPE', function (frame) {
-  return (frame.scope = frame.scope!.parent);
+export const EXIT_SCOPE = createOP(OPCodeIdx.EXIT_SCOPE, function (frame) {
+  return (frame.scp = frame.scp!.parent);
 });
 
 /*
  * 设置行号
  * */
-export const LINE = createOP('LINE', function (frame) {
+export const LINE = createOP(OPCodeIdx.LINE, function (frame) {
   return frame.setLine(this.args[0]);
 });
 
 /*
  * 设置列号
  * */
-export const COLUMN = createOP('COLUMN', function (frame) {
+export const COLUMN = createOP(OPCodeIdx.COLUMN, function (frame) {
   return frame.setColumn(this.args[0]);
 });
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const DEBUG = createOP('DEBUG', function (frame, stack, scope) {});
+export const DEBUG = createOP(OPCodeIdx.DEBUG, function (frame, _eStack, scope) {});
+
+export const InsMap = new Map([
+  [OPCodeIdx.SR1, SR1],
+  [OPCodeIdx.SR2, SR2],
+  [OPCodeIdx.SR3, SR3],
+
+  [OPCodeIdx.LR1, LR1],
+  [OPCodeIdx.LR2, LR2],
+  [OPCodeIdx.LR3, LR3],
+
+  [OPCodeIdx.SREXP, SREXP],
+
+  [OPCodeIdx.LINE, LINE],
+  [OPCodeIdx.COLUMN, COLUMN],
+
+  [OPCodeIdx.GETL, GETL],
+  [OPCodeIdx.SETL, SETL],
+
+  [OPCodeIdx.POP, POP],
+  [OPCodeIdx.DUP, DUP],
+  [OPCodeIdx.SWAP, SWAP],
+
+  [OPCodeIdx.GLOBAL, GLOBAL],
+
+  [OPCodeIdx.GET, GET],
+  [OPCodeIdx.SET, SET],
+  [OPCodeIdx.DEL, DEL],
+
+  [OPCodeIdx.GETG, GETG],
+  [OPCodeIdx.SETG, SETG],
+  [OPCodeIdx.SLHS, SLHS],
+  [OPCodeIdx.LLHS, LLHS],
+  [OPCodeIdx.DECLG, DECLG],
+
+  [OPCodeIdx.PLU, PLU],
+  [OPCodeIdx.INV, INV],
+  [OPCodeIdx.LNOT, LNOT],
+  [OPCodeIdx.NOT, NOT],
+  [OPCodeIdx.INC, INC],
+  [OPCodeIdx.DEC, DEC],
+
+  [OPCodeIdx.ADD, ADD],
+  [OPCodeIdx.SUB, SUB],
+  [OPCodeIdx.MUL, MUL],
+  [OPCodeIdx.DIV, DIV],
+  [OPCodeIdx.MOD, MOD],
+  [OPCodeIdx.SHL, SHL],
+  [OPCodeIdx.SAR, SAR],
+  [OPCodeIdx.SHR, SHR],
+  [OPCodeIdx.OR, OR],
+  [OPCodeIdx.AND, AND],
+  [OPCodeIdx.XOR, XOR],
+  [OPCodeIdx.EXP, EXP],
+
+  [OPCodeIdx.CEQ, CEQ],
+  [OPCodeIdx.CNEQ, CNEQ],
+  [OPCodeIdx.CID, CID],
+  [OPCodeIdx.CNID, CNID],
+  [OPCodeIdx.LT, LT],
+  [OPCodeIdx.LTE, LTE],
+
+  [OPCodeIdx.GT, GT],
+  [OPCodeIdx.GTE, GTE],
+
+  [OPCodeIdx.IN, IN],
+  [OPCodeIdx.INSTANCEOF, INSTANCEOF],
+  [OPCodeIdx.TYPEOF, TYPEOF],
+  [OPCodeIdx.VOID, VOID],
+
+  [OPCodeIdx.UNDEF, UNDEF],
+
+  [OPCodeIdx.LITERAL, LITERAL],
+  [OPCodeIdx.STRING_LITERAL, STRING_LITERAL],
+  [OPCodeIdx.REGEXP_LITERAL, REGEXP_LITERAL],
+  [OPCodeIdx.OBJECT_LITERAL, OBJECT_LITERAL],
+  [OPCodeIdx.ARRAY_LITERAL, ARRAY_LITERAL],
+
+  [OPCodeIdx.ITER, ITER],
+  [OPCodeIdx.ENUMERATE, ENUMERATE],
+  [OPCodeIdx.NEXT, NEXT],
+
+  [OPCodeIdx.JMP, JMP],
+  [OPCodeIdx.JMPT, JMPT],
+  [OPCodeIdx.JMPF, JMPF],
+
+  [OPCodeIdx.FUNCTION_SETUP, FUNCTION_SETUP],
+  [OPCodeIdx.FUNCTION, FUNCTION],
+  [OPCodeIdx.REST, REST],
+  [OPCodeIdx.RET, RET],
+  [OPCodeIdx.RETV, RETV],
+  [OPCodeIdx.NEW, NEW],
+  [OPCodeIdx.CALL, CALL],
+  [OPCodeIdx.CALLM, CALLM],
+  [OPCodeIdx.PAUSE, PAUSE],
+  [OPCodeIdx.YIELD, YIELD],
+  [OPCodeIdx.THROW, THROW],
+  [OPCodeIdx.ENTER_GUARD, ENTER_GUARD],
+  [OPCodeIdx.EXIT_GUARD, EXIT_GUARD],
+
+  [OPCodeIdx.ENTER_SCOPE, ENTER_SCOPE],
+  [OPCodeIdx.EXIT_SCOPE, EXIT_SCOPE],
+
+  [OPCodeIdx.DEBUG, DEBUG],
+]);

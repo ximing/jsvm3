@@ -1,9 +1,6 @@
-import { OPCodeIdx } from './opIdx';
-import { Label } from './label';
 import { Instruction, OPExec } from './types';
 import { Fiber } from '../vm/fiber';
-import { XYZError, XYZTypeError } from '../utils/errors';
-import { StopIteration } from '../vm/builtin';
+import { XYZTypeError } from '../utils/errors';
 import { Script } from '../vm/script';
 import { Scope } from '../vm/scope';
 import { Realm } from '../vm/realm';
@@ -12,18 +9,28 @@ import { throwErr } from '../utils/opcodes';
 import type { Frame } from '../vm/frame';
 import { get } from './op';
 import { EvaluationStack } from '../vm/stack';
+// @ifdef COMPILER
+import { OPCodeIdx } from './opIdx';
+import { Label } from './label';
 
+const OPCodeMap: any = Object.keys(OPCodeIdx).reduce((total: any, cur: string) => {
+  total[OPCodeIdx[cur]] = cur;
+  return total;
+}, {});
+// @endif
 export const createOP = function (
-  name,
+  id: number,
   fn: OPExec,
-  // eslint-disable-next-line @typescript-eslint/ban-types
   calculateFactor?: (this: Instruction) => number
 ) {
   // @ts-ignore
   const base: Instruction = {
-    name,
-    id: OPCodeIdx[name],
+    // runtime
+    id,
     exec: fn,
+    // runtime end
+    // @ifdef COMPILER
+    name: OPCodeMap[id],
     calculateFactor:
       calculateFactor ||
       function () {
@@ -44,96 +51,97 @@ export const createOP = function (
         return result;
       }
     },
+    // @endif
   };
   return (args: any) => Object.assign({ args }, base) as Instruction;
 };
 
-const createGenerator = function (caller, script, scope, realm, target, args, fn, callname) {
-  let timeout;
-  if (caller) {
-    ({ timeout } = caller);
-  }
-  const fiber = new Fiber(realm, timeout);
-  let frame = fiber.pushFrame(script, target, scope, args, fn, callname, false);
-  let newborn = true;
-
-  const send = function (obj) {
-    if (newborn && obj !== undefined) {
-      throw new XYZTypeError('no argument must be passed when starting generator');
-    }
-    if (fiber.done()) {
-      throw new XYZError('generator closed');
-    }
-    frame = fiber.callStack[fiber.depth];
-    if (newborn) {
-      newborn = false;
-      fiber.run();
-    } else {
-      frame!.evalStack.push(obj);
-      fiber.resume();
-    }
-    if (caller) {
-      // transfer timeout back to the caller fiber
-      caller.timeout = fiber.timeout;
-    }
-    if (fiber.done()) {
-      rv.closed = true;
-      throw new StopIteration(fiber.rv, 'generator has stopped');
-    }
-    return fiber.yielded;
-  };
-
-  const thrw = function (e) {
-    if (newborn) {
-      close();
-      return e;
-    }
-    if (fiber.done()) {
-      throw new XYZError('generator closed');
-    }
-    frame = fiber.callStack[fiber.depth];
-    frame!.error = e;
-    fiber.resume();
-    if (caller) {
-      caller.timeout = fiber.timeout;
-    }
-    if (fiber.done()) {
-      return fiber.rv;
-    }
-    return fiber.yielded;
-  };
-
-  const close = function () {
-    if (fiber.done()) {
-      return;
-    }
-    if (newborn) {
-      fiber.depth = -1;
-    }
-    // force a return
-    frame = fiber.callStack[fiber.depth];
-    frame!.evalStack.clear();
-    frame!.ip = frame!.exitIp;
-    fiber.resume();
-    if (caller) {
-      caller.timeout = fiber.timeout;
-    }
-    return fiber.rv;
-  };
-
-  const rv = {
-    next: send,
-    send,
-    throw: thrw,
-    close,
-    closed: false,
-    iterator() {
-      return rv;
-    },
-  };
-
-  return rv;
-};
+// const createGenerator = function (caller, script, scope, realm, target, args, fn, callname) {
+//   let timeout;
+//   if (caller) {
+//     ({ timeout } = caller);
+//   }
+//   const fiber = new Fiber(realm, timeout);
+//   let frame = fiber.pushFrame(script, target, scope, args, fn, callname, false);
+//   let newborn = true;
+//
+//   const send = function (obj) {
+//     if (newborn && obj !== undefined) {
+//       throw new XYZTypeError('no argument must be passed when starting generator');
+//     }
+//     if (fiber.done()) {
+//       throw new XYZError('generator closed');
+//     }
+//     frame = fiber._cStack[fiber.depth];
+//     if (newborn) {
+//       newborn = false;
+//       fiber.run();
+//     } else {
+//       frame!._eStack.push(obj);
+//       fiber.resume();
+//     }
+//     if (caller) {
+//       // transfer timeout back to the caller fiber
+//       caller.timeout = fiber.timeout;
+//     }
+//     if (fiber.done()) {
+//       rv.closed = true;
+//       throw new StopIteration(fiber.rv, 'generator has stopped');
+//     }
+//     return fiber.yielded;
+//   };
+//
+//   const thrw = function (e) {
+//     if (newborn) {
+//       close();
+//       return e;
+//     }
+//     if (fiber.done()) {
+//       throw new XYZError('generator closed');
+//     }
+//     frame = fiber._cStack[fiber.depth];
+//     frame!.error = e;
+//     fiber.resume();
+//     if (caller) {
+//       caller.timeout = fiber.timeout;
+//     }
+//     if (fiber.done()) {
+//       return fiber.rv;
+//     }
+//     return fiber.yielded;
+//   };
+//
+//   const close = function () {
+//     if (fiber.done()) {
+//       return;
+//     }
+//     if (newborn) {
+//       fiber.depth = -1;
+//     }
+//     // force a return
+//     frame = fiber._cStack[fiber.depth];
+//     frame!._eStack.clear();
+//     frame!.ip = frame!.exitIp;
+//     fiber.resume();
+//     if (caller) {
+//       caller.timeout = fiber.timeout;
+//     }
+//     return fiber.rv;
+//   };
+//
+//   const rv = {
+//     next: send,
+//     send,
+//     throw: thrw,
+//     close,
+//     closed: false,
+//     iterator() {
+//       return rv;
+//     },
+//   };
+//
+//   return rv;
+// };
 
 export const createFunction = function (
   script: Script,
@@ -143,23 +151,25 @@ export const createFunction = function (
 ) {
   let fun;
   if (generator) {
-    fun = function (this: any) {
-      let fiber;
-      const name = fun.__callname__ || script.name;
-      const gen = createGenerator(fun.__fiber__, script, scope, realm, this, arguments, fun, name);
-      if (!(fiber = fun.__fiber__)) {
-        return gen;
-      }
-      fiber.callStack[fiber.depth].evalStack.push(gen);
-      fun.__fiber__ = null;
-      return (fun.__callname__ = null);
-    };
+    throw new Error('generator not work');
+    // fun = function (this: any) {
+    //   let fiber;
+    //   const name = fun.__callname__ || script.name;
+    //   const gen = createGenerator(fun.__fiber__, script, scope, realm, this, arguments, fun, name);
+    //   if (!(fiber = fun.__fiber__)) {
+    //     return gen;
+    //   }
+    //   fiber._cStack[fiber.depth]._eStack.push(gen);
+    //   fun.__fiber__ = null;
+    //   return (fun.__callname__ = null);
+    // };
   } else {
     fun = function (this: any) {
       let construct, fiber: Fiber;
       let run = false;
       if ((fiber = fun.__fiber__)) {
-        fiber.callStack[fiber.depth].paused = true;
+        // callStack
+        fiber._cStack[fiber.depth].paused = true;
         fun.__fiber__ = null;
         construct = fun.__construct__;
         fun.__construct__ = null;
@@ -188,8 +198,8 @@ export const createFunction = function (
   return fun;
 };
 
-export const ret = function (frame) {
-  frame.evalStack.clear();
+export const ret = function (frame: Frame) {
+  frame._eStack.clear();
   return (frame.exitIp = frame.ip);
 };
 
@@ -263,16 +273,16 @@ const createNativeInstance = function (constructor, args) {
   }
 };
 
-export const getParams = function (length: number, stack: EvaluationStack) {
+export const getParams = function (length: number, _eStack: EvaluationStack) {
   const args: any = { length };
   while (length) {
-    args[--length] = stack.pop();
+    args[--length] = _eStack.pop();
   }
   return args;
 };
 
 export const callFun = function (frame, func, args, target, name, construct = false) {
-  const { evalStack: stack, fiber, realm } = frame;
+  const { _eStack, fiber, realm } = frame;
   if (typeof func !== 'function') {
     return throwErr(frame, new XYZTypeError(`${name || 'object'} is not a function`));
   }
@@ -298,7 +308,7 @@ export const callFun = function (frame, func, args, target, name, construct = fa
       val = func.apply(target, args);
     }
     if (push && !fiber.paused) {
-      return stack.push(val);
+      return _eStack.push(val);
     }
   } catch (nativeError) {
     return throwErr(frame, nativeError);
@@ -306,12 +316,12 @@ export const callFun = function (frame, func, args, target, name, construct = fa
 };
 
 export const call = function (frame: Frame, length: number, name: string | null, construct?) {
-  const { evalStack: stack } = frame;
+  const { _eStack } = frame;
   const args = { length, callee: null };
   while (length) {
-    args[--length] = stack.pop();
+    args[--length] = _eStack.pop();
   }
-  const func = stack.pop();
+  const func = _eStack.pop();
   args.callee = func;
   return callFun(frame, func, args, null, name, construct);
 };
@@ -323,11 +333,11 @@ export const callm = function (
   target?: any,
   name?: string | null
 ) {
-  const { evalStack: stack } = frame;
-  const args = getParams(length, stack);
+  const { _eStack } = frame;
+  const args = getParams(length, _eStack);
   if (!key) {
-    key = stack.pop();
-    target = stack.pop();
+    key = _eStack.pop();
+    target = _eStack.pop();
   }
   if (target == null) {
     let id = 'null';

@@ -15,8 +15,9 @@ export class Fiber {
   timeout: number;
   maxDepth: number;
   maxTraceDepth: number;
-  callStack: any[];
-  evalStack: any;
+  // callStack
+  _cStack: any[];
+  _eStack: any;
   depth: number;
   rv: any;
   yielded: any;
@@ -27,8 +28,8 @@ export class Fiber {
     this.timeout = timeout;
     this.maxDepth = 1000;
     this.maxTraceDepth = 50;
-    this.callStack = [];
-    this.evalStack = null;
+    this._cStack = [];
+    this._eStack = null;
     this.depth = -1;
     this.yielded = this.rv = undefined;
     this.paused = false;
@@ -39,7 +40,7 @@ export class Fiber {
   }
 
   run() {
-    let frame: Frame = this.callStack[this.depth];
+    let frame: Frame = this._cStack[this.depth];
     let err = frame.error;
     while (this.depth >= 0 && frame && !this.paused) {
       if (err) {
@@ -63,20 +64,20 @@ export class Fiber {
         }
       } else {
         // 可能是函数调用，确保“frame”指向顶部
-        frame = this.callStack[this.depth];
+        frame = this._cStack[this.depth];
         err = frame.error;
         continue;
       }
       // 返回的函数，检查这是否是构造函数调用并采取相应措施
       if (frame.construct) {
         if (!['object', 'function'].includes(typeof this.rv)) {
-          this.rv = frame.scope!.get(0); // return this
+          this.rv = frame.scp!.get(0); // return this
         }
       }
       frame = this.popFrame();
       if (frame && !err) {
         // set the return value
-        frame.evalStack.push(this.rv);
+        frame._eStack.push(this.rv);
         this.rv = undefined;
       }
     }
@@ -92,7 +93,7 @@ export class Fiber {
 
   unwind(err) {
     // 展开调用堆栈以寻找 guard
-    let frame = this.callStack[this.depth];
+    let frame: Frame = this._cStack[this.depth];
     while (frame) {
       let len;
       // 确保错误出现在栈帧上
@@ -106,7 +107,7 @@ export class Fiber {
             // try/catch
             if (ip <= guard.handler) {
               // 扔到保护区内
-              frame.evalStack.push(err);
+              frame._eStack.push(err);
               frame.error = null;
               frame.ip = guard.handler;
             } else {
@@ -144,7 +145,7 @@ export class Fiber {
       asc ? i <= end : i >= end;
       asc ? i++ : i--
     ) {
-      const frame = this.callStack[i];
+      const frame = this._cStack[i];
       let { name } = frame.script;
       if (name === '<anon>' && frame.fname) {
         name = frame.fname;
@@ -192,18 +193,18 @@ export class Fiber {
     scope.set(0, target);
     const frame = new Frame(this, script, scope, this.realm, name, construct);
     if (self) {
-      frame.evalStack.push(self);
+      frame._eStack.push(self);
     }
     if (args) {
-      frame.evalStack.push(args);
+      frame._eStack.push(args);
     }
-    this.callStack[++this.depth] = frame;
+    this._cStack[++this.depth] = frame;
     return frame;
   }
 
   checkCallStack() {
     if (this.depth === this.maxDepth) {
-      this.callStack[this.depth].error = new XYZError('maximum call stack size exceeded');
+      this._cStack[this.depth].error = new XYZError('maximum call stack size exceeded');
       this.pause();
       return false;
     }
@@ -211,7 +212,7 @@ export class Fiber {
   }
 
   popFrame() {
-    const frame = this.callStack[--this.depth];
+    const frame = this._cStack[--this.depth];
     if (frame) {
       frame.paused = false;
     }
@@ -219,20 +220,20 @@ export class Fiber {
   }
 
   setReturnValue(rv) {
-    return this.callStack[this.depth].evalStack.push(rv);
+    return this._cStack[this.depth]._eStack.push(rv);
   }
 
   pause() {
     // eslint-disable-next-line no-return-assign
-    return (this.paused = this.callStack[this.depth].paused = true);
+    return (this.paused = this._cStack[this.depth].paused = true);
   }
 
   resume(timeout = -1) {
     this.timeout = timeout;
     this.paused = false;
-    const frame = this.callStack[this.depth];
+    const frame = this._cStack[this.depth];
     frame.paused = false;
-    // const { evalStack } = this.callStack[0];
+    // const { _eStack } = this._cStack[0];
     this.run();
     if (!this.paused) {
       return this.rexp;
@@ -244,7 +245,7 @@ export class Fiber {
   }
 
   send(obj) {
-    return this.callStack[this.depth].evalStack.push(obj);
+    return this._cStack[this.depth]._eStack.push(obj);
   }
 
   done() {

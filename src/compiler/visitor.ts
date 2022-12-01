@@ -9,9 +9,11 @@ export class Visitor {
       return this.visitArray(node);
     }
     if (node && node.type) {
+      // @ts-ignore
       if (!this[node.type]) {
         throw new Error(`${node.type} 未实现`);
       }
+      // @ts-ignore
       return this[node.type](node);
     }
     if (node) {

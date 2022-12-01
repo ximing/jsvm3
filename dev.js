@@ -1,5 +1,5 @@
 const { transform } = require('./lib/compiler');
-const { Vm } = require('./lib/vm/vm');
+const { XYZ } = require('./lib/vm/vm');
 
 // const code = `
 // let a = 4;
@@ -193,7 +193,7 @@ const { Vm } = require('./lib/vm/vm');
 // const script = transform(code, 'sum.js', { hoisting: true, convertES5: false });
 // console.log(JSON.stringify(script.toJSON(), null, 2));
 // console.log('===============+> run');
-// const vm = new Vm();
+// const vm = new XYZ();
 // const res = vm.run(script);
 // // console.log(JSON.stringify(script.toJSON(), null, 2));
 // console.log(res);
@@ -280,21 +280,34 @@ const { Vm } = require('./lib/vm/vm');
 // module.exports = testcase();
 // `;
 
+// const code1 = `
+// var freeProcess = { binding:1 };
+// var nodeUtil=function(){
+//   try{
+//     return freeProcess&&freeProcess.binding&&freeProcess.binding('util');
+//   }catch(e){
+//     return 1;
+//   }
+// }();
+// module.exports = nodeUtil
+// `;
+
 const code1 = `
-var freeProcess = { binding:1 };
-var nodeUtil=function(){
-  try{
-    return freeProcess&&freeProcess.binding&&freeProcess.binding('util');
-  }catch(e){
-    return 1;
+function testcase() {
+  // just cooking up a long/veryLikely unique name
+  try {
+    var d = delete __ES3_1_test_suite_test_11_4_1_3_unique_id_2__.x;
+  } catch(e) {
+    if (e instanceof ReferenceError)
+      return true;
   }
-}();
-module.exports = nodeUtil
-`;
+ }
+module.exports = testcase();
+`
 const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: false });
 console.log(JSON.stringify(script1.toJSON(), null, 2));
 console.log('===============+> run');
-const vm1 = new Vm({
+const vm1 = new XYZ({
   self: global,
   global,
   console,
@@ -330,7 +343,7 @@ console.log(vm1.realm.global.module.exports);
 // const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: false });
 // // console.log(JSON.stringify(script1.toJSON(), null, 2));
 // console.log('===============+> run');
-// const vm1 = new Vm({
+// const vm1 = new XYZ({
 //   self: global,
 //   global,
 //   console,

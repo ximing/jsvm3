@@ -1,6 +1,5 @@
 import { Trace } from '../vm/types';
-
-const { isArray } = require('./helper');
+import { isArray } from './helper';
 
 function printTrace(trace: Trace[], indent?: string) {
   if (indent == null) {
@@ -8,7 +7,7 @@ function printTrace(trace: Trace[], indent?: string) {
   }
   indent += '    ';
   let rv = '';
-  for (const frame of Array.from(trace)) {
+  for (const frame of trace) {
     if (isArray(frame)) {
       rv += `\n\n${indent}Rethrown:`;
       // @ts-ignore
@@ -51,9 +50,9 @@ export class XYZError {
   }
 }
 
-export class XYZEvalError extends XYZError {
-  static display = 'EvalError';
-}
+// export class XYZEvalError extends XYZError {
+//   static display = 'EvalError';
+// }
 
 export class XYZRangeError extends XYZError {
   static display = 'RangeError';
@@ -71,9 +70,9 @@ export class XYZTypeError extends XYZError {
   static display = 'TypeError';
 }
 
-export class XYZURIError extends XYZError {
-  static display = 'URIError';
-}
+// export class XYZURIError extends XYZError {
+//   static display = 'URIError';
+// }
 
 export class XYZTimeoutError extends XYZError {
   static display = 'TimeoutError';

@@ -62,6 +62,7 @@
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
     "babel-preset-power-assert": "^3.0.0",
+    "babel-plugin-transform-define": "^2.0.1",
     "benchmark": "^2.1.4",
     "conventional-changelog-cli": "^2.0.34",
     "core-js": "^3.19.2",
@@ -83,11 +84,13 @@
     "jest": "^27.4.3",
     "lint-staged": "^12.1.2",
     "prettier": "^2.5.0",
+    "require-from-string": "^2.0.2",
     "rollup": "^2.60.2",
     "rollup-plugin-auto-external": "^2.0.0",
     "rollup-plugin-peer-deps-external": "^2.2.2",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-typescript2": "^0.31.1",
+    "rollup-plugin-preprocess": "^0.0.4",
     "terser": "^5.12.0",
     "ts-jest": "^27.0.7",
     "ts-node": "^10.4.0",
@@ -106,6 +109,7 @@
     "node": ">=10"
   },
   "files": [
-    "lib"
+    "lib",
+    "dist"
   ]
 }

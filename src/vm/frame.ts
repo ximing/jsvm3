@@ -7,7 +7,7 @@ import type { Script } from './script';
 export class Frame {
   fiber: Fiber;
   script: Script;
-  scope: Scope | null;
+  scp: Scope | null;
 
   error: any;
   paused: boolean;
@@ -15,7 +15,7 @@ export class Frame {
   realm: Realm;
   // frame name
   fname: any;
-  evalStack: EvaluationStack;
+  _eStack: EvaluationStack;
   construct: any;
 
   ip: number;
@@ -38,11 +38,11 @@ export class Frame {
   ) {
     this.fiber = fiber;
     this.script = script;
-    this.scope = scope;
+    this.scp = scope;
     this.realm = realm;
     this.fname = fname;
     this.construct = construct;
-    this.evalStack = new EvaluationStack(this.script.stackSize, this.fiber);
+    this._eStack = new EvaluationStack(this.script.stackSize, this.fiber);
     this.ip = 0;
     this.exitIp = this.script.instructions.length;
     this.paused = false;
@@ -58,13 +58,14 @@ export class Frame {
     const { instructions } = this.script;
     while (this.ip !== this.exitIp && !this.paused && this.fiber.timeout !== 0) {
       this.fiber.timeout--;
-      instructions[this.ip++].exec(this, this.evalStack, this.scope!, this.realm);
-      // console.log(`\x1B[36m${instructions[this.ip - 1].name}\x1B[0m`, this.error, this.paused);
+      const ins = instructions[this.ip++];
+      ins.exec(this, this._eStack, this.scp!, this.realm);
+      // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args, this.error, this.paused, ins.id);
     }
     if (this.fiber.timeout === 0) {
       this.paused = this.fiber.paused = true;
     }
-    if (!this.paused && !this.error && (len = this.evalStack.len()) !== 0) {
+    if (!this.paused && !this.error && (len = this._eStack.len()) !== 0) {
       // debug assertion
       throw new Error(`Evaluation stack has ${len} items after execution`);
     }

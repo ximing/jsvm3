@@ -1,22 +1,22 @@
-// @ts-nocheck
 import { Script } from '../vm/script';
 import { Instruction } from '../opcodes/types';
+import { InsMap } from '../opcodes/ins';
 
 export const scriptFromJson = function (json: any) {
   const filename = json[0] !== 0 ? json[0] : null;
   const name = json[1] !== 0 ? json[1] : null;
   const instructions = instructionsFromJson(json[2]);
-  const scripts = [];
+  const scripts: any[] = [];
   const localNames = json[4];
   const localLength = localNames.length;
-  const guards = [];
+  const guards: any[] = [];
   const stackSize = json[6];
   const strings = json[7];
-  const regexps = [];
-  for (const s of Array.from(json[3])) {
+  const regexps: any = [];
+  for (const s of json[3]) {
     scripts.push(scriptFromJson(s));
   }
-  for (const guard of Array.from(json[5])) {
+  for (const guard of json[5]) {
     guards.push({
       start: guard[0] !== -1 ? guard[0] : null,
       handler: guard[1] !== -1 ? guard[1] : null,
@@ -24,7 +24,7 @@ export const scriptFromJson = function (json: any) {
       end: guard[3] !== -1 ? guard[3] : null,
     });
   }
-  for (const regexp of Array.from(json[8])) {
+  for (const regexp of json[8]) {
     regexps.push(regexpFromString(regexp));
   }
   const source = json[9] !== 0 ? json[9] : null;
@@ -43,15 +43,22 @@ export const scriptFromJson = function (json: any) {
   );
 };
 
-export const instructionsFromJson = function (instructions) {
-  const rv = [];
-  for (const inst of Array.from(instructions)) {
-    const klass = opcodes[inst[0]];
-    const args = [];
-    for (let i = 1, end = inst.length, asc = end >= 1; asc ? i < end : i > end; asc ? i++ : i--) {
+export const regexpFromString = function (str: string) {
+  const sliceIdx = str.lastIndexOf('/');
+  const source = str.slice(0, sliceIdx);
+  const flags = str.slice(sliceIdx + 1);
+  return new RegExp(source, flags);
+};
+
+export const instructionsFromJson = function (instructions: any[][]) {
+  const rv: Instruction[] = [];
+  for (const inst of instructions) {
+    const insFun = InsMap.get(inst[0]);
+    const args: any[] = [];
+    for (let i = 1, end = inst.length; i < end; i++) {
       args.push(inst[i]);
     }
-    const opcode = new klass(args.length ? args : null);
+    const opcode = insFun!(args.length ? args : null);
     rv.push(opcode);
   }
   return rv;
@@ -65,17 +72,13 @@ export const regexpToString = function (regexp: RegExp) {
   return rv;
 };
 
-export const regexpFromString = function (str) {
-  const sliceIdx = str.lastIndexOf('/');
-  const source = str.slice(0, sliceIdx);
-  const flags = str.slice(sliceIdx + 1);
-  return new RegExp(source, flags);
-};
-
 export const instructionsToJson = function (instructions: Instruction[]) {
   const rv: any[][] = [];
   for (const inst of instructions) {
-    const code = [inst.name];
+    let code: any[] = [inst.id];
+    // @ifdef COMPILER
+    code = [inst.name];
+    // @endif
     if (inst.args) {
       for (const a of inst.args) {
         if (a != null) {
@@ -88,5 +91,31 @@ export const instructionsToJson = function (instructions: Instruction[]) {
     }
     rv.push(code);
   }
+  return rv;
+};
+
+export const scriptToJson = function (script: Script) {
+  const rv = [
+    script.filename || 0,
+    script.name || 0,
+    instructionsToJson(script.instructions),
+    [],
+    script.localNames,
+    [],
+    script.stackSize,
+    script.strings,
+    [],
+  ];
+  for (const s of Array.from(script.scripts)) {
+    rv[3].push(scriptToJson(s));
+  }
+  for (const guard of Array.from(script.guards)) {
+    rv[5].push([guard.start || -1, guard.handler || -1, guard.finalizer || -1, guard.end || -1]);
+  }
+  for (const regexp of script.regexps) {
+    rv[8].push(regexpToString(regexp));
+  }
+  rv[9] = script.source || 0;
+  rv[10] = script.source || 0;
   return rv;
 };

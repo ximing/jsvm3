@@ -1,3 +1,5 @@
+import * as t from '@babel/types';
+import { parse } from '@babel/parser';
 import { Visitor } from './visitor';
 import { hasProp } from '../utils/helper';
 import { Instruction } from '../opcodes/types';
@@ -56,11 +58,8 @@ import {
 } from '../opcodes';
 import * as OPCODES from '../opcodes';
 import { Label } from '../opcodes/label';
-import { OPCodeIdx } from '../opcodes/opIdx';
 import { Script } from '../vm/script';
 import { binaryOp, unaryOp } from './opMap';
-import * as t from '@babel/types';
-import { parse } from '@babel/parser';
 import { regexpFromString } from '../utils/convert';
 
 type EmitterLabel = {
@@ -281,12 +280,12 @@ export class Emitter extends Visitor {
       const code: any = this.instructions[i];
       // replace all GETG/GETL instructions that match the declared name on
       // a parent scope by GETL of the matched index in the local scope
-      if (this.scopes.length && code?.id === OPCodeIdx.GETG) {
+      if (this.scopes.length && code?.name === 'GETG') {
         if (code.args[0] === name) {
           this.instructions[i] = GETL(scope);
         }
       }
-      if (code?.id === OPCodeIdx.GETL) {
+      if (code?.name === 'GETL') {
         if (code.args[0] !== 0) {
           const s = this.scopes[code.args[0]];
           if (s[name] === code.args[1]) {
@@ -374,8 +373,7 @@ export class Emitter extends Visitor {
         idx = this.instructions.length - 1;
         while (
           idx >= 0 &&
-          (this.instructions[idx].id === OPCodeIdx.LINE ||
-            this.instructions[idx].id === OPCodeIdx.COLUMN)
+          (this.instructions[idx].name === 'LINE' || this.instructions[idx].name === 'COLUMN')
         ) {
           this.instructions.pop();
           idx--;
@@ -384,7 +382,7 @@ export class Emitter extends Visitor {
         this.currentLine = line;
       } else if (column !== this.currentColumn) {
         idx = this.instructions.length - 1;
-        while (idx >= 0 && this.instructions[idx].id === OPCodeIdx.COLUMN) {
+        while (idx >= 0 && this.instructions[idx].name === 'COLUMN') {
           this.instructions.pop();
           idx--;
         }

@@ -3,11 +3,11 @@ import { parse, parseExpression } from '@babel/parser';
 import { Emitter } from './emitter';
 
 export const transform = (
-  code,
-  filename,
+  code: string,
+  filename: string,
   { hoisting, convertES5 } = { hoisting: true, convertES5: true }
 ) => {
-  let transformCode = code;
+  let transformCode: string = code;
   if (convertES5) {
     const result = babel.transformSync(code, {
       presets: [
@@ -41,7 +41,8 @@ export const transform = (
       configFile: false,
       babelrc: false,
     });
-    transformCode = result!.code;
+
+    transformCode = result!.code!;
   }
   if (hoisting) {
     const result = babel.transformSync(transformCode, {
@@ -49,27 +50,19 @@ export const transform = (
       configFile: false,
       babelrc: false,
     });
-    transformCode = result!.code;
+    transformCode = result!.code!;
   }
-  // console.log(transformCode);
-  // try {
-  //   let ast = parse(transformCode, {
-  //     sourceType: 'module',
-  //     plugins: [],
-  //   });
-  //   const emitter = new Emitter(null, filename, null, transformCode.split('\n'));
-  //   ast = emitter.visit(ast);
-  //   console.log(ast);
-  //   return emitter.end();
-  // } catch (err) {
-  //   console.log(transformCode);
-  //   throw err;
-  // }
   let ast = parse(transformCode, {
     sourceType: 'module',
     plugins: [],
   });
-  const emitter = new Emitter([], filename, null, transformCode.split('\n'), transformCode);
+  const emitter = new Emitter(
+    [],
+    filename,
+    null,
+    transformCode.split('\n'),
+    transformCode
+  );
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ast = emitter.visit(ast.program);
   // console.log(ast);
