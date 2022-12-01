@@ -152,7 +152,7 @@ export const createFunction = function (
 ) {
   let fun;
   if (generator) {
-    throw new Error('generator not work');
+    throw new Error('*fun not work');
     // fun = function (this: any) {
     //   let fiber;
     //   const name = fun.__cname__ || script.name;
