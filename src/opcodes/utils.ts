@@ -17,13 +17,18 @@ export const createOP = function (
   name,
   fn: OPExec,
   // eslint-disable-next-line @typescript-eslint/ban-types
-  calculateFactor?: Function
+  calculateFactor?: (this: Instruction) => number
 ) {
-  const base = {
+  // @ts-ignore
+  const base: Instruction = {
     name,
     id: OPCodeIdx[name],
     exec: fn,
-    calculateFactor,
+    calculateFactor:
+      calculateFactor ||
+      function () {
+        return 0;
+      },
     forEachLabel(cb) {
       if (this.args) {
         const result = [];
@@ -40,15 +45,6 @@ export const createOP = function (
       }
     },
   };
-  if (!calculateFactor) {
-    // base.factor = calculateOpcodeFactor(fn);
-    // base.calculateFactor = function () {
-    //   return this.factor;
-    // };
-    base.calculateFactor = function () {
-      return 0;
-    };
-  }
   return (args: any) => Object.assign({ args }, base) as Instruction;
 };
 
@@ -147,7 +143,7 @@ export const createFunction = function (
 ) {
   let fun;
   if (generator) {
-    fun = function () {
+    fun = function (this: any) {
       let fiber;
       const name = fun.__callname__ || script.name;
       const gen = createGenerator(fun.__fiber__, script, scope, realm, this, arguments, fun, name);
@@ -159,7 +155,7 @@ export const createFunction = function (
       return (fun.__callname__ = null);
     };
   } else {
-    fun = function () {
+    fun = function (this: any) {
       let construct, fiber: Fiber;
       let run = false;
       if ((fiber = fun.__fiber__)) {

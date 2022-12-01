@@ -146,7 +146,7 @@ export class Fiber {
     ) {
       const frame = this.callStack[i];
       let { name } = frame.script;
-      if (name === '<anonymous>' && frame.fname) {
+      if (name === '<anon>' && frame.fname) {
         name = frame.fname;
       }
       trace.push({
@@ -174,14 +174,14 @@ export class Fiber {
     return (err.stack = err.toString());
   }
 
-  // <anonymous>
+  // <anon>
   pushFrame(
     script: Script,
     target: any,
     parent: Scope | null = null,
     args: any = null,
     self: any = null,
-    name = '<ano>',
+    name = '<anon>',
     construct = false
   ) {
     if (!this.checkCallStack()) {

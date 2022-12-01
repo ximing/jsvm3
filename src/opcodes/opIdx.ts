@@ -1,5 +1,3 @@
-import { DECLG } from './ins';
-
 export const OPCodeIdx = {
   SR1: 1,
   SR2: 2,

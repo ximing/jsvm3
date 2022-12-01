@@ -14,7 +14,6 @@ import {
   div,
   enumerateKeys,
   exp,
-  get,
   gt,
   gte,
   has,
@@ -496,7 +495,7 @@ export const RETV = createOP('RETV', function (f, s) {
 });
 
 // call as constructor
-export const NEW = createOP('NEW', function (f, s) {
+export const NEW = createOP('NEW', function (f) {
   return call(f, this.args[0], null, true);
 });
 
@@ -514,7 +513,7 @@ export const CALL = createOP(
 // call method
 export const CALLM = createOP(
   'CALLM',
-  function (f, s) {
+  function (f) {
     return callm(f, this.args[0], null, null, this.args[1]);
   },
   function () {

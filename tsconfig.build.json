@@ -12,7 +12,7 @@
     "noImplicitAny": false,
     "allowSyntheticDefaultImports": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedParameters": false,
     "strictNullChecks": true,
     "resolveJsonModule": true,
     "sourceMap": true,

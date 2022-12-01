@@ -1194,7 +1194,7 @@ export class Emitter extends Visitor {
     original[0] = original[0].slice(scol);
     original[original.length - 1] = original[original.length - 1].slice(0, ecol);
     const source = original.join('\n');
-    let name = '<ano>';
+    let name = '<anon>';
     let functionType = '';
     if (node.id) {
       // @ts-ignore
