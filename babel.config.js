@@ -4,7 +4,7 @@ module.exports = {
       '@babel/env',
       {
         targets: {
-          browsers: ['safari >= 9', 'android >= 4.0'],
+          browsers: ['safari >= 10', 'android >= 53'],
         },
         useBuiltIns: 'usage',
         corejs: '3',

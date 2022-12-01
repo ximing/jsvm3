@@ -202,75 +202,53 @@ export const ret = function (frame: Frame) {
   frame._eStack.clear();
   return (frame.exitIp = frame.ip);
 };
-
-const callDateConstructor = function (a) {
-  let rv;
-  switch (a.length) {
-    case 0:
-      rv = new Date();
-      break;
-    case 1:
-      rv = new Date(a[0]);
-      break;
-    case 2:
-      rv = new Date(a[0], a[1]);
-      break;
-    case 3:
-      rv = new Date(a[0], a[1], a[2]);
-      break;
-    case 4:
-      rv = new Date(a[0], a[1], a[2], a[3]);
-      break;
-    case 5:
-      rv = new Date(a[0], a[1], a[2], a[3], a[4]);
-      break;
-    case 6:
-      rv = new Date(a[0], a[1], a[2], a[3], a[4], a[5]);
-      break;
-    default:
-      rv = new Date(a[0], a[1], a[2], a[3], a[4], a[5], a[6]);
-  }
-  return rv;
-};
-
-const callArrayConstructor = function (a) {
-  if (a.length === 1 && (a[0] | 0) === a[0]) {
-    return new Array(a[0]);
-  }
-  return a.slice();
-};
-
-const callRegExpConstructor = function (a) {
-  if (a.length === 1) {
-    return new RegExp(a[0]);
-  } else {
-    return new RegExp(a[0], a[1]);
-  }
-};
+//
+// // https://stackoverflow.com/questions/3362471/how-can-i-call-a-javascript-constructor-using-call-or-apply
+// const callDateConstructor = function (a: any[]) {
+//   // @ts-ignore
+//   return new Date(...a);
+// };
+//
+// const callArrayConstructor = function (a) {
+//   if (a.length === 1 && (a[0] | 0) === a[0]) {
+//     return new Array(a[0]);
+//   }
+//   return a.slice();
+// };
+//
+// const callRegExpConstructor = function (a) {
+//   if (a.length === 1) {
+//     return new RegExp(a[0]);
+//   } else {
+//     return new RegExp(a[0], a[1]);
+//   }
+// };
 
 const createNativeInstance = function (constructor, args) {
-  if (constructor === Date) {
-    return callDateConstructor(args);
-  } else if (constructor === Array) {
-    return callArrayConstructor(args);
-  } else if (constructor === RegExp) {
-    return callRegExpConstructor(args);
-  } else if (constructor === Number) {
-    return Number(args[0]);
-  } else if (constructor === Boolean) {
-    return Boolean(args[0]);
-  } else {
-    return new constructor(...args);
-    // // create a new object linked to the function prototype by using
-    // // a constructor proxy
-    // const constructorProxy = function () {
-    //   return constructor.apply(this, args);
-    // };
-    // constructorProxy.prototype = constructor.prototype;
-    // // @ts-ignore
-    // const rv = new constructorProxy();
-    // return rv;
-  }
+  return new constructor(...args);
+
+  // if (constructor === Date) {
+  //   return callDateConstructor(args);
+  // } else if (constructor === Array) {
+  //   return callArrayConstructor(args);
+  // } else if (constructor === RegExp) {
+  //   return callRegExpConstructor(args);
+  // } else if (constructor === Number) {
+  //   return Number(args[0]);
+  // } else if (constructor === Boolean) {
+  //   return Boolean(args[0]);
+  // } else {
+  //   return new constructor(...args);
+  //   // // create a new object linked to the function prototype by using
+  //   // // a constructor proxy
+  //   // const constructorProxy = function () {
+  //   //   return constructor.apply(this, args);
+  //   // };
+  //   // constructorProxy.prototype = constructor.prototype;
+  //   // // @ts-ignore
+  //   // const rv = new constructorProxy();
+  //   // return rv;
+  // }
 };
 
 export const getParams = function (length: number, _eStack: EvaluationStack) {

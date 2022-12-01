@@ -55,6 +55,8 @@ export default {
     // }),
     commonjs(),
     babel({
+      babelrc: false,
+      configFile: false,
       assumptions: {
         noDocumentAll: true,
         noClassCalls: true,
@@ -78,6 +80,7 @@ export default {
             targets: {
               browsers: ['safari >= 10', 'android >= 53'],
             },
+            bugfixes: true,
           },
         ],
         '@babel/preset-typescript',

@@ -1,4 +1,4 @@
-// convert compiled scripts from/to json-compatible structure
+// convert compiled children from/to json-compatible structure
 import { Instruction } from '../opcodes/types';
 // @ifdef COMPILER
 import { scriptToJson } from '../utils/convert';
@@ -9,7 +9,7 @@ export class Script {
   name: string;
   instructions: Instruction[];
   // eslint-disable-next-line no-use-before-define
-  scripts: Script[];
+  children: Script[];
   localNames: Record<string, any>;
   localLength: number;
   guards: any[];
@@ -23,7 +23,7 @@ export class Script {
     filename,
     name,
     instructions,
-    scripts,
+    children,
     localNames,
     localLength,
     guards,
@@ -32,17 +32,18 @@ export class Script {
     regexps,
     source?
   ) {
-    this.filename = filename;
-    this.name = name;
-    this.instructions = instructions;
-    this.scripts = scripts;
-    this.localNames = localNames;
-    this.localLength = localLength;
-    this.guards = guards;
-    this.stackSize = stackSize;
-    this.strings = strings;
-    this.regexps = regexps;
-    this.source = source;
+    const t = this;
+    t.filename = filename;
+    t.name = name;
+    t.instructions = instructions;
+    t.children = children;
+    t.localNames = localNames;
+    t.localLength = localLength;
+    t.guards = guards;
+    t.stackSize = stackSize;
+    t.strings = strings;
+    t.regexps = regexps;
+    t.source = source;
   }
 
   // @ifdef COMPILER

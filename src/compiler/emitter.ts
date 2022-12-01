@@ -77,7 +77,7 @@ export class Emitter extends Visitor {
   source: string;
   instructions: Instruction[];
   labels: EmitterLabel[];
-  scripts: any[];
+  children: any[];
   tryStatements: any[];
   withLevel: number;
   scopes: any[];
@@ -101,7 +101,7 @@ export class Emitter extends Visitor {
     this.source = source;
     this.instructions = [];
     this.labels = [];
-    this.scripts = [];
+    this.children = [];
     this.tryStatements = [];
     this.withLevel = 0;
     // Stack of scopes. Each scope maintains a name -> index association
@@ -343,14 +343,14 @@ export class Emitter extends Visitor {
     }
     const localLength = Array.from(this.localNames).length;
     // compile all functions
-    for (let i = 0, end = this.scripts.length; i < end; i++) {
-      this.scripts[i] = this.scripts[i]();
+    for (let i = 0, end = this.children.length; i < end; i++) {
+      this.children[i] = this.children[i]();
     }
     return new Script(
       this.filename,
       this.name,
       this.instructions,
-      this.scripts,
+      this.children,
       this.localNames,
       localLength,
       this.guards,
@@ -1270,8 +1270,8 @@ export class Emitter extends Visitor {
       script.paramsSize = len;
       return script;
     };
-    const functionIndex = this.scripts.length;
-    this.scripts.push(emit);
+    const functionIndex = this.children.length;
+    this.children.push(emit);
     if (node.isExpression) {
       // push function on the stack
       this.createINS(FUNCTION, functionIndex, node.generator);

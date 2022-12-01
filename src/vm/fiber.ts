@@ -24,19 +24,20 @@ export class Fiber {
   paused: boolean;
 
   constructor(realm: Realm, timeout = -1) {
-    this.realm = realm;
-    this.timeout = timeout;
-    this.maxDepth = 1000;
-    this.maxTraceDepth = 50;
-    this._cStack = [];
-    this._eStack = null;
-    this.depth = -1;
-    this.yielded = this.rv = undefined;
-    this.paused = false;
+    const t = this;
+    t.realm = realm;
+    t.timeout = timeout;
+    t.maxDepth = 1000;
+    t.maxTraceDepth = 50;
+    t._cStack = [];
+    t._eStack = null;
+    t.depth = -1;
+    t.yielded = this.rv = undefined;
+    t.paused = false;
     // fiber-specific registers temporary registers
-    this.r1 = this.r2 = this.r3 = null;
+    t.r1 = t.r2 = t.r3 = null;
     // expression register(last evaluated expression statement)
-    this.rexp = null;
+    t.rexp = null;
   }
 
   run() {
@@ -146,14 +147,14 @@ export class Fiber {
       asc ? i++ : i--
     ) {
       const frame = this._cStack[i];
-      let { name } = frame.script;
+      let { name } = frame.srt;
       if (name === '<anon>' && frame.fname) {
         name = frame.fname;
       }
       trace.push({
         at: {
           name,
-          filename: frame.script.filename,
+          filename: frame.srt.filename,
         },
         line: frame.line,
         column: frame.column,

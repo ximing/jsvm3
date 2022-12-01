@@ -55,19 +55,19 @@ export class XYZError {
 // }
 
 export class XYZRangeError extends XYZError {
-  static display = 'RangeError';
+  static display = 'RangeErr';
 }
 
 export class XYZReferenceError extends XYZError {
-  static display = 'ReferenceError';
+  static display = 'RefErr';
 }
 
 export class XYZSyntaxError extends XYZError {
-  static display = 'SyntaxError';
+  static display = 'SynErr';
 }
 
 export class XYZTypeError extends XYZError {
-  static display = 'TypeError';
+  static display = 'TyErr';
 }
 
 // export class XYZURIError extends XYZError {
@@ -75,11 +75,11 @@ export class XYZTypeError extends XYZError {
 // }
 
 export class XYZTimeoutError extends XYZError {
-  static display = 'TimeoutError';
+  static display = 'TErr';
   fiber: any;
 
   constructor(fiber) {
-    super('Script timed out');
+    super('timed out');
     this.fiber = fiber;
   }
 }

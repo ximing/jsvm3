@@ -1,14 +1,14 @@
 import { XYZError } from '../utils/errors';
 
 export class StopIteration extends XYZError {
-  static display = 'StopIteration';
+  static display = 'StopIter';
   value: any;
   message: string;
   constructor(value?, message?) {
     super(message);
     this.value = value;
     if (message == null) {
-      message = 'iterator has stopped';
+      message = 'iter has stopped';
     }
     this.message = message;
   }

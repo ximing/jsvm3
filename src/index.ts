@@ -1,2 +1,2 @@
 export * from './vm';
-export { scriptFromJson } from './utils/convert';
+export { fromJson } from './utils/convert';

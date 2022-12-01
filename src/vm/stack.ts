@@ -17,7 +17,8 @@ export class EvaluationStack {
   p(item) {
     // console.log('-----> push', this.idx + 1);
     if (this.idx === this.array.length) {
-      throw new Error('maximum evaluation stack size exceeded');
+      // maximum
+      throw new Error('max _estack size exceeded');
     }
     return (this.array[this.idx++] = item);
   }

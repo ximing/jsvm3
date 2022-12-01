@@ -384,7 +384,7 @@ export const LITERAL = createOP(
 export const STRING_LITERAL = createOP(
   OPCodeIdx.STRING_LITERAL,
   function (f, _eStack) {
-    return _eStack.push(f.script.strings[this.args[0]]);
+    return _eStack.push(f.srt.strings[this.args[0]]);
   },
   () => 1
 );
@@ -392,7 +392,7 @@ export const STRING_LITERAL = createOP(
 export const REGEXP_LITERAL = createOP(
   OPCodeIdx.REGEXP_LITERAL,
   function (f, _eStack) {
-    return _eStack.push(f.script.regexps[this.args[0]]);
+    return _eStack.push(f.srt.regexps[this.args[0]]);
   },
   () => 1
 );
@@ -461,8 +461,8 @@ export const FUNCTION = createOP(
   OPCodeIdx.FUNCTION,
   function (f, _eStack, l, r) {
     const scriptIndex = this.args[0];
-    // f.script.scripts[scriptIndex]  函数的body 指令集
-    return _eStack.push(createFunction(f.script.scripts[scriptIndex], l, r, this.args[1]));
+    // f.srt.children[scriptIndex]  函数的body 指令集
+    return _eStack.push(createFunction(f.srt.children[scriptIndex], l, r, this.args[1]));
   },
   () => 1
 );
@@ -559,12 +559,12 @@ export const THROW = createOP(OPCodeIdx.THROW, function (f, _eStack) {
 });
 
 export const ENTER_GUARD = createOP(OPCodeIdx.ENTER_GUARD, function (f) {
-  return f.guards.push(f.script.guards[this.args[0]]);
+  return f.guards.push(f.srt.guards[this.args[0]]);
 });
 
 export const EXIT_GUARD = createOP(OPCodeIdx.EXIT_GUARD, function (f) {
   const currentGuard = f.guards[f.guards.length - 1];
-  const specifiedGuard = f.script.guards[this.args[0]];
+  const specifiedGuard = f.srt.guards[this.args[0]];
   if (specifiedGuard === currentGuard) {
     return f.guards.pop();
   }
@@ -574,7 +574,7 @@ export const EXIT_GUARD = createOP(OPCodeIdx.EXIT_GUARD, function (f) {
  * enter nested scope
  * */
 export const ENTER_SCOPE = createOP(OPCodeIdx.ENTER_SCOPE, function (frame) {
-  return (frame.scp = new Scope(frame.scp, frame.script.localNames, frame.script.localLength));
+  return (frame.scp = new Scope(frame.scp, frame.srt.localNames, frame.srt.localLength));
 });
 
 /*

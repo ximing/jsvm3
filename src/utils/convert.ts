@@ -2,11 +2,11 @@ import { Script } from '../vm/script';
 import { Instruction } from '../opcodes/types';
 import { InsMap } from '../opcodes/ins';
 
-export const scriptFromJson = function (json: any) {
+export const fromJson = function (json: any) {
   const filename = json[0] !== 0 ? json[0] : null;
   const name = json[1] !== 0 ? json[1] : null;
   const instructions = instructionsFromJson(json[2]);
-  const scripts: any[] = [];
+  const children: any[] = [];
   const localNames = json[4];
   const localLength = localNames.length;
   const guards: any[] = [];
@@ -14,7 +14,7 @@ export const scriptFromJson = function (json: any) {
   const strings = json[7];
   const regexps: any = [];
   for (const s of json[3]) {
-    scripts.push(scriptFromJson(s));
+    children.push(fromJson(s));
   }
   for (const guard of json[5]) {
     guards.push({
@@ -32,7 +32,7 @@ export const scriptFromJson = function (json: any) {
     filename,
     name,
     instructions,
-    scripts,
+    children,
     localNames,
     localLength,
     guards,
@@ -106,7 +106,7 @@ export const scriptToJson = function (script: Script) {
     script.strings,
     [],
   ];
-  for (const s of Array.from(script.scripts)) {
+  for (const s of Array.from(script.children)) {
     rv[3].push(scriptToJson(s));
   }
   for (const guard of Array.from(script.guards)) {
