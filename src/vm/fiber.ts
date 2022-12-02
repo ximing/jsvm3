@@ -42,13 +42,13 @@ export class Fiber {
 
   run() {
     let frame: Frame = this.callStack[this.depth];
-    let err = frame.error;
+    let err = frame.evalError;
     while (this.depth >= 0 && frame && !this.paused) {
       if (err) {
         frame = this.unwind(err);
       }
       frame.run();
-      if ((err = frame.error) instanceof XYZError) {
+      if ((err = frame.evalError) instanceof XYZError) {
         this.injectStackTrace(err);
       }
       if (frame.done()) {
@@ -66,7 +66,7 @@ export class Fiber {
       } else {
         // 可能是函数调用，确保“frame”指向顶部
         frame = this.callStack[this.depth];
-        err = frame.error;
+        err = frame.evalError;
         continue;
       }
       // 返回的函数，检查这是否是构造函数调用并采取相应措施
@@ -87,7 +87,7 @@ export class Fiber {
       this.injectStackTrace(err);
     }
     if (err) {
-      console.trace();
+      // console.trace();
       throw err;
     }
   }
@@ -98,7 +98,7 @@ export class Fiber {
     while (frame) {
       let len;
       // 确保错误出现在栈帧上
-      frame.error = err;
+      frame.evalError = err;
       // ip 总是指向下一条指令，所以减去一条
       const ip = frame.ip - 1;
       if ((len = frame.guards.length)) {
@@ -109,7 +109,7 @@ export class Fiber {
             if (ip <= guard.handler) {
               // 扔到保护区内
               frame.evalStack.push(err);
-              frame.error = null;
+              frame.evalError = null;
               frame.ip = guard.handler;
             } else {
               // 扔到保护区外(eg: catch or finally block)
@@ -131,7 +131,7 @@ export class Fiber {
       }
       frame = this.popFrame();
     }
-    console.log('throw error');
+    // console.log('throw error');
     throw err;
   }
 
@@ -141,14 +141,10 @@ export class Fiber {
     if (this.depth > this.maxTraceDepth) {
       minDepth = this.depth - this.maxTraceDepth;
     }
-    for (
-      let i = this.depth, end = minDepth, asc = this.depth <= end;
-      asc ? i <= end : i >= end;
-      asc ? i++ : i--
-    ) {
+    for (let i = this.depth, end = minDepth; i >= end; i--) {
       const frame: Frame = this.callStack[i];
       let { name } = frame.script;
-      if (name === '<anon>' && frame.fName) {
+      if (name === '<a>' && frame.fName) {
         name = frame.fName;
       }
       trace.push({
@@ -160,8 +156,8 @@ export class Fiber {
         column: frame.column,
       });
     }
-    if (err.trace) {
-      let t: any = err.trace;
+    if (err._trace) {
+      let t: any = err._trace;
       // error was rethrown, inject the current trace at the end of
       // the leaf trace
       while (isArray(t[t.length - 1])) {
@@ -169,21 +165,21 @@ export class Fiber {
       }
       t.push(trace);
     } else {
-      err.trace = trace;
+      err._trace = trace;
     }
     // show stack trace on node.js
     // @ts-ignore
     return (err.stack = err.toString());
   }
 
-  // <anon>
+  // <a>
   pushFrame(
     script: Script,
     target: any,
     parent: Scope | null = null,
     args: any = null,
     self: any = null,
-    name = '<anon>',
+    name = '<a>',
     construct = false
   ) {
     if (!this.checkCallStack()) {
@@ -205,7 +201,7 @@ export class Fiber {
 
   checkCallStack() {
     if (this.depth === this.maxDepth) {
-      this.callStack[this.depth].error = new XYZError('maximum cStack size exceeded');
+      this.callStack[this.depth].evalError = new XYZError('maximum cStack size exceeded');
       this.pause();
       return false;
     }

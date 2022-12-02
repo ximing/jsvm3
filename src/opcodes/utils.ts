@@ -13,12 +13,14 @@ import { EvaluationStack } from '../vm/stack';
 import { OPCodeIdx } from './opIdx';
 import { Label } from './label';
 import { Cannot } from './contants';
+import { InsMap } from './ins';
 
 const OPCodeMap: any = Object.keys(OPCodeIdx).reduce((total: any, cur: string) => {
   total[OPCodeIdx[cur]] = cur;
   return total;
 }, {});
 // @endif
+
 export const createOP = function (
   id: number,
   fn: OPExec,
@@ -54,6 +56,7 @@ export const createOP = function (
     },
     // @endif
   };
+  InsMap.set(id, base);
   return (args: any) => Object.assign({ args }, base) as Instruction;
 };
 
@@ -101,7 +104,7 @@ export const createOP = function (
 //       throw new XYZError('generator closed');
 //     }
 //     frame = fiber.callStack[fiber.depth];
-//     frame!.error = e;
+//     frame!.evalError = e;
 //     fiber.resume();
 //     if (caller) {
 //       caller.timeout = fiber.timeout;

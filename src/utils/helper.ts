@@ -7,6 +7,7 @@ if (typeof Object.getPrototypeOf !== 'function') {
   // @ts-ignore
   // eslint-disable-next-line no-proto
   if (typeof ''.__proto__ === 'object') {
+    // eslint-disable-next-line no-proto
     prototypeOf = (obj: any) => obj.__proto__;
   } else {
     prototypeOf = (obj: any) => obj.constructor.prototype;

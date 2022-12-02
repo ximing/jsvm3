@@ -1,11 +1,11 @@
 export class Scope {
   // eslint-disable-next-line no-use-before-define
-  parent: Scope | null;
+  parentScope: Scope | null;
   names: Record<string, any>;
   data: Array<any>;
 
   constructor(parent: Scope | null, names: Record<string, any>, len: number) {
-    this.parent = parent;
+    this.parentScope = parent;
     this.names = names;
     this.data = new Array(len);
   }

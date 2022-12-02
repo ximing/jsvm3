@@ -29,19 +29,19 @@ function printTrace(trace: Trace[], indent?: string) {
 
 export class XYZError {
   message: string;
-  trace: null | Trace[];
+  _trace: null | Trace[];
 
   constructor(message) {
     this.message = message;
-    this.trace = null;
+    this._trace = null;
   }
 
   toString() {
     // @ts-ignore
     const errName = this.constructor.display;
     let rv = `${errName}: ${this.message}`;
-    if (this.trace) {
-      rv += printTrace(this.trace);
+    if (this._trace) {
+      rv += printTrace(this._trace);
     }
     return rv;
   }

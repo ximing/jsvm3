@@ -41,6 +41,7 @@ import { StopIteration } from '../vm/builtin';
 import { OPCodeIdx } from './opIdx';
 import { Cannot, property } from './contants';
 // @endif
+export const InsMap = new Map();
 
 /*
  * 存储到寄存器1
@@ -181,7 +182,7 @@ export const GETL = createOP(
     let scopeIndex = this.args[0];
     const varIndex = this.args[1];
     while (scopeIndex--) {
-      scope = scope.parent!;
+      scope = scope.parentScope!;
     }
     // console.log(scope, this.args, varIndex, scopeIndex, scope.get(varIndex));
     return evalStack.push(scope.get(varIndex));
@@ -197,7 +198,7 @@ export const SETL = createOP(OPCodeIdx.SETL, function (frame, evalStack, s) {
   const varIndex = this.args[1];
   let scope = s;
   while (scopeIndex--) {
-    scope = scope.parent!;
+    scope = scope.parentScope!;
   }
   return evalStack.push(scope.set(varIndex, evalStack.pop()));
 });
@@ -537,8 +538,8 @@ export const ENUMERATE = createOP(OPCodeIdx.ENUMERATE, function (f, evalStack) {
 // calls iterator 'next'
 export const NEXT = createOP(OPCodeIdx.NEXT, function (f, evalStack) {
   callm(f, 0, 'next', evalStack.pop());
-  if (f.error instanceof StopIteration) {
-    f.error = null;
+  if (f.evalError instanceof StopIteration) {
+    f.evalError = null;
     f.paused = false;
     return (f.ip = this.args[0]);
   }
@@ -583,7 +584,7 @@ export const ENTER_SCOPE = createOP(OPCodeIdx.ENTER_SCOPE, function (frame) {
  * exit nested scope
  * */
 export const EXIT_SCOPE = createOP(OPCodeIdx.EXIT_SCOPE, function (frame) {
-  return frame.setScope(frame.getScope()!.parent!);
+  return frame.setScope(frame.getScope()!.parentScope!);
 });
 
 /*
@@ -604,106 +605,108 @@ export const COLUMN = createOP(OPCodeIdx.COLUMN, function (frame) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DEBUG = createOP(OPCodeIdx.DEBUG, function (frame, evalStack, scope) {});
 
-export const InsMap = new Map([
-  [OPCodeIdx.SR1, SR1],
-  [OPCodeIdx.SR2, SR2],
-  [OPCodeIdx.SR3, SR3],
 
-  [OPCodeIdx.LR1, LR1],
-  [OPCodeIdx.LR2, LR2],
-  [OPCodeIdx.LR3, LR3],
 
-  [OPCodeIdx.SREXP, SREXP],
-
-  [OPCodeIdx.LINE, LINE],
-  [OPCodeIdx.COLUMN, COLUMN],
-
-  [OPCodeIdx.GETL, GETL],
-  [OPCodeIdx.SETL, SETL],
-
-  [OPCodeIdx.POP, POP],
-  [OPCodeIdx.DUP, DUP],
-  [OPCodeIdx.SWAP, SWAP],
-
-  [OPCodeIdx.GLOBAL, GLOBAL],
-
-  [OPCodeIdx.GET, GET],
-  [OPCodeIdx.SET, SET],
-  [OPCodeIdx.DEL, DEL],
-
-  [OPCodeIdx.GETG, GETG],
-  [OPCodeIdx.SETG, SETG],
-  [OPCodeIdx.SLHS, SLHS],
-  [OPCodeIdx.LLHS, LLHS],
-  [OPCodeIdx.DECLG, DECLG],
-
-  [OPCodeIdx.PLU, PLU],
-  [OPCodeIdx.INV, INV],
-  [OPCodeIdx.LNOT, LNOT],
-  [OPCodeIdx.NOT, NOT],
-  [OPCodeIdx.INC, INC],
-  [OPCodeIdx.DEC, DEC],
-
-  [OPCodeIdx.ADD, ADD],
-  [OPCodeIdx.SUB, SUB],
-  [OPCodeIdx.MUL, MUL],
-  [OPCodeIdx.DIV, DIV],
-  [OPCodeIdx.MOD, MOD],
-  [OPCodeIdx.SHL, SHL],
-  [OPCodeIdx.SAR, SAR],
-  [OPCodeIdx.SHR, SHR],
-  [OPCodeIdx.OR, OR],
-  [OPCodeIdx.AND, AND],
-  [OPCodeIdx.XOR, XOR],
-  [OPCodeIdx.EXP, EXP],
-
-  [OPCodeIdx.CEQ, CEQ],
-  [OPCodeIdx.CNEQ, CNEQ],
-  [OPCodeIdx.CID, CID],
-  [OPCodeIdx.CNID, CNID],
-  [OPCodeIdx.LT, LT],
-  [OPCodeIdx.LTE, LTE],
-
-  [OPCodeIdx.GT, GT],
-  [OPCodeIdx.GTE, GTE],
-
-  [OPCodeIdx.IN, IN],
-  [OPCodeIdx.INSTANCEOF, INSTANCEOF],
-  [OPCodeIdx.TYPEOF, TYPEOF],
-  [OPCodeIdx.VOID, VOID],
-
-  [OPCodeIdx.UNDEF, UNDEF],
-
-  [OPCodeIdx.LITERAL, LITERAL],
-  [OPCodeIdx.STRING_LITERAL, STRING_LITERAL],
-  [OPCodeIdx.REGEXP_LITERAL, REGEXP_LITERAL],
-  [OPCodeIdx.OBJECT_LITERAL, OBJECT_LITERAL],
-  [OPCodeIdx.ARRAY_LITERAL, ARRAY_LITERAL],
-
-  [OPCodeIdx.ITER, ITER],
-  [OPCodeIdx.ENUMERATE, ENUMERATE],
-  [OPCodeIdx.NEXT, NEXT],
-
-  [OPCodeIdx.JMP, JMP],
-  [OPCodeIdx.JMPT, JMPT],
-  [OPCodeIdx.JMPF, JMPF],
-
-  [OPCodeIdx.FUNCTION_SETUP, FUNCTION_SETUP],
-  [OPCodeIdx.FUNCTION, FUNCTION],
-  [OPCodeIdx.REST, REST],
-  [OPCodeIdx.RET, RET],
-  [OPCodeIdx.RETV, RETV],
-  [OPCodeIdx.NEW, NEW],
-  [OPCodeIdx.CALL, CALL],
-  [OPCodeIdx.CALLM, CALLM],
-  [OPCodeIdx.PAUSE, PAUSE],
-  [OPCodeIdx.YIELD, YIELD],
-  [OPCodeIdx.THROW, THROW],
-  [OPCodeIdx.ENTER_GUARD, ENTER_GUARD],
-  [OPCodeIdx.EXIT_GUARD, EXIT_GUARD],
-
-  [OPCodeIdx.ENTER_SCOPE, ENTER_SCOPE],
-  [OPCodeIdx.EXIT_SCOPE, EXIT_SCOPE],
-
-  [OPCodeIdx.DEBUG, DEBUG],
-]);
+// export const InsMap = new Map([
+//   [OPCodeIdx.SR1, SR1],
+//   [OPCodeIdx.SR2, SR2],
+//   [OPCodeIdx.SR3, SR3],
+//
+//   [OPCodeIdx.LR1, LR1],
+//   [OPCodeIdx.LR2, LR2],
+//   [OPCodeIdx.LR3, LR3],
+//
+//   [OPCodeIdx.SREXP, SREXP],
+//
+//   [OPCodeIdx.LINE, LINE],
+//   [OPCodeIdx.COLUMN, COLUMN],
+//
+//   [OPCodeIdx.GETL, GETL],
+//   [OPCodeIdx.SETL, SETL],
+//
+//   [OPCodeIdx.POP, POP],
+//   [OPCodeIdx.DUP, DUP],
+//   [OPCodeIdx.SWAP, SWAP],
+//
+//   [OPCodeIdx.GLOBAL, GLOBAL],
+//
+//   [OPCodeIdx.GET, GET],
+//   [OPCodeIdx.SET, SET],
+//   [OPCodeIdx.DEL, DEL],
+//
+//   [OPCodeIdx.GETG, GETG],
+//   [OPCodeIdx.SETG, SETG],
+//   [OPCodeIdx.SLHS, SLHS],
+//   [OPCodeIdx.LLHS, LLHS],
+//   [OPCodeIdx.DECLG, DECLG],
+//
+//   [OPCodeIdx.PLU, PLU],
+//   [OPCodeIdx.INV, INV],
+//   [OPCodeIdx.LNOT, LNOT],
+//   [OPCodeIdx.NOT, NOT],
+//   [OPCodeIdx.INC, INC],
+//   [OPCodeIdx.DEC, DEC],
+//
+//   [OPCodeIdx.ADD, ADD],
+//   [OPCodeIdx.SUB, SUB],
+//   [OPCodeIdx.MUL, MUL],
+//   [OPCodeIdx.DIV, DIV],
+//   [OPCodeIdx.MOD, MOD],
+//   [OPCodeIdx.SHL, SHL],
+//   [OPCodeIdx.SAR, SAR],
+//   [OPCodeIdx.SHR, SHR],
+//   [OPCodeIdx.OR, OR],
+//   [OPCodeIdx.AND, AND],
+//   [OPCodeIdx.XOR, XOR],
+//   [OPCodeIdx.EXP, EXP],
+//
+//   [OPCodeIdx.CEQ, CEQ],
+//   [OPCodeIdx.CNEQ, CNEQ],
+//   [OPCodeIdx.CID, CID],
+//   [OPCodeIdx.CNID, CNID],
+//   [OPCodeIdx.LT, LT],
+//   [OPCodeIdx.LTE, LTE],
+//
+//   [OPCodeIdx.GT, GT],
+//   [OPCodeIdx.GTE, GTE],
+//
+//   [OPCodeIdx.IN, IN],
+//   [OPCodeIdx.INSTANCEOF, INSTANCEOF],
+//   [OPCodeIdx.TYPEOF, TYPEOF],
+//   [OPCodeIdx.VOID, VOID],
+//
+//   [OPCodeIdx.UNDEF, UNDEF],
+//
+//   [OPCodeIdx.LITERAL, LITERAL],
+//   [OPCodeIdx.STRING_LITERAL, STRING_LITERAL],
+//   [OPCodeIdx.REGEXP_LITERAL, REGEXP_LITERAL],
+//   [OPCodeIdx.OBJECT_LITERAL, OBJECT_LITERAL],
+//   [OPCodeIdx.ARRAY_LITERAL, ARRAY_LITERAL],
+//
+//   [OPCodeIdx.ITER, ITER],
+//   [OPCodeIdx.ENUMERATE, ENUMERATE],
+//   [OPCodeIdx.NEXT, NEXT],
+//
+//   [OPCodeIdx.JMP, JMP],
+//   [OPCodeIdx.JMPT, JMPT],
+//   [OPCodeIdx.JMPF, JMPF],
+//
+//   [OPCodeIdx.FUNCTION_SETUP, FUNCTION_SETUP],
+//   [OPCodeIdx.FUNCTION, FUNCTION],
+//   [OPCodeIdx.REST, REST],
+//   [OPCodeIdx.RET, RET],
+//   [OPCodeIdx.RETV, RETV],
+//   [OPCodeIdx.NEW, NEW],
+//   [OPCodeIdx.CALL, CALL],
+//   [OPCodeIdx.CALLM, CALLM],
+//   [OPCodeIdx.PAUSE, PAUSE],
+//   [OPCodeIdx.YIELD, YIELD],
+//   [OPCodeIdx.THROW, THROW],
+//   [OPCodeIdx.ENTER_GUARD, ENTER_GUARD],
+//   [OPCodeIdx.EXIT_GUARD, EXIT_GUARD],
+//
+//   [OPCodeIdx.ENTER_SCOPE, ENTER_SCOPE],
+//   [OPCodeIdx.EXIT_SCOPE, EXIT_SCOPE],
+//
+//   [OPCodeIdx.DEBUG, DEBUG],
+// ]);

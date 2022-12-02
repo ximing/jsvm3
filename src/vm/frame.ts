@@ -9,7 +9,7 @@ export class Frame {
   script: Script;
   _scope: Scope | null;
 
-  error: any;
+  evalError: any;
   paused: boolean;
 
   realm: Realm;
@@ -63,12 +63,12 @@ export class Frame {
       t.fiber.timeout--;
       const ins = instructions[t.ip++];
       ins.exec(t, t.evalStack, s!, t.realm);
-      // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args, this.error, this.paused, ins.id);
+      // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args, this.evalError, this.paused, ins.id);
     }
     if (t.fiber.timeout === 0) {
       t.paused = t.fiber.paused = true;
     }
-    if (!t.paused && !t.error && (len = t.evalStack.len()) !== 0) {
+    if (!t.paused && !t.evalError && (len = t.evalStack.len()) !== 0) {
       // debug assertion
       throw new Error(`eStack has ${len} items after run`);
     }

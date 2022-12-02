@@ -3,7 +3,7 @@ import { XYZ } from '../src/vm/vm';
 
 export const run = function (code, ctx = {}, hoisting = true, convertES5 = false) {
   const script = transform(code, 'test.js', { hoisting, convertES5 });
-  const vm = new XYZ(ctx);
+  const vm = new XYZ(Object.assign({ Map: Map, WeakMap: WeakMap, Set: Set, Proxy: Proxy }, ctx));
   // console.log(JSON.stringify(script.toJSON(), null, 2));
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const res = vm.run(script);
