@@ -117,7 +117,7 @@ export const scriptToJson = function (script: Script) {
   for (const regexp of script.regexps) {
     rv[8].push(regexpToString(regexp));
   }
-  rv[9] = script.source || 0;
-  rv[10] = script.source || 0;
+  // rv[9] = script.source || 0;
+  // rv[10] = script.source || 0;
   return rv;
 };
