@@ -73,12 +73,12 @@ export const createOP = function (
 //     if (fiber.done()) {
 //       throw new XYZError('generator closed');
 //     }
-//     frame = fiber._cStack[fiber.depth];
+//     frame = fiber.callStack[fiber.depth];
 //     if (newborn) {
 //       newborn = false;
 //       fiber.run();
 //     } else {
-//       frame!._eStack.push(obj);
+//       frame!.evalStack.push(obj);
 //       fiber.resume();
 //     }
 //     if (caller) {
@@ -100,7 +100,7 @@ export const createOP = function (
 //     if (fiber.done()) {
 //       throw new XYZError('generator closed');
 //     }
-//     frame = fiber._cStack[fiber.depth];
+//     frame = fiber.callStack[fiber.depth];
 //     frame!.error = e;
 //     fiber.resume();
 //     if (caller) {
@@ -120,8 +120,8 @@ export const createOP = function (
 //       fiber.depth = -1;
 //     }
 //     // force a return
-//     frame = fiber._cStack[fiber.depth];
-//     frame!._eStack.clear();
+//     frame = fiber.callStack[fiber.depth];
+//     frame!.evalStack.clear();
 //     frame!.ip = frame!.exitIp;
 //     fiber.resume();
 //     if (caller) {
@@ -160,7 +160,7 @@ export const createFunction = function (
     //   if (!(fiber = fun.__fiber__)) {
     //     return gen;
     //   }
-    //   fiber._cStack[fiber.depth]._eStack.push(gen);
+    //   fiber.callStack[fiber.depth].evalStack.push(gen);
     //   fun.__fiber__ = null;
     //   return (fun.__cname__ = null);
     // };
@@ -170,7 +170,7 @@ export const createFunction = function (
       let run = false;
       if ((fiber = fun.__fiber__)) {
         // callStack
-        fiber._cStack[fiber.depth].paused = true;
+        fiber.callStack[fiber.depth].paused = true;
         fun.__fiber__ = null;
         construct = fun.__con__;
         fun.__con__ = null;
@@ -190,7 +190,9 @@ export const createFunction = function (
   }
   defProp(fun, '__xyzFun__', { value: true });
   defProp(fun, 'length', { value: script.paramsSize });
+  // @ifdef COMPILER
   defProp(fun, '__source__', { value: script.source });
+  // @endif
   defProp(fun, '__name__', { value: script.name });
   defProp(fun, 'name', { value: script.name });
   defProp(fun, '__con__', { value: null, writable: true });
@@ -200,7 +202,7 @@ export const createFunction = function (
 };
 
 export const ret = function (frame: Frame) {
-  frame._eStack.clear();
+  frame.evalStack.clear();
   return (frame.exitIp = frame.ip);
 };
 //
@@ -252,16 +254,16 @@ const createNativeInstance = function (constructor, args) {
   // }
 };
 
-export const getParams = function (length: number, _eStack: EvaluationStack) {
+export const getParams = function (length: number, evalStack: EvaluationStack) {
   const args: any = { length };
   while (length) {
-    args[--length] = _eStack.pop();
+    args[--length] = evalStack.pop();
   }
   return args;
 };
 
 export const callFun = function (frame, func, args, target, name, construct = false) {
-  const { _eStack, fiber, realm } = frame;
+  const { evalStack, fiber, realm } = frame;
   if (typeof func !== 'function') {
     return throwErr(frame, new XYZTypeError(`${name || 'object'} is not a function`));
   }
@@ -287,7 +289,7 @@ export const callFun = function (frame, func, args, target, name, construct = fa
       val = func.apply(target, args);
     }
     if (push && !fiber.paused) {
-      return _eStack.push(val);
+      return evalStack.push(val);
     }
   } catch (nativeError) {
     return throwErr(frame, nativeError);
@@ -295,12 +297,12 @@ export const callFun = function (frame, func, args, target, name, construct = fa
 };
 
 export const call = function (frame: Frame, length: number, name: string | null, construct?) {
-  const { _eStack } = frame;
+  const { evalStack } = frame;
   const args = { length, callee: null };
   while (length) {
-    args[--length] = _eStack.pop();
+    args[--length] = evalStack.pop();
   }
-  const func = _eStack.pop();
+  const func = evalStack.pop();
   args.callee = func;
   return callFun(frame, func, args, null, name, construct);
 };
@@ -312,11 +314,11 @@ export const callm = function (
   target?: any,
   name?: string | null
 ) {
-  const { _eStack } = frame;
-  const args = getParams(length, _eStack);
+  const { evalStack } = frame;
+  const args = getParams(length, evalStack);
   if (!key) {
-    key = _eStack.pop();
-    target = _eStack.pop();
+    key = evalStack.pop();
+    target = evalStack.pop();
   }
   if (target == null) {
     let id = 'null';

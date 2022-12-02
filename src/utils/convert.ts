@@ -3,7 +3,7 @@ import { Instruction } from '../opcodes/types';
 import { InsMap } from '../opcodes/ins';
 
 export const fromJson = function (json: any) {
-  const filename = json[0] !== 0 ? json[0] : null;
+  const fName = json[0] !== 0 ? json[0] : null;
   const name = json[1] !== 0 ? json[1] : null;
   const instructions = instructionsFromJson(json[2]);
   const children: any[] = [];
@@ -29,7 +29,7 @@ export const fromJson = function (json: any) {
   }
   const source = json[9] !== 0 ? json[9] : null;
   return new Script(
-    filename,
+    fName,
     name,
     instructions,
     children,
@@ -77,7 +77,9 @@ export const instructionsToJson = function (instructions: Instruction[]) {
   for (const inst of instructions) {
     let code: any[] = [inst.id];
     // @ifdef COMPILER
-    code = [inst.name];
+    if (process.env.KEEP_INS_NAME) {
+      code = [inst.name];
+    }
     // @endif
     if (inst.args) {
       for (const a of inst.args) {
@@ -96,7 +98,7 @@ export const instructionsToJson = function (instructions: Instruction[]) {
 
 export const scriptToJson = function (script: Script) {
   const rv = [
-    script.filename || 0,
+    script.fName || 0,
     script.name || 0,
     instructionsToJson(script.instructions),
     [],

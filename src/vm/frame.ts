@@ -6,16 +6,16 @@ import type { Script } from './script';
 
 export class Frame {
   fiber: Fiber;
-  srt: Script;
-  scp: Scope | null;
+  script: Script;
+  _scope: Scope | null;
 
   error: any;
   paused: boolean;
 
   realm: Realm;
   // frame name
-  fname: any;
-  _eStack: EvaluationStack;
+  fName: any;
+  evalStack: EvaluationStack;
   construct: any;
 
   ip: number;
@@ -31,21 +31,21 @@ export class Frame {
   constructor(
     fiber: Fiber,
     script: Script,
-    scope: Scope,
+    s: Scope,
     realm: Realm,
-    fname: string,
+    fName: string,
     construct = false
   ) {
     const t = this;
     t.fiber = fiber;
-    t.srt = script;
-    t.scp = scope;
+    t.script = script;
+    t._scope = s;
     t.realm = realm;
-    t.fname = fname;
+    t.fName = fName;
     t.construct = construct;
-    t._eStack = new EvaluationStack(t.srt.stackSize, t.fiber);
+    t.evalStack = new EvaluationStack(t.script.stackSize, t.fiber);
     t.ip = 0;
-    t.exitIp = t.srt.instructions.length;
+    t.exitIp = t.script.instructions.length;
     t.paused = false;
     t.finalizer = null;
     t.guards = [];
@@ -57,24 +57,34 @@ export class Frame {
   run() {
     let len;
     const t = this;
-    const { instructions } = t.srt;
+    const s = this._scope;
+    const { instructions } = t.script;
     while (t.ip !== t.exitIp && !t.paused && t.fiber.timeout !== 0) {
       t.fiber.timeout--;
       const ins = instructions[t.ip++];
-      ins.exec(t, t._eStack, t.scp!, t.realm);
+      ins.exec(t, t.evalStack, s!, t.realm);
       // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args, this.error, this.paused, ins.id);
     }
     if (t.fiber.timeout === 0) {
       t.paused = t.fiber.paused = true;
     }
-    if (!t.paused && !t.error && (len = t._eStack.len()) !== 0) {
+    if (!t.paused && !t.error && (len = t.evalStack.len()) !== 0) {
       // debug assertion
-      throw new Error(`_eStack has ${len} items after run`);
+      throw new Error(`eStack has ${len} items after run`);
     }
   }
 
   done() {
     return this.ip === this.exitIp;
+  }
+
+  // 方便terser 压缩 scope
+  getScope() {
+    return this._scope;
+  }
+
+  setScope(__s: Scope) {
+    return (this._scope = __s);
   }
 
   // later we will use these methods to notify listeners(eg: debugger)

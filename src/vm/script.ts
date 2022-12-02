@@ -5,7 +5,7 @@ import { scriptToJson } from '../utils/convert';
 // @endif
 
 export class Script {
-  filename: string;
+  fName: string;
   name: string;
   instructions: Instruction[];
   // eslint-disable-next-line no-use-before-define
@@ -16,11 +16,14 @@ export class Script {
   stackSize: number;
   strings: any;
   regexps: RegExp[];
+  // @ifdef COMPILER
   source: any;
+  // @endif
   paramsSize = 0;
 
+  // fName filename
   constructor(
-    filename,
+    fName,
     name,
     instructions,
     children,
@@ -30,10 +33,12 @@ export class Script {
     stackSize,
     strings,
     regexps,
+    // @ifdef COMPILER
     source?
+    // @endif
   ) {
     const t = this;
-    t.filename = filename;
+    t.fName = fName;
     t.name = name;
     t.instructions = instructions;
     t.children = children;
@@ -43,7 +48,9 @@ export class Script {
     t.stackSize = stackSize;
     t.strings = strings;
     t.regexps = regexps;
+    // @ifdef COMPILER
     t.source = source;
+    // @endif
   }
 
   // @ifdef COMPILER

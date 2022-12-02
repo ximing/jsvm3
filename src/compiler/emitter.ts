@@ -71,7 +71,7 @@ type EmitterLabel = {
 };
 
 export class Emitter extends Visitor {
-  filename: string;
+  fName: string;
   name: string | null;
   original: string[];
   source: string;
@@ -93,9 +93,9 @@ export class Emitter extends Visitor {
   regexps: RegExp[];
   ignoreNotDefined: number;
 
-  constructor(scopes, filename: string, name: string | null, original: string[], source: string) {
+  constructor(scopes, fName: string, name: string | null, original: string[], source: string) {
     super();
-    this.filename = filename;
+    this.fName = fName;
     this.name = name;
     this.original = original;
     this.source = source;
@@ -347,7 +347,7 @@ export class Emitter extends Visitor {
       this.children[i] = this.children[i]();
     }
     return new Script(
-      this.filename,
+      this.fName,
       this.name,
       this.instructions,
       this.children,
@@ -1221,7 +1221,7 @@ export class Emitter extends Visitor {
       }
       const fn = new Emitter(
         [initialScope].concat(this.scopes),
-        this.filename,
+        this.fName,
         name,
         this.original,
         source
@@ -1313,7 +1313,7 @@ export class Emitter extends Visitor {
   }
 
   CallExpression(node) {
-    let fname;
+    let fName;
     const len = node.arguments.length;
     if (node.callee.type === 'MemberExpression') {
       this.visit(node.callee.object); // push target
@@ -1321,17 +1321,17 @@ export class Emitter extends Visitor {
       this.createINS(LR1); // load target
       this.visitProperty(node.callee); // push property
       if (node.callee.property.type === 'Identifier') {
-        fname = node.callee.property.name;
+        fName = node.callee.property.name;
       }
       this.visit(node.arguments); // push arguments
-      this.createINS(CALLM, len, fname);
+      this.createINS(CALLM, len, fName);
     } else {
       this.visit(node.callee);
       if (node.callee.type === 'Identifier') {
-        fname = node.callee.name;
+        fName = node.callee.name;
       }
       this.visit(node.arguments); // push arguments
-      this.createINS(CALL, len, fname);
+      this.createINS(CALL, len, fName);
     }
     return node;
   }

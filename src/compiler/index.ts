@@ -4,7 +4,7 @@ import { Emitter } from './emitter';
 
 export const transform = (
   code: string,
-  filename: string,
+  fName: string,
   { hoisting, convertES5 } = { hoisting: true, convertES5: true }
 ) => {
   let transformCode: string = code;
@@ -58,7 +58,7 @@ export const transform = (
   });
   const emitter = new Emitter(
     [],
-    filename,
+    fName,
     null,
     transformCode.split('\n'),
     transformCode

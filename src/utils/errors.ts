@@ -16,11 +16,12 @@ function printTrace(trace: Trace[], indent?: string) {
     }
     const l = frame.line;
     const c = frame.column;
-    const { name, filename } = frame.at;
+    const name = frame.at.name;
+    const fName = frame.at.fName;
     if (name) {
-      rv += `\n${indent}at ${name} (${filename}:${l}:${c})`;
+      rv += `\n${indent}at ${name} (${fName}:${l}:${c})`;
     } else {
-      rv += `\n${indent}at ${filename}:${l}:${c}`;
+      rv += `\n${indent}at ${fName}:${l}:${c}`;
     }
   }
   return rv;

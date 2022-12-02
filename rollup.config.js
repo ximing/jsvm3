@@ -7,6 +7,7 @@ import babel from '@rollup/plugin-babel';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as t from '@babel/types';
+import { terser } from 'rollup-plugin-terser';
 
 import pkg from './package.json';
 
@@ -98,8 +99,8 @@ export default {
             visitor: {
               CallExpression({ node }) {
                 if (t.isMemberExpression(node.callee)) {
-                  // _eStack.push()
-                  if (t.isIdentifier(node.callee.object) && node.callee.object.name === '_eStack') {
+                  // evalStack.push()
+                  if (t.isIdentifier(node.callee.object) && node.callee.object.name === 'evalStack') {
                     if (t.isIdentifier(node.callee.property)) {
                       if (node.callee.property.name === 'push') {
                         node.callee.property.name = 'p';
@@ -119,6 +120,14 @@ export default {
         },
       ],
       extensions: ['.ts'],
+    }),
+    terser({
+      mangle: {
+        module: true,
+        properties: {
+          reserved: ['run'],
+        },
+      },
     }),
   ],
 };

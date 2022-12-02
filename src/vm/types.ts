@@ -1,7 +1,7 @@
 export type Trace = {
   at: {
     name: string;
-    filename: string;
+    fName: string;
   };
   line: number;
   column: number;
