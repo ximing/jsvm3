@@ -209,13 +209,14 @@ export const SETL = createOP(OPCodeIdx.SETL, function (frame, evalStack, s) {
 export const GETG = createOP(
   OPCodeIdx.GETG,
   function (frame, evalStack, scope, realm) {
+    const k = frame.script.globalNames[this.args[0]];
     // name, ignoreNotDefined
     // console.log(this.args[0], this.args[1]);
-    if (!hasProp(realm.global, this.args[0]) && !this.args[1]) {
-      return throwErr(frame, new XYZReferenceError('' + this.args[0] + ' is not def'));
+    if (!hasProp(realm.global, k) && !this.args[1]) {
+      return throwErr(frame, new XYZReferenceError(`.${k} not def`));
     }
     // console.log(realm.global[this.args[0]]);
-    return evalStack.push(realm.global[this.args[0]]);
+    return evalStack.push(realm.global[k]);
   },
   () => 1
 );
@@ -224,15 +225,17 @@ export const GETG = createOP(
  * 设置全局变量
  * */
 export const SETG = createOP(OPCodeIdx.SETG, function (frame, evalStack, scope, realm) {
-  return evalStack.push((realm.global[this.args[0]] = evalStack.pop()));
+  const k = frame.script.globalNames[this.args[0]];
+  return evalStack.push((realm.global[k] = evalStack.pop()));
 });
 
 /*
  * 声明全局变量，考虑 __tests__/es5/global.test.ts case
  * */
 export const DECLG = createOP(OPCodeIdx.DECLG, function (frame, evalStack, scope, realm) {
-  if (!hasProp(realm.global, this.args[0])) {
-    realm.global[this.args[0]] = undefined;
+  const k = frame.script.globalNames[this.args[0]];
+  if (!hasProp(realm.global, k)) {
+    realm.global[k] = undefined;
   }
 });
 
@@ -540,19 +543,19 @@ export const NEXT = createOP(OPCodeIdx.NEXT, function (f, evalStack) {
   callm(f, 0, 'next', evalStack.pop());
   if (f.evalError instanceof StopIteration) {
     f.evalError = null;
-    f.paused = false;
+    f.suspended = false;
     return (f.ip = this.args[0]);
   }
 });
 // pause frame
 export const PAUSE = createOP(OPCodeIdx.PAUSE, function (f) {
-  return (f.paused = true);
+  return (f.suspended = true);
 });
 
 // yield value from generator
 export const YIELD = createOP(OPCodeIdx.YIELD, function (f, evalStack) {
   f.fiber.yielded = evalStack.pop();
-  return f.fiber.pause();
+  return f.fiber.suspend();
 });
 
 export const THROW = createOP(OPCodeIdx.THROW, function (f, evalStack) {
@@ -604,109 +607,3 @@ export const COLUMN = createOP(OPCodeIdx.COLUMN, function (frame) {
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DEBUG = createOP(OPCodeIdx.DEBUG, function (frame, evalStack, scope) {});
-
-
-
-// export const InsMap = new Map([
-//   [OPCodeIdx.SR1, SR1],
-//   [OPCodeIdx.SR2, SR2],
-//   [OPCodeIdx.SR3, SR3],
-//
-//   [OPCodeIdx.LR1, LR1],
-//   [OPCodeIdx.LR2, LR2],
-//   [OPCodeIdx.LR3, LR3],
-//
-//   [OPCodeIdx.SREXP, SREXP],
-//
-//   [OPCodeIdx.LINE, LINE],
-//   [OPCodeIdx.COLUMN, COLUMN],
-//
-//   [OPCodeIdx.GETL, GETL],
-//   [OPCodeIdx.SETL, SETL],
-//
-//   [OPCodeIdx.POP, POP],
-//   [OPCodeIdx.DUP, DUP],
-//   [OPCodeIdx.SWAP, SWAP],
-//
-//   [OPCodeIdx.GLOBAL, GLOBAL],
-//
-//   [OPCodeIdx.GET, GET],
-//   [OPCodeIdx.SET, SET],
-//   [OPCodeIdx.DEL, DEL],
-//
-//   [OPCodeIdx.GETG, GETG],
-//   [OPCodeIdx.SETG, SETG],
-//   [OPCodeIdx.SLHS, SLHS],
-//   [OPCodeIdx.LLHS, LLHS],
-//   [OPCodeIdx.DECLG, DECLG],
-//
-//   [OPCodeIdx.PLU, PLU],
-//   [OPCodeIdx.INV, INV],
-//   [OPCodeIdx.LNOT, LNOT],
-//   [OPCodeIdx.NOT, NOT],
-//   [OPCodeIdx.INC, INC],
-//   [OPCodeIdx.DEC, DEC],
-//
-//   [OPCodeIdx.ADD, ADD],
-//   [OPCodeIdx.SUB, SUB],
-//   [OPCodeIdx.MUL, MUL],
-//   [OPCodeIdx.DIV, DIV],
-//   [OPCodeIdx.MOD, MOD],
-//   [OPCodeIdx.SHL, SHL],
-//   [OPCodeIdx.SAR, SAR],
-//   [OPCodeIdx.SHR, SHR],
-//   [OPCodeIdx.OR, OR],
-//   [OPCodeIdx.AND, AND],
-//   [OPCodeIdx.XOR, XOR],
-//   [OPCodeIdx.EXP, EXP],
-//
-//   [OPCodeIdx.CEQ, CEQ],
-//   [OPCodeIdx.CNEQ, CNEQ],
-//   [OPCodeIdx.CID, CID],
-//   [OPCodeIdx.CNID, CNID],
-//   [OPCodeIdx.LT, LT],
-//   [OPCodeIdx.LTE, LTE],
-//
-//   [OPCodeIdx.GT, GT],
-//   [OPCodeIdx.GTE, GTE],
-//
-//   [OPCodeIdx.IN, IN],
-//   [OPCodeIdx.INSTANCEOF, INSTANCEOF],
-//   [OPCodeIdx.TYPEOF, TYPEOF],
-//   [OPCodeIdx.VOID, VOID],
-//
-//   [OPCodeIdx.UNDEF, UNDEF],
-//
-//   [OPCodeIdx.LITERAL, LITERAL],
-//   [OPCodeIdx.STRING_LITERAL, STRING_LITERAL],
-//   [OPCodeIdx.REGEXP_LITERAL, REGEXP_LITERAL],
-//   [OPCodeIdx.OBJECT_LITERAL, OBJECT_LITERAL],
-//   [OPCodeIdx.ARRAY_LITERAL, ARRAY_LITERAL],
-//
-//   [OPCodeIdx.ITER, ITER],
-//   [OPCodeIdx.ENUMERATE, ENUMERATE],
-//   [OPCodeIdx.NEXT, NEXT],
-//
-//   [OPCodeIdx.JMP, JMP],
-//   [OPCodeIdx.JMPT, JMPT],
-//   [OPCodeIdx.JMPF, JMPF],
-//
-//   [OPCodeIdx.FUNCTION_SETUP, FUNCTION_SETUP],
-//   [OPCodeIdx.FUNCTION, FUNCTION],
-//   [OPCodeIdx.REST, REST],
-//   [OPCodeIdx.RET, RET],
-//   [OPCodeIdx.RETV, RETV],
-//   [OPCodeIdx.NEW, NEW],
-//   [OPCodeIdx.CALL, CALL],
-//   [OPCodeIdx.CALLM, CALLM],
-//   [OPCodeIdx.PAUSE, PAUSE],
-//   [OPCodeIdx.YIELD, YIELD],
-//   [OPCodeIdx.THROW, THROW],
-//   [OPCodeIdx.ENTER_GUARD, ENTER_GUARD],
-//   [OPCodeIdx.EXIT_GUARD, EXIT_GUARD],
-//
-//   [OPCodeIdx.ENTER_SCOPE, ENTER_SCOPE],
-//   [OPCodeIdx.EXIT_SCOPE, EXIT_SCOPE],
-//
-//   [OPCodeIdx.DEBUG, DEBUG],
-// ]);

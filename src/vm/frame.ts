@@ -10,7 +10,7 @@ export class Frame {
   _scope: Scope | null;
 
   evalError: any;
-  paused: boolean;
+  suspended: boolean;
 
   realm: Realm;
   // frame name
@@ -46,7 +46,7 @@ export class Frame {
     t.evalStack = new EvaluationStack(t.script.stackSize, t.fiber);
     t.ip = 0;
     t.exitIp = t.script.instructions.length;
-    t.paused = false;
+    t.suspended = false;
     t.finalizer = null;
     t.guards = [];
     t.rv = undefined;
@@ -59,22 +59,22 @@ export class Frame {
     const t = this;
     const s = this._scope;
     const { instructions } = t.script;
-    while (t.ip !== t.exitIp && !t.paused && t.fiber.timeout !== 0) {
+    while (t.ip !== t.exitIp && !t.suspended && t.fiber.timeout !== 0) {
       t.fiber.timeout--;
       const ins = instructions[t.ip++];
       ins.exec(t, t.evalStack, s!, t.realm);
-      // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args, this.evalError, this.paused, ins.id);
+      // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args, this.evalError, this.suspended, ins.id);
     }
     if (t.fiber.timeout === 0) {
-      t.paused = t.fiber.paused = true;
+      t.suspended = t.fiber.suspended = true;
     }
-    if (!t.paused && !t.evalError && (len = t.evalStack.len()) !== 0) {
+    if (!t.suspended && !t.evalError && (len = t.evalStack.len()) !== 0) {
       // debug assertion
-      throw new Error(`eStack has ${len} items after run`);
+      throw new Error(`eStack has ${len} items`);
     }
   }
 
-  done() {
+  isDone() {
     return this.ip === this.exitIp;
   }
 

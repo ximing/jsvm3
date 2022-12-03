@@ -80,6 +80,7 @@ export const instructionsToJson = function (instructions: Instruction[]) {
     if (process.env.KEEP_INS_NAME) {
       code = [inst.name];
     }
+    code = [inst.name];
     // @endif
     if (inst.args) {
       for (const a of inst.args) {
@@ -94,6 +95,36 @@ export const instructionsToJson = function (instructions: Instruction[]) {
     rv.push(code);
   }
   return rv;
+};
+
+export const scriptToJsonObject = function (script: Script) {
+  const obj: any = {
+    fName: script.fName,
+    name: script.name,
+    instructions: instructionsToJson(script.instructions),
+    localNames: script.localNames,
+    globalNames: script.globalNames,
+    stackSize: script.stackSize,
+    strings: script.strings,
+    children: [],
+    guards: [],
+    regexps: [],
+  };
+  for (const s of Array.from(script.children)) {
+    obj.children.push(scriptToJsonObject(s));
+  }
+  for (const guard of Array.from(script.guards)) {
+    obj.guards.push([
+      guard.start || -1,
+      guard.handler || -1,
+      guard.finalizer || -1,
+      guard.end || -1,
+    ]);
+  }
+  for (const regexp of script.regexps) {
+    obj.regexps.push(regexpToString(regexp));
+  }
+  return obj;
 };
 
 export const scriptToJson = function (script: Script) {

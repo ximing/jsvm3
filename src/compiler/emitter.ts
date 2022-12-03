@@ -82,6 +82,7 @@ export class Emitter extends Visitor {
   withLevel: number;
   scopes: any[];
   scriptScope: any;
+  globalNames: any[];
   localNames: any[];
   varIndex: number;
   guards: any[];
@@ -111,6 +112,7 @@ export class Emitter extends Visitor {
     if (scopes) {
       this.scriptScope = scopes[0];
     }
+    this.globalNames = [];
     this.localNames = [];
     this.varIndex = 3;
     this.guards = [];
@@ -157,8 +159,18 @@ export class Emitter extends Visitor {
       this.createINS(GETL, ...scope);
       return;
     }
-    this.createINS(GETG, name, this.ignoreNotDefined);
+    const idx = this.globalIdx(name);
+    this.createINS(GETG, idx, this.ignoreNotDefined);
     this.ignoreNotDefined = 0;
+  }
+
+  globalIdx(name: string) {
+    for (let i = 0; i < this.globalNames.length; i++) {
+      if (this.globalNames[i] === name) {
+        return i;
+      }
+    }
+    return this.globalNames.push(name) - 1;
   }
 
   scopeSet(name, isDecl = false) {
@@ -166,10 +178,11 @@ export class Emitter extends Visitor {
     if (scope) {
       return this.createINS(SETL, ...scope);
     }
+    const idx = this.globalIdx(name);
     if (isDecl) {
-      return this.createINS(DECLG, name); // global object set
+      return this.createINS(DECLG, idx);
     } else {
-      return this.createINS(SETG, name); // global object set
+      return this.createINS(SETG, idx);
     }
   }
 
@@ -269,19 +282,28 @@ export class Emitter extends Visitor {
     if (scope) {
       opcode = SETL(scope);
     } else {
-      opcode = SETG([name]);
+      const idx = this.globalIdx(name);
+      opcode = SETG([idx]);
     }
     // 通过将名称绑定到函数 ref 来声明函数,  在其他不是函数声明的语句之前
     const codes = [FUNCTION([index, generator]), opcode, POP(null)];
     this.instructions = codes.concat(this.instructions);
     const processedLabels = {};
     const result: any[] = [];
+    console.log(this.instructions);
     for (let i = 0, end = this.instructions.length; i < end; i++) {
       const code: any = this.instructions[i];
-      // replace all GETG/GETL instructions that match the declared name on
-      // a parent scope by GETL of the matched index in the local scope
+      /*
+      * var C = function () {
+          console.log(C); <---  考虑这种情况
+          function C() {}
+          return C;
+        }();
+      * */
+      // 用local scope内匹配索引的 GETL 替换parent scope内声明名称匹配的所有 GETG/GETL 指令
       if (this.scopes.length && code?.name === 'GETG') {
-        if (code.args[0] === name) {
+        const idx = this.globalIdx(name);
+        if (code.args[0] === idx) {
           this.instructions[i] = GETL(scope);
         }
       }
@@ -341,7 +363,7 @@ export class Emitter extends Visitor {
       current += code.calculateFactor();
       max = Math.max(current, max);
     }
-    const localLength = Array.from(this.localNames).length;
+    const localLength = this.localNames.length;
     // compile all functions
     for (let i = 0, end = this.children.length; i < end; i++) {
       this.children[i] = this.children[i]();
@@ -353,6 +375,7 @@ export class Emitter extends Visitor {
       this.children,
       this.localNames,
       localLength,
+      this.globalNames,
       this.guards,
       max,
       this.strings,
@@ -1226,6 +1249,7 @@ export class Emitter extends Visitor {
         this.original,
         source
       );
+      fn.globalNames = this.globalNames;
       const len = node.params.length;
       // console.log(node.expression, node.isExpression, node.declare);
       // perform initial function call setup

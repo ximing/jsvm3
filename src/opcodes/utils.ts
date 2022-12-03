@@ -173,7 +173,7 @@ export const createFunction = function (
       let run = false;
       if ((fiber = fun.__fiber__)) {
         // callStack
-        fiber.callStack[fiber.depth].paused = true;
+        fiber.callStack[fiber.depth].suspended = true;
         fun.__fiber__ = null;
         construct = fun.__con__;
         fun.__con__ = null;
@@ -291,7 +291,7 @@ export const callFun = function (frame, func, args, target, name, construct = fa
       // console.log('call---->', func, target, args);
       val = func.apply(target, args);
     }
-    if (push && !fiber.paused) {
+    if (push && !fiber.suspended) {
       return evalStack.push(val);
     }
   } catch (nativeError) {
@@ -340,12 +340,12 @@ export const callm = function (
   }
   if (func == null) {
     // stack.pop(); // pop target
-    return throwErr(frame, new XYZTypeError(`Object #<${name}> has no method '${key}'`));
+    return throwErr(frame, new XYZTypeError(`Object #<${name}> has no fun '${key}'`));
   } else {
     // stack.pop(); // pop target
     return throwErr(
       frame,
-      new XYZTypeError(`Prop '${key}' of object #<${name}> is not a function`)
+      new XYZTypeError(`'${key}' of object #<${name}> is not a function`)
     );
   }
 };

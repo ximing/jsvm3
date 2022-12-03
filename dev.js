@@ -194,7 +194,7 @@ const { XYZ } = require('./lib/vm/vm');
 // console.log(JSON.stringify(script.toJSON(), null, 2));
 // console.log('===============+> run');
 // const vm = new XYZ();
-// const res = vm.run(script);
+// const res = vm.go(script);
 // // console.log(JSON.stringify(script.toJSON(), null, 2));
 // console.log(res);
 // 'use strict'
@@ -293,18 +293,14 @@ const { XYZ } = require('./lib/vm/vm');
 // `;
 
 const code1 = `
-function testcase() {
-  // just cooking up a long/veryLikely unique name
-  try {
-    var d = delete __ES3_1_test_suite_test_11_4_1_3_unique_id_2__.x;
-  } catch(e) {
-    if (e instanceof ReferenceError)
-      return true;
-  }
- }
-module.exports = testcase();
-`
-const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: false });
+var C = function(){ 
+    console.log(C) 
+    function C(){}
+    return C;
+}()
+module.exports = C;
+`;
+const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: true });
 console.log(JSON.stringify(script1.toJSON(), null, 2));
 console.log('===============+> run');
 const vm1 = new XYZ({
@@ -331,7 +327,7 @@ const vm1 = new XYZ({
   },
   regeneratorRuntime: require('regenerator-runtime/runtime.js'),
 });
-const res1 = vm1.run(script1);
+const res1 = vm1.go(script1);
 // console.log(res1);
 console.log(vm1.realm.global.module.exports);
 

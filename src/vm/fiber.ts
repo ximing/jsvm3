@@ -21,7 +21,7 @@ export class Fiber {
   depth: number;
   rv: any;
   yielded: any;
-  paused: boolean;
+  suspended: boolean;
 
   constructor(realm: Realm, timeout = -1) {
     const t = this;
@@ -33,7 +33,7 @@ export class Fiber {
     t.evalStack = null;
     t.depth = -1;
     t.yielded = this.rv = undefined;
-    t.paused = false;
+    t.suspended = false;
     // fiber-specific registers temporary registers
     t.r1 = t.r2 = t.r3 = null;
     // expression register(last evaluated expression statement)
@@ -43,7 +43,7 @@ export class Fiber {
   run() {
     let frame: Frame = this.callStack[this.depth];
     let err = frame.evalError;
-    while (this.depth >= 0 && frame && !this.paused) {
+    while (this.depth >= 0 && frame && !this.suspended) {
       if (err) {
         frame = this.unwind(err);
       }
@@ -51,7 +51,7 @@ export class Fiber {
       if ((err = frame.evalError) instanceof XYZError) {
         this.injectStackTrace(err);
       }
-      if (frame.done()) {
+      if (frame.isDone()) {
         if (frame.guards.length) {
           const guard = frame.guards.pop();
           if (guard.finalizer) {
@@ -59,7 +59,7 @@ export class Fiber {
             // if there's a finalizer, it be executed before returning
             frame.ip = guard.finalizer;
             frame.exitIp = guard.end;
-            frame.paused = false;
+            frame.suspended = false;
             continue;
           }
         }
@@ -125,7 +125,7 @@ export class Fiber {
             // try/finally
             frame.ip = guard.finalizer;
           }
-          frame.paused = false;
+          frame.suspended = false;
           return frame;
         }
       }
@@ -201,8 +201,8 @@ export class Fiber {
 
   checkCallStack() {
     if (this.depth === this.maxDepth) {
-      this.callStack[this.depth].evalError = new XYZError('maximum cStack size exceeded');
-      this.pause();
+      this.callStack[this.depth].evalError = new XYZError('maximum cStack size.');
+      this.suspend();
       return false;
     }
     return true;
@@ -211,7 +211,7 @@ export class Fiber {
   popFrame() {
     const frame = this.callStack[--this.depth];
     if (frame) {
-      frame.paused = false;
+      frame.suspended = false;
     }
     return frame;
   }
@@ -220,19 +220,19 @@ export class Fiber {
     return this.callStack[this.depth].evalStack.push(rv);
   }
 
-  pause() {
+  suspend() {
     // eslint-disable-next-line no-return-assign
-    return (this.paused = this.callStack[this.depth].paused = true);
+    return (this.suspended = this.callStack[this.depth].suspended = true);
   }
 
   resume(timeout = -1) {
     this.timeout = timeout;
-    this.paused = false;
+    this.suspended = false;
     const frame = this.callStack[this.depth];
-    frame.paused = false;
+    frame.suspended = false;
     // const { evalStack } = this.callStack[0];
     this.run();
-    if (!this.paused) {
+    if (!this.suspended) {
       return this.rexp;
     }
   }
@@ -245,7 +245,7 @@ export class Fiber {
     return this.callStack[this.depth].evalStack.push(obj);
   }
 
-  done() {
+  isDone() {
     return this.depth === -1;
   }
 }

@@ -100,7 +100,10 @@ export default {
               CallExpression({ node }) {
                 if (t.isMemberExpression(node.callee)) {
                   // evalStack.push()
-                  if (t.isIdentifier(node.callee.object) && node.callee.object.name === 'evalStack') {
+                  if (
+                    t.isIdentifier(node.callee.object) &&
+                    node.callee.object.name === 'evalStack'
+                  ) {
                     if (t.isIdentifier(node.callee.property)) {
                       if (node.callee.property.name === 'push') {
                         node.callee.property.name = 'p';
@@ -125,7 +128,7 @@ export default {
       mangle: {
         module: true,
         properties: {
-          reserved: ['run'],
+          reserved: ['go'],
         },
       },
     }),

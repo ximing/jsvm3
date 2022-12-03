@@ -1,7 +1,7 @@
 // convert compiled children from/to json-compatible structure
 import { Instruction } from '../opcodes/types';
 // @ifdef COMPILER
-import { scriptToJson } from '../utils/convert';
+import { scriptToJsonObject } from '../utils/convert';
 // @endif
 
 export class Script {
@@ -10,7 +10,8 @@ export class Script {
   instructions: Instruction[];
   // eslint-disable-next-line no-use-before-define
   children: Script[];
-  localNames: Record<string, any>;
+  localNames: any[];
+  globalNames: any[];
   localLength: number;
   guards: any[];
   stackSize: number;
@@ -29,6 +30,7 @@ export class Script {
     children,
     localNames,
     localLength,
+    globalNames,
     guards,
     stackSize,
     strings,
@@ -44,6 +46,7 @@ export class Script {
     t.children = children;
     t.localNames = localNames;
     t.localLength = localLength;
+    t.globalNames = globalNames;
     t.guards = guards;
     t.stackSize = stackSize;
     t.strings = strings;
@@ -55,7 +58,8 @@ export class Script {
 
   // @ifdef COMPILER
   toJSON() {
-    return scriptToJson(this);
+    return scriptToJsonObject(this);
+    // return scriptToJson(this);
   }
   // @endif
 }

@@ -13,10 +13,10 @@ export class XYZ {
     // }
   }
 
-  run(script: Script, timeout = -1) {
+  go(script: Script, timeout = -1) {
     const fiber = this.createFiber(script, timeout);
     fiber.run();
-    if (!fiber.paused) {
+    if (!fiber.suspended) {
       return fiber.rexp;
     }
   }
