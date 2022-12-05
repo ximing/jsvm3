@@ -57,12 +57,11 @@ export class Frame {
   run() {
     let len;
     const t = this;
-    const s = this._scope;
     const { instructions } = t.script;
     while (t.ip !== t.exitIp && !t.suspended && t.fiber.timeout !== 0) {
       t.fiber.timeout--;
       const ins = instructions[t.ip++];
-      ins.exec(t, t.evalStack, s!, t.realm);
+      ins.exec(t, t.evalStack, this._scope!, t.realm);
       // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args, this.evalError, this.suspended, ins.id);
       // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args !== null ? ins.args : '');
     }

@@ -9,11 +9,11 @@ import { throwErr } from '../utils/opcodes';
 import type { Frame } from '../vm/frame';
 import { get } from './op';
 import { EvaluationStack } from '../vm/stack';
+import { InsMap } from './ins';
 // @ifdef COMPILER
 import { OPCodeIdx } from './opIdx';
 import { Label } from './label';
 import { Cannot } from './contants';
-import { InsMap } from './ins';
 
 const OPCodeMap: any = Object.keys(OPCodeIdx).reduce((total: any, cur: string) => {
   total[OPCodeIdx[cur]] = cur;
@@ -343,9 +343,6 @@ export const callm = function (
     return throwErr(frame, new XYZTypeError(`Object #<${name}> has no fun '${key}'`));
   } else {
     // stack.pop(); // pop target
-    return throwErr(
-      frame,
-      new XYZTypeError(`'${key}' of object #<${name}> is not a function`)
-    );
+    return throwErr(frame, new XYZTypeError(`'${key}' of object #<${name}> is not a function`));
   }
 };

@@ -624,10 +624,12 @@ export class Emitter extends Visitor {
     if (node.argument.type === 'MemberExpression') {
       this.visitProperty(node.argument);
       this.visit(node.argument.object);
-      this.createINS(SR2);
-      this.createINS(SR1);
-      this.createINS(LR1);
-      this.createINS(LR2);
+      this.createINS(SLHS);
+      this.createINS(LLHS);
+      // this.createINS(SR2);
+      // this.createINS(SR1);
+      // this.createINS(LR1);
+      // this.createINS(LR2);
       this.createINS(GET); // get current
       this.createINS(SR3); // save current
       this.createINS(LR3); // load current
@@ -757,10 +759,10 @@ export class Emitter extends Visitor {
     if (node.left.type === 'MemberExpression') {
       if (node.operator !== '=') {
         this.createINS(LLHS);
-        this.createINS(SR2); // object
-        this.createINS(SR1); // property
-        this.createINS(LR1); // property
-        this.createINS(LR2); // object
+        // this.createINS(SR2); // object
+        // this.createINS(SR1); // property
+        // this.createINS(LR1); // property
+        // this.createINS(LR2); // object
         this.createINS(GET); // get current value
         this.createINS(SWAP);
         const op = node.operator.slice(0, node.operator.length - 1);
@@ -1356,7 +1358,7 @@ export class Emitter extends Visitor {
         fName = node.callee.property.name;
       }
       this.visit(node.arguments); // push arguments
-      const idx = this.createString(fName)
+      const idx = this.createString(fName);
       this.createINS(CALLM, len, idx);
     } else {
       this.visit(node.callee);
@@ -1364,7 +1366,7 @@ export class Emitter extends Visitor {
         fName = node.callee.name;
       }
       this.visit(node.arguments); // push arguments
-      const idx = this.createString(fName)
+      const idx = this.createString(fName);
       this.createINS(CALL, len, idx);
     }
     return node;

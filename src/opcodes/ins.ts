@@ -50,12 +50,12 @@ export const InsMap = new Map();
 export const SR1 = createOP(
   OPCodeIdx.SR1,
   function (frame, evalStack, scope, realm) {
-    return (frame.fiber.r1 = evalStack.pop());
+    frame.fiber.r1 = evalStack.pop();
   },
   () => 0
 );
 export const SR2 = createOP(OPCodeIdx.SR2, function (frame, evalStack, scope, realm) {
-  return (frame.fiber.r2 = evalStack.pop());
+  frame.fiber.r2 = evalStack.pop();
 });
 
 export const SR3 = createOP(OPCodeIdx.SR3, function (frame, evalStack, scope, realm) {
@@ -67,21 +67,21 @@ export const SR3 = createOP(OPCodeIdx.SR3, function (frame, evalStack, scope, re
 export const LR1 = createOP(
   OPCodeIdx.LR1,
   function (frame, evalStack, scope, realm) {
-    return evalStack.push(frame.fiber.r1);
+    evalStack.push(frame.fiber.r1);
   },
   () => 1
 );
 export const LR2 = createOP(
   OPCodeIdx.LR2,
   function (frame, evalStack, scope, realm) {
-    return evalStack.push(frame.fiber.r2);
+    evalStack.push(frame.fiber.r2);
   },
   () => 1
 );
 export const LR3 = createOP(
   OPCodeIdx.LR3,
   function (frame, evalStack, scope, realm) {
-    return evalStack.push(frame.fiber.r3);
+    evalStack.push(frame.fiber.r3);
   },
   () => 1
 );
@@ -89,17 +89,17 @@ export const LR3 = createOP(
  * 存储到表达式寄存器
  * */
 export const SREXP = createOP(OPCodeIdx.SREXP, function (frame, evalStack, scope, realm) {
-  return (evalStack.fiber.rexp = evalStack.pop());
+  evalStack.fiber.rexp = evalStack.pop();
 });
 
 export const POP = createOP(OPCodeIdx.POP, function (frame, evalStack, scope, realm) {
-  return evalStack.pop();
+  evalStack.pop();
 });
 
 export const DUP = createOP(
   OPCodeIdx.DUP,
   function (frame, evalStack, scope, realm) {
-    return evalStack.push(evalStack.top());
+    evalStack.push(evalStack.top());
   },
   () => 1
 );
@@ -108,13 +108,13 @@ export const SWAP = createOP(OPCodeIdx.SWAP, function (frame, evalStack, scope, 
   const top = evalStack.pop();
   const bot = evalStack.pop();
   evalStack.push(top);
-  return evalStack.push(bot);
+  evalStack.push(bot);
 });
 
 export const GLOBAL = createOP(
   OPCodeIdx.GLOBAL,
   function (frame, evalStack, l, r) {
-    return evalStack.push(r.global);
+    evalStack.push(r.global);
   },
   () => 1
 );
@@ -123,15 +123,17 @@ export const SLHS = createOP(OPCodeIdx.SLHS, function (frame, evalStack, scope, 
   const obj = evalStack.pop();
   const key = evalStack.pop();
   // console.log('SLHS', obj, key);
-  return frame.lref.push([obj, key]);
+  frame.lref.push([obj, key]);
 });
 
 export const LLHS = createOP(
   OPCodeIdx.LLHS,
   function (frame, evalStack, scope, realm) {
     const [obj, key] = frame.lref.pop();
+    frame.fiber.r1 = key;
+    frame.fiber.r2 = obj;
     evalStack.push(key);
-    return evalStack.push(obj);
+    evalStack.push(obj);
   },
   () => 2
 );
@@ -144,9 +146,11 @@ export const GET = createOP(OPCodeIdx.GET, function (frame, evalStack, scope, re
   // console.log('--->GET', obj, key);
   if (obj == null) {
     // console.trace();
-    return throwErr(frame, new XYZTypeError(`[XYZ] ${Cannot} get ${property} ${key} of ${obj}`));
+    throwErr(frame, new XYZTypeError(`[XYZ] ${Cannot} get ${property} ${key} of ${obj}`));
+  } else {
+    evalStack.push(obj[key]);
   }
-  return evalStack.push(obj[key]);
+  // return evalStack.push(obj[key]);
   // return evalStack.push(get(obj, key));
 });
 
@@ -158,9 +162,11 @@ export const SET = createOP(OPCodeIdx.SET, function (frame, evalStack, scope, re
   const key = evalStack.pop();
   const val = evalStack.pop();
   if (obj == null) {
-    return throwErr(frame, new XYZTypeError(`${Cannot} set ${property} ${key} of ${obj}`));
+    throwErr(frame, new XYZTypeError(`${Cannot} set ${property} ${key} of ${obj}`));
+  } else {
+    evalStack.push(set(obj, key, val));
   }
-  return evalStack.push(set(obj, key, val));
+  // return evalStack.push(set(obj, key, val));
 });
 
 /*
@@ -170,9 +176,11 @@ export const DEL = createOP(OPCodeIdx.DEL, function (frame, evalStack, scope, re
   const obj = evalStack.pop();
   const key = evalStack.pop();
   if (obj == null) {
-    return throwErr(frame, new XYZTypeError(`${Cannot} convert null to object`));
+    throwErr(frame, new XYZTypeError(`${Cannot} convert null to object`));
+  } else {
+    evalStack.push(del(obj, key));
   }
-  return evalStack.push(del(obj, key));
+  // return evalStack.push(del(obj, key));
 });
 
 /*
@@ -187,7 +195,7 @@ export const GETL = createOP(
       scope = scope.parentScope!;
     }
     // console.log(scope, this.args, varIndex, scopeIndex, scope.get(varIndex));
-    return evalStack.push(scope.get(varIndex));
+    evalStack.push(scope.get(varIndex));
   },
   () => 1
 );
@@ -202,7 +210,7 @@ export const SETL = createOP(OPCodeIdx.SETL, function (frame, evalStack, scope, 
   while (scopeIndex--) {
     _scope = _scope.parentScope!;
   }
-  return evalStack.push(_scope.set(varIndex, evalStack.pop()));
+  evalStack.push(_scope.set(varIndex, evalStack.pop()));
 });
 
 /*
@@ -215,10 +223,12 @@ export const GETG = createOP(
     // name, ignoreNotDefined
     // console.log(this.args[0], this.args[1]);
     if (!hasProp(realm.global, k) && !this.args[1]) {
-      return throwErr(frame, new XYZReferenceError(`.${k} not def`));
+      throwErr(frame, new XYZReferenceError(`.${k} not def`));
+    } else {
+      evalStack.push(realm.global[k]);
     }
     // console.log(realm.global[this.args[0]]);
-    return evalStack.push(realm.global[k]);
+    // return evalStack.push(realm.global[k]);
   },
   () => 1
 );
@@ -228,7 +238,7 @@ export const GETG = createOP(
  * */
 export const SETG = createOP(OPCodeIdx.SETG, function (frame, evalStack, scope, realm) {
   const k = frame.script.globalNames[this.args[0]];
-  return evalStack.push((realm.global[k] = evalStack.pop()));
+  evalStack.push((realm.global[k] = evalStack.pop()));
 });
 
 /*
@@ -245,134 +255,134 @@ export const DECLG = createOP(OPCodeIdx.DECLG, function (frame, evalStack, scope
  * invert signal
  * */
 export const INV = createOP(OPCodeIdx.INV, function (frame, evalStack, scope, realm) {
-  return evalStack.push(inv(evalStack.pop()));
+  evalStack.push(inv(evalStack.pop()));
 });
 
 export const PLU = createOP(OPCodeIdx.PLU, function (frame, evalStack, scope, realm) {
-  return evalStack.push(plu(evalStack.pop()));
+  evalStack.push(plu(evalStack.pop()));
 });
 
 /*
  * logical NOT
  * */
 export const LNOT = createOP(OPCodeIdx.LNOT, function (frame, evalStack, scope, realm) {
-  return evalStack.push(lnot(evalStack.pop()));
+  evalStack.push(lnot(evalStack.pop()));
 });
 
 /*
  * bitwise NOT
  * */
 export const NOT = createOP(OPCodeIdx.NOT, function (frame, evalStack, scope, realm) {
-  return evalStack.push(not(evalStack.pop()));
+  evalStack.push(not(evalStack.pop()));
 });
 
 /*
  * increment
  * */
 export const INC = createOP(OPCodeIdx.INC, function (frame, evalStack, scope, realm) {
-  return evalStack.push(inc(evalStack.pop()));
+  evalStack.push(inc(evalStack.pop()));
 });
 
 /*
  * decrement
  * */
 export const DEC = createOP(OPCodeIdx.DEC, function (frame, evalStack, scope, realm) {
-  return evalStack.push(dec(evalStack.pop()));
+  evalStack.push(dec(evalStack.pop()));
 });
 
 /*
  * sum
  * */
 export const ADD = createOP(OPCodeIdx.ADD, function (frame, evalStack, scope, realm) {
-  return evalStack.push(add(evalStack.pop(), evalStack.pop()));
+  evalStack.push(add(evalStack.pop(), evalStack.pop()));
 });
 export const SUB = createOP(OPCodeIdx.SUB, function (frame, evalStack, scope, realm) {
-  return evalStack.push(sub(evalStack.pop(), evalStack.pop()));
+  evalStack.push(sub(evalStack.pop(), evalStack.pop()));
 });
 export const MUL = createOP(OPCodeIdx.MUL, function (frame, evalStack, scope, realm) {
-  return evalStack.push(mul(evalStack.pop(), evalStack.pop()));
+  evalStack.push(mul(evalStack.pop(), evalStack.pop()));
 });
 export const DIV = createOP(OPCodeIdx.DIV, function (frame, evalStack, scope, realm) {
-  return evalStack.push(div(evalStack.pop(), evalStack.pop()));
+  evalStack.push(div(evalStack.pop(), evalStack.pop()));
 });
 
 export const MOD = createOP(OPCodeIdx.MOD, function (frame, evalStack, scope, realm) {
-  return evalStack.push(mod(evalStack.pop(), evalStack.pop()));
+  evalStack.push(mod(evalStack.pop(), evalStack.pop()));
 });
 
 // left shift
 export const SHL = createOP(OPCodeIdx.SHL, function (frame, evalStack, scope, realm) {
-  return evalStack.push(shl(evalStack.pop(), evalStack.pop()));
+  evalStack.push(shl(evalStack.pop(), evalStack.pop()));
 });
 // right shift
 export const SAR = createOP(OPCodeIdx.SAR, function (frame, evalStack, scope, realm) {
-  return evalStack.push(sar(evalStack.pop(), evalStack.pop()));
+  evalStack.push(sar(evalStack.pop(), evalStack.pop()));
 });
 // unsigned shift
 export const SHR = createOP(OPCodeIdx.SHR, function (frame, evalStack, scope, realm) {
-  return evalStack.push(shr(evalStack.pop(), evalStack.pop()));
+  evalStack.push(shr(evalStack.pop(), evalStack.pop()));
 });
 
 export const OR = createOP(OPCodeIdx.OR, function (frame, evalStack, scope, realm) {
-  return evalStack.push(or(evalStack.pop(), evalStack.pop()));
+  evalStack.push(or(evalStack.pop(), evalStack.pop()));
 });
 export const AND = createOP(OPCodeIdx.AND, function (frame, evalStack, scope, realm) {
-  return evalStack.push(and(evalStack.pop(), evalStack.pop()));
+  evalStack.push(and(evalStack.pop(), evalStack.pop()));
 });
 // bitwise XOR
 export const XOR = createOP(OPCodeIdx.XOR, function (frame, evalStack, scope, realm) {
-  return evalStack.push(xor(evalStack.pop(), evalStack.pop()));
+  evalStack.push(xor(evalStack.pop(), evalStack.pop()));
 });
 export const EXP = createOP(OPCodeIdx.EXP, function (frame, evalStack, scope, realm) {
-  return evalStack.push(exp(evalStack.pop(), evalStack.pop()));
+  evalStack.push(exp(evalStack.pop(), evalStack.pop()));
 });
 
 export const CEQ = createOP(OPCodeIdx.CEQ, function (frame, evalStack, scope, realm) {
-  return evalStack.push(ceq(evalStack.pop(), evalStack.pop()));
+  evalStack.push(ceq(evalStack.pop(), evalStack.pop()));
 });
 export const CNEQ = createOP(OPCodeIdx.CNEQ, function (frame, evalStack, scope, realm) {
-  return evalStack.push(cneq(evalStack.pop(), evalStack.pop()));
+  evalStack.push(cneq(evalStack.pop(), evalStack.pop()));
 });
 
 // 全等
 export const CID = createOP(OPCodeIdx.CID, function (frame, evalStack, scope, realm) {
-  return evalStack.push(cid(evalStack.pop(), evalStack.pop()));
+  evalStack.push(cid(evalStack.pop(), evalStack.pop()));
 });
 export const CNID = createOP(OPCodeIdx.CNID, function (frame, evalStack, scope, realm) {
-  return evalStack.push(cnid(evalStack.pop(), evalStack.pop()));
+  evalStack.push(cnid(evalStack.pop(), evalStack.pop()));
 });
 export const LT = createOP(OPCodeIdx.LT, function (frame, evalStack, scope, realm) {
-  return evalStack.push(lt(evalStack.pop(), evalStack.pop()));
+  evalStack.push(lt(evalStack.pop(), evalStack.pop()));
 });
 export const LTE = createOP(OPCodeIdx.LTE, function (frame, evalStack, scope, realm) {
-  return evalStack.push(lte(evalStack.pop(), evalStack.pop()));
+  evalStack.push(lte(evalStack.pop(), evalStack.pop()));
 });
 export const GT = createOP(OPCodeIdx.GT, function (frame, evalStack, scope, realm) {
-  return evalStack.push(gt(evalStack.pop(), evalStack.pop()));
+  evalStack.push(gt(evalStack.pop(), evalStack.pop()));
 });
 export const GTE = createOP(OPCodeIdx.GTE, function (frame, evalStack, scope, realm) {
-  return evalStack.push(gte(evalStack.pop(), evalStack.pop()));
+  evalStack.push(gte(evalStack.pop(), evalStack.pop()));
 });
 export const IN = createOP(OPCodeIdx.IN, function (frame, evalStack, scope, realm) {
-  return evalStack.push(has(evalStack.pop(), evalStack.pop()));
+  evalStack.push(has(evalStack.pop(), evalStack.pop()));
 });
 export const INSTANCEOF = createOP(OPCodeIdx.INSTANCEOF, function (frame, evalStack, scope, realm) {
-  return evalStack.push(instanceOf(evalStack.pop(), evalStack.pop()));
+  evalStack.push(instanceOf(evalStack.pop(), evalStack.pop()));
 });
 export const TYPEOF = createOP(OPCodeIdx.TYPEOF, function (frame, evalStack, scope, realm) {
-  return evalStack.push(typeof evalStack.pop());
+  evalStack.push(typeof evalStack.pop());
 });
 export const VOID = createOP(OPCodeIdx.VOID, function (frame, evalStack, scope, realm) {
   evalStack.pop();
   // eslint-disable-next-line no-void
-  return evalStack.push(void 0);
+  evalStack.push(void 0);
 });
 
 export const UNDEF = createOP(
   OPCodeIdx.UNDEF,
   function (frame, evalStack, scope, realm) {
     // eslint-disable-next-line no-void
-    return evalStack.push(void 0);
+    evalStack.push(void 0);
   },
   () => 1
 );
@@ -381,7 +391,7 @@ export const UNDEF = createOP(
 export const LITERAL = createOP(
   OPCodeIdx.LITERAL,
   function (frame, evalStack, scope, realm) {
-    return evalStack.push(this.args[0]);
+    evalStack.push(this.args[0]);
   },
   () => 1
 );
@@ -390,7 +400,7 @@ export const LITERAL = createOP(
 export const STRING_LITERAL = createOP(
   OPCodeIdx.STRING_LITERAL,
   function (frame, evalStack, scope, realm) {
-    return evalStack.push(frame.script.strings[this.args[0]]);
+    evalStack.push(frame.script.strings[this.args[0]]);
   },
   () => 1
 );
@@ -398,7 +408,7 @@ export const STRING_LITERAL = createOP(
 export const REGEXP_LITERAL = createOP(
   OPCodeIdx.REGEXP_LITERAL,
   function (frame, evalStack, scope, realm) {
-    return evalStack.push(frame.script.regexps[this.args[0]]);
+    evalStack.push(frame.script.regexps[this.args[0]]);
   },
   () => 1
 );
@@ -417,7 +427,7 @@ export const OBJECT_LITERAL = createOP(
     for (const [key, val] of rv.reverse()) {
       set(obj, key, val);
     }
-    return evalStack.push(obj);
+    evalStack.push(obj);
   },
   function () {
     return 1 - this.args[0] * 2;
@@ -431,7 +441,7 @@ export const ARRAY_LITERAL = createOP(
     while (length--) {
       rv[length] = evalStack.pop();
     }
-    return evalStack.push(rv);
+    evalStack.push(rv);
   },
   function () {
     return 1 - this.args[0];
@@ -442,14 +452,14 @@ export const ARRAY_LITERAL = createOP(
  * 无条件跳转
  * */
 export const JMP = createOP(OPCodeIdx.JMP, function (frame, evalStack, scope, realm) {
-  return (frame.ip = this.args[0]);
+  frame.ip = this.args[0];
 });
 /*
  * true 跳转
  * */
 export const JMPT = createOP(OPCodeIdx.JMPT, function (frame, evalStack, scope, realm) {
   if (evalStack.pop()) {
-    return (frame.ip = this.args[0]);
+    frame.ip = this.args[0];
   }
 });
 
@@ -458,7 +468,7 @@ export const JMPT = createOP(OPCodeIdx.JMPT, function (frame, evalStack, scope, 
  * */
 export const JMPF = createOP(OPCodeIdx.JMPF, function (frame, evalStack, scope, realm) {
   if (!evalStack.pop()) {
-    return (frame.ip = this.args[0]);
+    frame.ip = this.args[0];
   }
 });
 
@@ -468,7 +478,7 @@ export const FUNCTION = createOP(
   function (frame, evalStack, l, r) {
     const scriptIndex = this.args[0];
     // frame.script.children[scriptIndex]  函数的body 指令集
-    return evalStack.push(createFunction(frame.script.children[scriptIndex], l, r, this.args[1]));
+    evalStack.push(createFunction(frame.script.children[scriptIndex], l, r, this.args[1]));
   },
   () => 1
 );
@@ -478,7 +488,7 @@ export const FUNCTION_SETUP = createOP(OPCodeIdx.FUNCTION_SETUP, function (frame
   l.set(1, evalStack.pop());
   const fn = evalStack.pop();
   if (this.args[0]) {
-    return l.set(2, fn);
+    l.set(2, fn);
   }
 });
 
@@ -488,31 +498,31 @@ export const REST = createOP(OPCodeIdx.REST, function (frame, evalStack, l, r) {
   const varIndex = this.args[1];
   const args = l.get(1);
   if (index < args.length) {
-    return l.set(varIndex, Array.prototype.slice.call(args, index));
+    l.set(varIndex, Array.prototype.slice.call(args, index));
   }
 });
 
-// return from function
+//  from function
 export const RET = createOP(OPCodeIdx.RET, function (frame, evalStack, scope, realm) {
-  return ret(frame);
+  ret(frame);
 });
 
-// return value from Function
+//  value from Function
 export const RETV = createOP(OPCodeIdx.RETV, function (frame, evalStack, scope, realm) {
   frame.fiber.rv = evalStack.pop();
-  return ret(frame);
+  ret(frame);
 });
 
 // call as constructor
 export const NEW = createOP(OPCodeIdx.NEW, function (frame, evalStack, scope, realm) {
-  return call(frame, this.args[0], null, true);
+  call(frame, this.args[0], null, true);
 });
 
 // 调用函数
 export const CALL = createOP(
   OPCodeIdx.CALL,
   function (frame, evalStack, scope, realm) {
-    return call(frame, this.args[0], frame.script.strings[this.args[1]]);
+    call(frame, this.args[0], frame.script.strings[this.args[1]]);
   },
   function () {
     // pop弹出 n 个参数加上函数并压入返回值
@@ -523,7 +533,7 @@ export const CALL = createOP(
 export const CALLM = createOP(
   OPCodeIdx.CALLM,
   function (frame, evalStack, scope, realm) {
-    return callm(frame, this.args[0], null, null, frame.script.strings[this.args[1]]);
+    callm(frame, this.args[0], null, null, frame.script.strings[this.args[1]]);
   },
   function () {
     // 弹出 n 个参数加上函数加上目标并推送返回值
@@ -532,13 +542,13 @@ export const CALLM = createOP(
 );
 // calls 'iterator' method
 export const ITER = createOP(OPCodeIdx.ITER, function (frame, evalStack, scope, realm) {
-  return callm(frame, 0, 'iterator', evalStack.pop());
+  callm(frame, 0, 'iterator', evalStack.pop());
 });
 /*
  * 产生对象的可枚举属性
  * */
 export const ENUMERATE = createOP(OPCodeIdx.ENUMERATE, function (frame, evalStack, scope, realm) {
-  return evalStack.push(enumerateKeys(evalStack.pop()));
+  evalStack.push(enumerateKeys(evalStack.pop()));
 });
 // calls iterator 'next'
 export const NEXT = createOP(OPCodeIdx.NEXT, function (frame, evalStack, scope, realm) {
@@ -546,33 +556,36 @@ export const NEXT = createOP(OPCodeIdx.NEXT, function (frame, evalStack, scope, 
   if (frame.evalError instanceof StopIteration) {
     frame.evalError = null;
     frame.suspended = false;
-    return (frame.ip = this.args[0]);
+    frame.ip = this.args[0];
   }
 });
 // pause frame
 export const PAUSE = createOP(OPCodeIdx.PAUSE, function (frame, evalStack, scope, realm) {
-  return (frame.suspended = true);
+  frame.suspended = true;
 });
 
 // yield value from generator
 export const YIELD = createOP(OPCodeIdx.YIELD, function (frame, evalStack, scope, realm) {
   frame.fiber.yielded = evalStack.pop();
-  return frame.fiber.suspend();
+  frame.fiber.suspend();
 });
 
 export const THROW = createOP(OPCodeIdx.THROW, function (frame, evalStack, scope, realm) {
-  return throwErr(frame, evalStack.pop());
+  throwErr(frame, evalStack.pop());
 });
 
-export const ENTER_GUARD = createOP(OPCodeIdx.ENTER_GUARD, function (frame, evalStack, scope, realm) {
-  return frame.guards.push(frame.script.guards[this.args[0]]);
-});
+export const ENTER_GUARD = createOP(
+  OPCodeIdx.ENTER_GUARD,
+  function (frame, evalStack, scope, realm) {
+    frame.guards.push(frame.script.guards[this.args[0]]);
+  }
+);
 
 export const EXIT_GUARD = createOP(OPCodeIdx.EXIT_GUARD, function (frame, evalStack, scope, realm) {
   const currentGuard = frame.guards[frame.guards.length - 1];
   const specifiedGuard = frame.script.guards[this.args[0]];
   if (specifiedGuard === currentGuard) {
-    return frame.guards.pop();
+    frame.guards.pop();
   }
 });
 
@@ -582,9 +595,7 @@ export const EXIT_GUARD = createOP(OPCodeIdx.EXIT_GUARD, function (frame, evalSt
 export const ENTER_SCOPE = createOP(
   OPCodeIdx.ENTER_SCOPE,
   function (frame, evalStack, scope, realm) {
-    return frame.setScope(
-      new Scope(frame.getScope(), frame.script.localNames, frame.script.localLength)
-    );
+    frame.setScope(new Scope(scope, frame.script.localNames, frame.script.localLength));
   }
 );
 
@@ -592,21 +603,21 @@ export const ENTER_SCOPE = createOP(
  * exit nested scope
  * */
 export const EXIT_SCOPE = createOP(OPCodeIdx.EXIT_SCOPE, function (frame, evalStack, scope, realm) {
-  return frame.setScope(frame.getScope()!.parentScope!);
+  frame.setScope(scope!.parentScope!);
 });
 
 /*
  * 设置行号
  * */
 export const LINE = createOP(OPCodeIdx.LINE, function (frame, evalStack, scope, realm) {
-  return frame.setLine(this.args[0]);
+  frame.setLine(this.args[0]);
 });
 
 /*
  * 设置列号
  * */
 export const COLUMN = createOP(OPCodeIdx.COLUMN, function (frame, evalStack, scope, realm) {
-  return frame.setColumn(this.args[0]);
+  frame.setColumn(this.args[0]);
 });
 
 // @ts-ignore

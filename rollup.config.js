@@ -127,6 +127,7 @@ export default {
     terser({
       mangle: {
         module: true,
+        reserved: [],
         properties: {
           reserved: ['go'],
         },
