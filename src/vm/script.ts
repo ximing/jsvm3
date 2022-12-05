@@ -1,7 +1,8 @@
 // convert compiled children from/to json-compatible structure
 import { Instruction } from '../opcodes/types';
 // @ifdef COMPILER
-import { scriptToJsonObject } from '../utils/convert';
+import { scriptToJson } from '../utils/convert';
+// import { scriptToJsonObject } from '../utils/convert';
 // @endif
 
 export class Script {
@@ -58,8 +59,8 @@ export class Script {
 
   // @ifdef COMPILER
   toJSON() {
-    return scriptToJsonObject(this);
-    // return scriptToJson(this);
+    // return scriptToJsonObject(this);
+    return scriptToJson(this);
   }
   // @endif
 }

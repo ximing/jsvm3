@@ -510,7 +510,7 @@ export const NEW = createOP(OPCodeIdx.NEW, function (f) {
 export const CALL = createOP(
   OPCodeIdx.CALL,
   function (f) {
-    return call(f, this.args[0], this.args[1]);
+    return call(f, this.args[0], f.script.strings[this.args[1]]);
   },
   function () {
     // pop弹出 n 个参数加上函数并压入返回值
@@ -521,7 +521,7 @@ export const CALL = createOP(
 export const CALLM = createOP(
   OPCodeIdx.CALLM,
   function (f) {
-    return callm(f, this.args[0], null, null, this.args[1]);
+    return callm(f, this.args[0], null, null, f.script.strings[this.args[1]]);
   },
   function () {
     // 弹出 n 个参数加上函数加上目标并推送返回值

@@ -75,4 +75,15 @@ a = b
       l: 4,
     });
   });
+
+  it('member exp', () => {
+    const s = run(
+      `
+var a = { b : 100}; 
+a.b /= 5;
+module.exports = a;
+      `
+    );
+    expect(s).toEqual({ b: 20 });
+  });
 });

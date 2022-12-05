@@ -27,8 +27,8 @@ export const fromJson = function (json: any) {
   for (const regexp of json[8]) {
     regexps.push(regexpFromString(regexp));
   }
-  const source = json[9] !== 0 ? json[9] : null;
-  return new Script(
+  const source = json[10] !== 0 ? json[10] : null;
+  const script = new Script(
     fName,
     name,
     instructions,
@@ -41,6 +41,8 @@ export const fromJson = function (json: any) {
     regexps,
     source
   );
+  script.globalNames = script[9];
+  return script;
 };
 
 export const regexpFromString = function (str: string) {
@@ -138,6 +140,7 @@ export const scriptToJson = function (script: Script) {
     script.stackSize,
     script.strings,
     [],
+    script.globalNames,
   ];
   for (const s of Array.from(script.children)) {
     rv[3].push(scriptToJson(s));

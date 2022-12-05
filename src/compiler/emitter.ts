@@ -88,9 +88,9 @@ export class Emitter extends Visitor {
   guards: any[];
   currentLine: number;
   currentColumn: number;
-  stringIds: Record<string, number>;
+  stringIds: Map<string, number>;
   strings: string[];
-  regexpIds: Record<string, number>;
+  regexpIds: Map<string, number>;
   regexps: RegExp[];
   ignoreNotDefined: number;
 
@@ -118,9 +118,9 @@ export class Emitter extends Visitor {
     this.guards = [];
     this.currentLine = -1;
     this.currentColumn = -1;
-    this.stringIds = {};
+    this.stringIds = new Map();
     this.strings = [];
-    this.regexpIds = {};
+    this.regexpIds = new Map();
     this.regexps = [];
     this.ignoreNotDefined = 0;
   }
@@ -286,11 +286,11 @@ export class Emitter extends Visitor {
       opcode = SETG([idx]);
     }
     // 通过将名称绑定到函数 ref 来声明函数,  在其他不是函数声明的语句之前
-    const codes = [FUNCTION([index, generator]), opcode, POP(null)];
+    const codes = [FUNCTION([index, generator === false ? 0 : 1]), opcode, POP(null)];
     this.instructions = codes.concat(this.instructions);
     const processedLabels = {};
     const result: any[] = [];
-    console.log(this.instructions);
+
     for (let i = 0, end = this.instructions.length; i < end; i++) {
       const code: any = this.instructions[i];
       /*
@@ -420,9 +420,11 @@ export class Emitter extends Visitor {
     if (memberExpression.computed) {
       return this.visit(memberExpression.property);
     } else if (memberExpression.property.type === 'Identifier') {
-      return this.createINS(LITERAL, memberExpression.property.name);
+      return this.createLiteral(memberExpression.property.name);
+      // return this.createINS(LITERAL, memberExpression.property.name);
     } else if (t.isLiteral(memberExpression.property)) {
-      return this.createINS(LITERAL, memberExpression.property.value);
+      return this.createLiteral(memberExpression.property.value);
+      // return this.createINS(LITERAL, memberExpression.property.value);
     } else {
       throw new Error('invalid assert');
     }
@@ -593,7 +595,8 @@ export class Emitter extends Visitor {
         this.createINS(DEL);
       } else if (node.argument.type === 'Identifier' && !this.scopes.length) {
         // global property
-        this.createINS(LITERAL, node.argument.name);
+        this.createLiteral(node.argument.name);
+        // this.createINS(LITERAL, node.argument.name);
         this.createINS(GLOBAL);
         this.createINS(DEL);
       } else {
@@ -754,15 +757,12 @@ export class Emitter extends Visitor {
     if (node.left.type === 'MemberExpression') {
       if (node.operator !== '=') {
         this.createINS(LLHS);
-        this.createINS(SR2);
-        this.createINS(SR1);
-        this.createINS(LR1);
-        this.createINS(LR2);
+        this.createINS(SR2); // object
+        this.createINS(SR1); // property
+        this.createINS(LR1); // property
+        this.createINS(LR2); // object
         this.createINS(GET); // get current value
-
-        // swap new/old values
-        // @SWAP()
-        // apply operator
+        this.createINS(SWAP);
         const op = node.operator.slice(0, node.operator.length - 1);
         this.createINS(OPCODES[binaryOp[op]]);
         this.createINS(LR1); // load property
@@ -798,12 +798,11 @@ export class Emitter extends Visitor {
     let idx;
     const id = `${node.pattern}/${node.flags}`;
     const val = regexpFromString(id);
-    if (!hasProp(this.regexpIds, id)) {
-      this.regexps.push(val);
-      idx = this.regexps.length - 1;
-      this.regexpIds[id] = idx;
+    if (!this.regexpIds.has(id)) {
+      idx = this.regexps.push(val) - 1;
+      this.regexpIds.set(id, idx);
     }
-    idx = this.regexpIds[id];
+    idx = this.regexpIds.get(id);
     this.createINS(REGEXP_LITERAL, idx);
     return node;
   }
@@ -828,25 +827,34 @@ export class Emitter extends Visitor {
     return node;
   }
 
-  Literal(node) {
+  Literal(node: t.Literal) {
+    // @ts-ignore
+    this.createLiteral(node.value);
+    return node;
+  }
+
+  createString(val: string) {
+    if (!this.stringIds.has(val)) {
+      this.strings.push(val);
+      const idx = this.strings.length - 1;
+      this.stringIds.set(val, idx);
+      return idx;
+    }
+    return this.stringIds.get(val);
+  }
+
+  createLiteral(val: any) {
     let idx;
-    const val = node.value;
     if (typeof val === 'undefined') {
       this.createINS(UNDEF);
       // variable-length literals(strings and regexps) are stored in arrays
       // and referenced by index
     } else if (typeof val === 'string') {
-      if (!hasProp(this.stringIds, val)) {
-        this.strings.push(val);
-        idx = this.strings.length - 1;
-        this.stringIds[val] = idx;
-      }
-      idx = this.stringIds[val];
+      idx = this.createString(val);
       this.createINS(STRING_LITERAL, idx);
     } else {
       this.createINS(LITERAL, val);
     }
-    return node;
   }
 
   IfStatement(node) {
@@ -1298,7 +1306,7 @@ export class Emitter extends Visitor {
     this.children.push(emit);
     if (node.isExpression) {
       // push function on the stack
-      this.createINS(FUNCTION, functionIndex, node.generator);
+      this.createINS(FUNCTION, functionIndex, node.generator === false ? 0 : 1);
     }
     if (node.declare) {
       // 声明以便函数可以绑定到最开始的context上
@@ -1348,14 +1356,16 @@ export class Emitter extends Visitor {
         fName = node.callee.property.name;
       }
       this.visit(node.arguments); // push arguments
-      this.createINS(CALLM, len, fName);
+      const idx = this.createString(fName)
+      this.createINS(CALLM, len, idx);
     } else {
       this.visit(node.callee);
       if (node.callee.type === 'Identifier') {
         fName = node.callee.name;
       }
       this.visit(node.arguments); // push arguments
-      this.createINS(CALL, len, fName);
+      const idx = this.createString(fName)
+      this.createINS(CALL, len, idx);
     }
     return node;
   }

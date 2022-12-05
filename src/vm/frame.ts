@@ -64,6 +64,7 @@ export class Frame {
       const ins = instructions[t.ip++];
       ins.exec(t, t.evalStack, s!, t.realm);
       // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args, this.evalError, this.suspended, ins.id);
+      // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args !== null ? ins.args : '');
     }
     if (t.fiber.timeout === 0) {
       t.suspended = t.fiber.suspended = true;

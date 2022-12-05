@@ -292,16 +292,28 @@ const { XYZ } = require('./lib/vm/vm');
 // module.exports = nodeUtil
 // `;
 
-const code1 = `
-var C = function(){ 
-    console.log(C) 
-    function C(){}
-    return C;
-}()
-module.exports = C;
-`;
-const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: true });
+// const code1 = `
+// var C = function(){
+//     console.log(C)
+//     function C(){}
+//     return C;
+// }()
+// module.exports = C;
+// `;
+
+// const code1 = require('fs').readFileSync(
+//   require('path').join(__dirname, './benchmark/raytrace.js'),
+//   'utf-8'
+// );
+// const code1 = 'Function.__proto__.__proto__ === Object.prototype';
+// const code1 = `var a = { b : 100};
+// a.b /= 5;
+// module.exports = a;`;
+const code1 = `var obj = {a: (null==undefined),b: (NaN!=NaN),c:(1===1),d:(1!==1)};
+     module.exports = obj;`
+const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: false });
 console.log(JSON.stringify(script1.toJSON(), null, 2));
+console.log(script1.source);
 console.log('===============+> run');
 const vm1 = new XYZ({
   self: global,
@@ -328,7 +340,7 @@ const vm1 = new XYZ({
   regeneratorRuntime: require('regenerator-runtime/runtime.js'),
 });
 const res1 = vm1.go(script1);
-// console.log(res1);
+console.log(res1);
 console.log(vm1.realm.global.module.exports);
 
 //
