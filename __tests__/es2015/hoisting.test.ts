@@ -10,7 +10,8 @@ describe('es2015 hoisting spec:', () => {
       fn(a);
       let a = 123;
     `)
-    ).toThrow('a not def');
+    ).toThrow('unknown: ReferenceError: Used a: let binding before declaration');
+    // .toThrow('a not def');
   });
 
   it('const should not Hoisting', function () {
@@ -20,6 +21,6 @@ describe('es2015 hoisting spec:', () => {
       fn(a);
       const a = 123;
     `)
-    ).toThrow('a not def');
+    ).toThrow('unknown: ReferenceError: Used a: const binding before declaration');
   });
 });

@@ -309,8 +309,8 @@ const { XYZ } = require('./lib/vm/vm');
 // const code1 = `var a = { b : 100};
 // a.b /= 5;
 // module.exports = a;`;
-const code1 = `var obj = {a: (null==undefined),b: (NaN!=NaN),c:(1===1),d:(1!==1)};
-     module.exports = obj;`
+const code1 = `const a = 1;
+      module.exports = a();`
 const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: false });
 console.log(JSON.stringify(script1.toJSON(), null, 2));
 console.log(script1.source);

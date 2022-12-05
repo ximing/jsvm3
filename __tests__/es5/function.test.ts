@@ -1,4 +1,3 @@
-import { ErrIsNotFunction } from '../../old-src/error';
 import { run } from '../helper';
 
 describe('function spec:', () => {
@@ -64,7 +63,7 @@ describe('function spec:', () => {
       const a = 1;
       module.exports = a();
     `)
-    ).toThrow('a is not a function');
+    ).toThrow('obj is not a function');
   });
 
   // @TODO 优化报错提示

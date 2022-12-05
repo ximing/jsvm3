@@ -44,14 +44,21 @@ export const transform = (
 
     transformCode = result!.code!;
   }
+  // 性能 编译期优化
+  const plugins = [
+    ['minify-dead-code-elimination', { keepFnName: true, keepFnArgs: true, keepClassName: true }],
+    ['minify-constant-folding'],
+    ['minify-guarded-expressions'],
+  ];
   if (hoisting) {
-    const result = babel.transformSync(transformCode, {
-      plugins: [require('./plugin/hoisting')],
-      configFile: false,
-      babelrc: false,
-    });
-    transformCode = result!.code!;
+    plugins.unshift(require('./plugin/hoisting'));
   }
+  const result = babel.transformSync(transformCode, {
+    plugins,
+    configFile: false,
+    babelrc: false,
+  });
+  transformCode = result!.code!;
   let ast = parse(transformCode, {
     sourceType: 'module',
     plugins: [],

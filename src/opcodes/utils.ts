@@ -268,7 +268,7 @@ export const getParams = function (length: number, evalStack: EvaluationStack) {
 export const callFun = function (frame, func, args, target, name, construct = false) {
   const { evalStack, fiber, realm } = frame;
   if (typeof func !== 'function') {
-    return throwErr(frame, new XYZTypeError(`${name || 'object'} is not a function`));
+    return throwErr(frame, new XYZTypeError(`${name || 'obj'} is not a function`));
   }
   // "" 字符串情况 @TODO 严格模式？
   if (target == null) {

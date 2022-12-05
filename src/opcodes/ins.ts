@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/no-unused-vars: 0 */
 import { hasProp } from '../utils/helper';
 import { throwErr } from '../utils/opcodes';
 import { XYZReferenceError, XYZTypeError } from '../utils/errors';
@@ -48,15 +49,16 @@ export const InsMap = new Map();
  * */
 export const SR1 = createOP(
   OPCodeIdx.SR1,
-  function (frame, evalStack) {
+  function (frame, evalStack, scope, realm) {
     return (frame.fiber.r1 = evalStack.pop());
   },
   () => 0
 );
-export const SR2 = createOP(OPCodeIdx.SR2, function (frame, evalStack) {
+export const SR2 = createOP(OPCodeIdx.SR2, function (frame, evalStack, scope, realm) {
   return (frame.fiber.r2 = evalStack.pop());
 });
-export const SR3 = createOP(OPCodeIdx.SR3, function (frame, evalStack) {
+
+export const SR3 = createOP(OPCodeIdx.SR3, function (frame, evalStack, scope, realm) {
   return (frame.fiber.r3 = evalStack.pop());
 });
 /*
@@ -64,21 +66,21 @@ export const SR3 = createOP(OPCodeIdx.SR3, function (frame, evalStack) {
  * */
 export const LR1 = createOP(
   OPCodeIdx.LR1,
-  function (frame, evalStack) {
+  function (frame, evalStack, scope, realm) {
     return evalStack.push(frame.fiber.r1);
   },
   () => 1
 );
 export const LR2 = createOP(
   OPCodeIdx.LR2,
-  function (frame, evalStack) {
+  function (frame, evalStack, scope, realm) {
     return evalStack.push(frame.fiber.r2);
   },
   () => 1
 );
 export const LR3 = createOP(
   OPCodeIdx.LR3,
-  function (frame, evalStack) {
+  function (frame, evalStack, scope, realm) {
     return evalStack.push(frame.fiber.r3);
   },
   () => 1
@@ -86,23 +88,23 @@ export const LR3 = createOP(
 /*
  * 存储到表达式寄存器
  * */
-export const SREXP = createOP(OPCodeIdx.SREXP, function (frame, evalStack) {
+export const SREXP = createOP(OPCodeIdx.SREXP, function (frame, evalStack, scope, realm) {
   return (evalStack.fiber.rexp = evalStack.pop());
 });
 
-export const POP = createOP(OPCodeIdx.POP, function (frame, evalStack) {
+export const POP = createOP(OPCodeIdx.POP, function (frame, evalStack, scope, realm) {
   return evalStack.pop();
 });
 
 export const DUP = createOP(
   OPCodeIdx.DUP,
-  function (frame, evalStack) {
+  function (frame, evalStack, scope, realm) {
     return evalStack.push(evalStack.top());
   },
   () => 1
 );
 
-export const SWAP = createOP(OPCodeIdx.SWAP, function (frame, evalStack) {
+export const SWAP = createOP(OPCodeIdx.SWAP, function (frame, evalStack, scope, realm) {
   const top = evalStack.pop();
   const bot = evalStack.pop();
   evalStack.push(top);
@@ -117,7 +119,7 @@ export const GLOBAL = createOP(
   () => 1
 );
 
-export const SLHS = createOP(OPCodeIdx.SLHS, function (frame, evalStack) {
+export const SLHS = createOP(OPCodeIdx.SLHS, function (frame, evalStack, scope, realm) {
   const obj = evalStack.pop();
   const key = evalStack.pop();
   // console.log('SLHS', obj, key);
@@ -126,7 +128,7 @@ export const SLHS = createOP(OPCodeIdx.SLHS, function (frame, evalStack) {
 
 export const LLHS = createOP(
   OPCodeIdx.LLHS,
-  function (frame, evalStack) {
+  function (frame, evalStack, scope, realm) {
     const [obj, key] = frame.lref.pop();
     evalStack.push(key);
     return evalStack.push(obj);
@@ -136,7 +138,7 @@ export const LLHS = createOP(
 /*
  * 从对象中获取属性
  * */
-export const GET = createOP(OPCodeIdx.GET, function (frame, evalStack) {
+export const GET = createOP(OPCodeIdx.GET, function (frame, evalStack, scope, realm) {
   const obj = evalStack.pop();
   const key = evalStack.pop();
   // console.log('--->GET', obj, key);
@@ -151,7 +153,7 @@ export const GET = createOP(OPCodeIdx.GET, function (frame, evalStack) {
 /*
  * 设置对象属性
  * */
-export const SET = createOP(OPCodeIdx.SET, function (frame, evalStack) {
+export const SET = createOP(OPCodeIdx.SET, function (frame, evalStack, scope, realm) {
   const obj = evalStack.pop();
   const key = evalStack.pop();
   const val = evalStack.pop();
@@ -164,7 +166,7 @@ export const SET = createOP(OPCodeIdx.SET, function (frame, evalStack) {
 /*
  * 删除对象属性
  * */
-export const DEL = createOP(OPCodeIdx.DEL, function (frame, evalStack) {
+export const DEL = createOP(OPCodeIdx.DEL, function (frame, evalStack, scope, realm) {
   const obj = evalStack.pop();
   const key = evalStack.pop();
   if (obj == null) {
@@ -178,7 +180,7 @@ export const DEL = createOP(OPCodeIdx.DEL, function (frame, evalStack) {
  * */
 export const GETL = createOP(
   OPCodeIdx.GETL,
-  function (frame, evalStack, scope) {
+  function (frame, evalStack, scope, realm) {
     let scopeIndex = this.args[0];
     const varIndex = this.args[1];
     while (scopeIndex--) {
@@ -193,7 +195,7 @@ export const GETL = createOP(
 /*
  * 设置局部变量
  * */
-export const SETL = createOP(OPCodeIdx.SETL, function (frame, evalStack, s) {
+export const SETL = createOP(OPCodeIdx.SETL, function (frame, evalStack, s, realm) {
   let scopeIndex = this.args[0];
   const varIndex = this.args[1];
   let scope = s;
@@ -242,125 +244,125 @@ export const DECLG = createOP(OPCodeIdx.DECLG, function (frame, evalStack, scope
 /*
  * invert signal
  * */
-export const INV = createOP(OPCodeIdx.INV, function (f, evalStack) {
+export const INV = createOP(OPCodeIdx.INV, function (f, evalStack, scope, realm) {
   return evalStack.push(inv(evalStack.pop()));
 });
 
-export const PLU = createOP(OPCodeIdx.PLU, function (f, evalStack) {
+export const PLU = createOP(OPCodeIdx.PLU, function (f, evalStack, scope, realm) {
   return evalStack.push(plu(evalStack.pop()));
 });
 
 /*
  * logical NOT
  * */
-export const LNOT = createOP(OPCodeIdx.LNOT, function (f, evalStack) {
+export const LNOT = createOP(OPCodeIdx.LNOT, function (f, evalStack, scope, realm) {
   return evalStack.push(lnot(evalStack.pop()));
 });
 
 /*
  * bitwise NOT
  * */
-export const NOT = createOP(OPCodeIdx.NOT, function (f, evalStack) {
+export const NOT = createOP(OPCodeIdx.NOT, function (f, evalStack, scope, realm) {
   return evalStack.push(not(evalStack.pop()));
 });
 
 /*
  * increment
  * */
-export const INC = createOP(OPCodeIdx.INC, function (f, evalStack) {
+export const INC = createOP(OPCodeIdx.INC, function (f, evalStack, scope, realm) {
   return evalStack.push(inc(evalStack.pop()));
 });
 
 /*
  * decrement
  * */
-export const DEC = createOP(OPCodeIdx.DEC, function (f, evalStack) {
+export const DEC = createOP(OPCodeIdx.DEC, function (f, evalStack, scope, realm) {
   return evalStack.push(dec(evalStack.pop()));
 });
 
 /*
  * sum
  * */
-export const ADD = createOP(OPCodeIdx.ADD, function (f, evalStack) {
+export const ADD = createOP(OPCodeIdx.ADD, function (f, evalStack, scope, realm) {
   return evalStack.push(add(evalStack.pop(), evalStack.pop()));
 });
-export const SUB = createOP(OPCodeIdx.SUB, function (f, evalStack) {
+export const SUB = createOP(OPCodeIdx.SUB, function (f, evalStack, scope, realm) {
   return evalStack.push(sub(evalStack.pop(), evalStack.pop()));
 });
-export const MUL = createOP(OPCodeIdx.MUL, function (f, evalStack) {
+export const MUL = createOP(OPCodeIdx.MUL, function (f, evalStack, scope, realm) {
   return evalStack.push(mul(evalStack.pop(), evalStack.pop()));
 });
-export const DIV = createOP(OPCodeIdx.DIV, function (f, evalStack) {
+export const DIV = createOP(OPCodeIdx.DIV, function (f, evalStack, scope, realm) {
   return evalStack.push(div(evalStack.pop(), evalStack.pop()));
 });
 
-export const MOD = createOP(OPCodeIdx.MOD, function (f, evalStack) {
+export const MOD = createOP(OPCodeIdx.MOD, function (f, evalStack, scope, realm) {
   return evalStack.push(mod(evalStack.pop(), evalStack.pop()));
 });
 
 // left shift
-export const SHL = createOP(OPCodeIdx.SHL, function (f, evalStack) {
+export const SHL = createOP(OPCodeIdx.SHL, function (f, evalStack, scope, realm) {
   return evalStack.push(shl(evalStack.pop(), evalStack.pop()));
 });
 // right shift
-export const SAR = createOP(OPCodeIdx.SAR, function (f, evalStack) {
+export const SAR = createOP(OPCodeIdx.SAR, function (f, evalStack, scope, realm) {
   return evalStack.push(sar(evalStack.pop(), evalStack.pop()));
 });
 // unsigned shift
-export const SHR = createOP(OPCodeIdx.SHR, function (f, evalStack) {
+export const SHR = createOP(OPCodeIdx.SHR, function (f, evalStack, scope, realm) {
   return evalStack.push(shr(evalStack.pop(), evalStack.pop()));
 });
 
-export const OR = createOP(OPCodeIdx.OR, function (f, evalStack) {
+export const OR = createOP(OPCodeIdx.OR, function (f, evalStack, scope, realm) {
   return evalStack.push(or(evalStack.pop(), evalStack.pop()));
 });
-export const AND = createOP(OPCodeIdx.AND, function (f, evalStack) {
+export const AND = createOP(OPCodeIdx.AND, function (f, evalStack, scope, realm) {
   return evalStack.push(and(evalStack.pop(), evalStack.pop()));
 });
 // bitwise XOR
-export const XOR = createOP(OPCodeIdx.XOR, function (f, evalStack) {
+export const XOR = createOP(OPCodeIdx.XOR, function (f, evalStack, scope, realm) {
   return evalStack.push(xor(evalStack.pop(), evalStack.pop()));
 });
-export const EXP = createOP(OPCodeIdx.EXP, function (f, evalStack) {
+export const EXP = createOP(OPCodeIdx.EXP, function (f, evalStack, scope, realm) {
   return evalStack.push(exp(evalStack.pop(), evalStack.pop()));
 });
 
-export const CEQ = createOP(OPCodeIdx.CEQ, function (f, evalStack) {
+export const CEQ = createOP(OPCodeIdx.CEQ, function (f, evalStack, scope, realm) {
   return evalStack.push(ceq(evalStack.pop(), evalStack.pop()));
 });
-export const CNEQ = createOP(OPCodeIdx.CNEQ, function (f, evalStack) {
+export const CNEQ = createOP(OPCodeIdx.CNEQ, function (f, evalStack, scope, realm) {
   return evalStack.push(cneq(evalStack.pop(), evalStack.pop()));
 });
 
 // 全等
-export const CID = createOP(OPCodeIdx.CID, function (f, evalStack) {
+export const CID = createOP(OPCodeIdx.CID, function (f, evalStack, scope, realm) {
   return evalStack.push(cid(evalStack.pop(), evalStack.pop()));
 });
-export const CNID = createOP(OPCodeIdx.CNID, function (f, evalStack) {
+export const CNID = createOP(OPCodeIdx.CNID, function (f, evalStack, scope, realm) {
   return evalStack.push(cnid(evalStack.pop(), evalStack.pop()));
 });
-export const LT = createOP(OPCodeIdx.LT, function (f, evalStack) {
+export const LT = createOP(OPCodeIdx.LT, function (f, evalStack, scope, realm) {
   return evalStack.push(lt(evalStack.pop(), evalStack.pop()));
 });
-export const LTE = createOP(OPCodeIdx.LTE, function (f, evalStack) {
+export const LTE = createOP(OPCodeIdx.LTE, function (f, evalStack, scope, realm) {
   return evalStack.push(lte(evalStack.pop(), evalStack.pop()));
 });
-export const GT = createOP(OPCodeIdx.GT, function (f, evalStack) {
+export const GT = createOP(OPCodeIdx.GT, function (f, evalStack, scope, realm) {
   return evalStack.push(gt(evalStack.pop(), evalStack.pop()));
 });
-export const GTE = createOP(OPCodeIdx.GTE, function (f, evalStack) {
+export const GTE = createOP(OPCodeIdx.GTE, function (f, evalStack, scope, realm) {
   return evalStack.push(gte(evalStack.pop(), evalStack.pop()));
 });
-export const IN = createOP(OPCodeIdx.IN, function (f, evalStack) {
+export const IN = createOP(OPCodeIdx.IN, function (f, evalStack, scope, realm) {
   return evalStack.push(has(evalStack.pop(), evalStack.pop()));
 });
-export const INSTANCEOF = createOP(OPCodeIdx.INSTANCEOF, function (f, evalStack) {
+export const INSTANCEOF = createOP(OPCodeIdx.INSTANCEOF, function (f, evalStack, scope, realm) {
   return evalStack.push(instanceOf(evalStack.pop(), evalStack.pop()));
 });
-export const TYPEOF = createOP(OPCodeIdx.TYPEOF, function (f, evalStack) {
+export const TYPEOF = createOP(OPCodeIdx.TYPEOF, function (f, evalStack, scope, realm) {
   return evalStack.push(typeof evalStack.pop());
 });
-export const VOID = createOP(OPCodeIdx.VOID, function (f, evalStack) {
+export const VOID = createOP(OPCodeIdx.VOID, function (f, evalStack, scope, realm) {
   evalStack.pop();
   // eslint-disable-next-line no-void
   return evalStack.push(void 0);
@@ -368,7 +370,7 @@ export const VOID = createOP(OPCodeIdx.VOID, function (f, evalStack) {
 
 export const UNDEF = createOP(
   OPCodeIdx.UNDEF,
-  function (f, evalStack) {
+  function (f, evalStack, scope, realm) {
     // eslint-disable-next-line no-void
     return evalStack.push(void 0);
   },
@@ -378,7 +380,7 @@ export const UNDEF = createOP(
 // push 字面值
 export const LITERAL = createOP(
   OPCodeIdx.LITERAL,
-  function (f, evalStack) {
+  function (f, evalStack, scope, realm) {
     return evalStack.push(this.args[0]);
   },
   () => 1
@@ -387,7 +389,7 @@ export const LITERAL = createOP(
 // string对象
 export const STRING_LITERAL = createOP(
   OPCodeIdx.STRING_LITERAL,
-  function (f, evalStack) {
+  function (f, evalStack, scope, realm) {
     return evalStack.push(f.script.strings[this.args[0]]);
   },
   () => 1
@@ -395,7 +397,7 @@ export const STRING_LITERAL = createOP(
 
 export const REGEXP_LITERAL = createOP(
   OPCodeIdx.REGEXP_LITERAL,
-  function (f, evalStack) {
+  function (f, evalStack, scope, realm) {
     return evalStack.push(f.script.regexps[this.args[0]]);
   },
   () => 1
@@ -403,7 +405,7 @@ export const REGEXP_LITERAL = createOP(
 // 对象字面量
 export const OBJECT_LITERAL = createOP(
   OPCodeIdx.OBJECT_LITERAL,
-  function (f, evalStack) {
+  function (f, evalStack, scope, realm) {
     // 对象里面有多少个属性
     let length = this.args[0];
     const rv: any[] = [];
@@ -423,7 +425,7 @@ export const OBJECT_LITERAL = createOP(
 );
 export const ARRAY_LITERAL = createOP(
   OPCodeIdx.ARRAY_LITERAL,
-  function (frame, evalStack) {
+  function (frame, evalStack, scope, realm) {
     let length = this.args[0];
     const rv = new Array(length);
     while (length--) {
@@ -439,13 +441,13 @@ export const ARRAY_LITERAL = createOP(
 /*
  * 无条件跳转
  * */
-export const JMP = createOP(OPCodeIdx.JMP, function (f) {
+export const JMP = createOP(OPCodeIdx.JMP, function (f, evalStack, scope, realm) {
   return (f.ip = this.args[0]);
 });
 /*
  * true 跳转
  * */
-export const JMPT = createOP(OPCodeIdx.JMPT, function (f, evalStack) {
+export const JMPT = createOP(OPCodeIdx.JMPT, function (f, evalStack, scope, realm) {
   if (evalStack.pop()) {
     return (f.ip = this.args[0]);
   }
@@ -454,7 +456,7 @@ export const JMPT = createOP(OPCodeIdx.JMPT, function (f, evalStack) {
 /*
  * false 跳转
  * */
-export const JMPF = createOP(OPCodeIdx.JMPF, function (f, evalStack) {
+export const JMPF = createOP(OPCodeIdx.JMPF, function (f, evalStack, scope, realm) {
   if (!evalStack.pop()) {
     return (f.ip = this.args[0]);
   }
@@ -471,7 +473,7 @@ export const FUNCTION = createOP(
   () => 1
 );
 
-export const FUNCTION_SETUP = createOP(OPCodeIdx.FUNCTION_SETUP, function (f, evalStack, l) {
+export const FUNCTION_SETUP = createOP(OPCodeIdx.FUNCTION_SETUP, function (f, evalStack, l, r) {
   // 当前栈 情况 [fn, [Arguments] { '0': 2 },]
   l.set(1, evalStack.pop());
   const fn = evalStack.pop();
@@ -481,7 +483,7 @@ export const FUNCTION_SETUP = createOP(OPCodeIdx.FUNCTION_SETUP, function (f, ev
 });
 
 // initialize 'rest' param
-export const REST = createOP(OPCodeIdx.REST, function (f, evalStack, l) {
+export const REST = createOP(OPCodeIdx.REST, function (f, evalStack, l, r) {
   const index = this.args[0];
   const varIndex = this.args[1];
   const args = l.get(1);
@@ -491,25 +493,25 @@ export const REST = createOP(OPCodeIdx.REST, function (f, evalStack, l) {
 });
 
 // return from function
-export const RET = createOP(OPCodeIdx.RET, function (f) {
+export const RET = createOP(OPCodeIdx.RET, function (f, evalStack, scope, realm) {
   return ret(f);
 });
 
 // return value from Function
-export const RETV = createOP(OPCodeIdx.RETV, function (f, evalStack) {
+export const RETV = createOP(OPCodeIdx.RETV, function (f, evalStack, scope, realm) {
   f.fiber.rv = evalStack.pop();
   return ret(f);
 });
 
 // call as constructor
-export const NEW = createOP(OPCodeIdx.NEW, function (f) {
+export const NEW = createOP(OPCodeIdx.NEW, function (f, evalStack, scope, realm) {
   return call(f, this.args[0], null, true);
 });
 
 // 调用函数
 export const CALL = createOP(
   OPCodeIdx.CALL,
-  function (f) {
+  function (f, evalStack, scope, realm) {
     return call(f, this.args[0], f.script.strings[this.args[1]]);
   },
   function () {
@@ -520,7 +522,7 @@ export const CALL = createOP(
 // call method
 export const CALLM = createOP(
   OPCodeIdx.CALLM,
-  function (f) {
+  function (f, evalStack, scope, realm) {
     return callm(f, this.args[0], null, null, f.script.strings[this.args[1]]);
   },
   function () {
@@ -529,17 +531,17 @@ export const CALLM = createOP(
   }
 );
 // calls 'iterator' method
-export const ITER = createOP(OPCodeIdx.ITER, function (f, evalStack) {
+export const ITER = createOP(OPCodeIdx.ITER, function (f, evalStack, scope, realm) {
   return callm(f, 0, 'iterator', evalStack.pop());
 });
 /*
  * 产生对象的可枚举属性
  * */
-export const ENUMERATE = createOP(OPCodeIdx.ENUMERATE, function (f, evalStack) {
+export const ENUMERATE = createOP(OPCodeIdx.ENUMERATE, function (f, evalStack, scope, realm) {
   return evalStack.push(enumerateKeys(evalStack.pop()));
 });
 // calls iterator 'next'
-export const NEXT = createOP(OPCodeIdx.NEXT, function (f, evalStack) {
+export const NEXT = createOP(OPCodeIdx.NEXT, function (f, evalStack, scope, realm) {
   callm(f, 0, 'next', evalStack.pop());
   if (f.evalError instanceof StopIteration) {
     f.evalError = null;
@@ -548,25 +550,25 @@ export const NEXT = createOP(OPCodeIdx.NEXT, function (f, evalStack) {
   }
 });
 // pause frame
-export const PAUSE = createOP(OPCodeIdx.PAUSE, function (f) {
+export const PAUSE = createOP(OPCodeIdx.PAUSE, function (f, evalStack, scope, realm) {
   return (f.suspended = true);
 });
 
 // yield value from generator
-export const YIELD = createOP(OPCodeIdx.YIELD, function (f, evalStack) {
+export const YIELD = createOP(OPCodeIdx.YIELD, function (f, evalStack, scope, realm) {
   f.fiber.yielded = evalStack.pop();
   return f.fiber.suspend();
 });
 
-export const THROW = createOP(OPCodeIdx.THROW, function (f, evalStack) {
+export const THROW = createOP(OPCodeIdx.THROW, function (f, evalStack, scope, realm) {
   return throwErr(f, evalStack.pop());
 });
 
-export const ENTER_GUARD = createOP(OPCodeIdx.ENTER_GUARD, function (f) {
+export const ENTER_GUARD = createOP(OPCodeIdx.ENTER_GUARD, function (f, evalStack, scope, realm) {
   return f.guards.push(f.script.guards[this.args[0]]);
 });
 
-export const EXIT_GUARD = createOP(OPCodeIdx.EXIT_GUARD, function (f) {
+export const EXIT_GUARD = createOP(OPCodeIdx.EXIT_GUARD, function (f, evalStack, scope, realm) {
   const currentGuard = f.guards[f.guards.length - 1];
   const specifiedGuard = f.script.guards[this.args[0]];
   if (specifiedGuard === currentGuard) {
@@ -577,33 +579,36 @@ export const EXIT_GUARD = createOP(OPCodeIdx.EXIT_GUARD, function (f) {
 /*
  * enter nested scope
  * */
-export const ENTER_SCOPE = createOP(OPCodeIdx.ENTER_SCOPE, function (frame) {
-  return frame.setScope(
-    new Scope(frame.getScope(), frame.script.localNames, frame.script.localLength)
-  );
-});
+export const ENTER_SCOPE = createOP(
+  OPCodeIdx.ENTER_SCOPE,
+  function (frame, evalStack, scope, realm) {
+    return frame.setScope(
+      new Scope(frame.getScope(), frame.script.localNames, frame.script.localLength)
+    );
+  }
+);
 
 /*
  * exit nested scope
  * */
-export const EXIT_SCOPE = createOP(OPCodeIdx.EXIT_SCOPE, function (frame) {
+export const EXIT_SCOPE = createOP(OPCodeIdx.EXIT_SCOPE, function (frame, evalStack, scope, realm) {
   return frame.setScope(frame.getScope()!.parentScope!);
 });
 
 /*
  * 设置行号
  * */
-export const LINE = createOP(OPCodeIdx.LINE, function (frame) {
+export const LINE = createOP(OPCodeIdx.LINE, function (frame, evalStack, scope, realm) {
   return frame.setLine(this.args[0]);
 });
 
 /*
  * 设置列号
  * */
-export const COLUMN = createOP(OPCodeIdx.COLUMN, function (frame) {
+export const COLUMN = createOP(OPCodeIdx.COLUMN, function (frame, evalStack, scope, realm) {
   return frame.setColumn(this.args[0]);
 });
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const DEBUG = createOP(OPCodeIdx.DEBUG, function (frame, evalStack, scope) {});
+export const DEBUG = createOP(OPCodeIdx.DEBUG, function (frame, evalStack, scope, r) {});
