@@ -9,7 +9,8 @@ export type OPExec = (
   frame: Frame,
   stack: EvaluationStack,
   scope: Scope,
-  realm: Realm
+  realm: Realm,
+  args: any | null
 ) => any;
 
 export type Instruction = {

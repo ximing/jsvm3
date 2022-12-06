@@ -1,10 +1,10 @@
 export const OPCodeIdx = {
-  SR1: 1,
-  SR2: 2,
+  SR1: 16,
+  SR2: 17,
   SR3: 12,
 
-  LR1: 4,
-  LR2: 5,
+  LR1: 19,
+  LR2: 20,
   LR3: 13,
 
   SREXP: 7,
@@ -21,12 +21,12 @@ export const OPCodeIdx = {
 
   GLOBAL: 15,
 
-  GET: 16,
-  SET: 17,
+  GET: 1,
+  SET: 2,
   DEL: 18,
 
-  GETG: 19,
-  SETG: 20,
+  GETG: 4,
+  SETG: 5,
   SLHS: 21,
   LLHS: 22,
   DECLG: 23,

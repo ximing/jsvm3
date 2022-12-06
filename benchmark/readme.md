@@ -37,3 +37,13 @@ RayTrace: 53.4;
 NavierStokes: 61.8;
 DeltaBlue: 31.3;
 ```
+
+计算指令函数展开，函数参数调用压缩，数组/对象 声明加速
+
+```javascript
+Richards: 23.6;
+Crypto: 26.9;
+RayTrace: 80.7;
+NavierStokes: 72.0;
+DeltaBlue: 38.7;
+```

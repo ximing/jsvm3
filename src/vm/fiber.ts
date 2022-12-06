@@ -22,6 +22,7 @@ export class Fiber {
   rv: any;
   yielded: any;
   suspended: boolean;
+  // insMap = new Map();
 
   constructor(realm: Realm, timeout = -1) {
     const t = this;

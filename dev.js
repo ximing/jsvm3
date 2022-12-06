@@ -301,16 +301,16 @@ const { XYZ } = require('./lib/vm/vm');
 // module.exports = C;
 // `;
 
-// const code1 = require('fs').readFileSync(
-//   require('path').join(__dirname, './benchmark/raytrace.js'),
-//   'utf-8'
-// );
+const code1 = require('fs').readFileSync(
+  require('path').join(__dirname, './benchmark/richards.js'),
+  'utf-8'
+);
 // const code1 = 'Function.__proto__.__proto__ === Object.prototype';
 // const code1 = `var a = { b : 100};
 // a.b /= 5;
 // module.exports = a;`;
-const code1 = `const a = 1;
-      module.exports = a();`
+// const code1 = ` let a = 4,b = 2
+//     module.exports =a/b`
 const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: false });
 console.log(JSON.stringify(script1.toJSON(), null, 2));
 console.log(script1.source);

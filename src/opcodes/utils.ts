@@ -258,10 +258,12 @@ const createNativeInstance = function (constructor, args) {
 };
 
 export const getParams = function (length: number, evalStack: EvaluationStack) {
-  const args: any = { length };
-  while (length) {
-    args[--length] = evalStack.pop();
-  }
+  // const args: any = { length };
+  // while (length) {
+  //   args[--length] = evalStack.pop();
+  // }
+  const args = evalStack.tail(length);
+  args.length = length;
   return args;
 };
 
@@ -275,7 +277,7 @@ export const callFun = function (frame, func, args, target, name, construct = fa
     target = realm.global;
   }
   let push = true;
-  args = Array.prototype.slice.call(args);
+  // args = Array.prototype.slice.call(args);
   if (hasProp(func, '__xyzFun__')) {
     func.__cname__ = name;
     func.__fiber__ = fiber;
@@ -301,10 +303,7 @@ export const callFun = function (frame, func, args, target, name, construct = fa
 
 export const call = function (frame: Frame, length: number, name: string | null, construct?) {
   const { evalStack } = frame;
-  const args = { length, callee: null };
-  while (length) {
-    args[--length] = evalStack.pop();
-  }
+  const args: any = getParams(length, evalStack);
   const func = evalStack.pop();
   args.callee = func;
   return callFun(frame, func, args, null, name, construct);

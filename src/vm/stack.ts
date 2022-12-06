@@ -32,11 +32,17 @@ export class EvaluationStack {
     return this.array[this.idx - 1];
   }
 
+  tail(length: number) {
+    const end = this.idx;
+    this.idx -= length;
+    return this.array.slice(this.idx, end);
+  }
+
   len() {
     return this.idx;
   }
 
   clear() {
-    return (this.idx = 0);
+    this.idx = 0;
   }
 }

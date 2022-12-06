@@ -1,5 +1,5 @@
 import { ArrayIterator } from '../vm/builtin';
-import { hasProp, prototypeOf } from '../utils/helper';
+import { hasProp } from '../utils/helper';
 
 export function inv(o) {
   return -o;
@@ -125,7 +125,7 @@ export function get(obj, key) {
   if (hasProp(obj, key)) {
     return obj[key];
   }
-  return get(prototypeOf(obj), key);
+  return get(Object.getPrototypeOf(obj), key);
 }
 
 export function set(obj, key, val) {
