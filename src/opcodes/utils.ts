@@ -274,7 +274,7 @@ export const callFun = function (frame, func, args, target, name, construct = fa
   }
   // "" 字符串情况 @TODO 严格模式？
   if (target == null) {
-    target = realm.global;
+    target = realm.globalObj;
   }
   let push = true;
   // args = Array.prototype.slice.call(args);

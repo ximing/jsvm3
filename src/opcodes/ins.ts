@@ -75,8 +75,6 @@ export const DUP = createOP(
 );
 
 export const SWAP = createOP(OPCodeIdx.SWAP, function (frame, evalStack, scope, realm, args) {
-  // const top = evalStack.pop();
-  // const bot = evalStack.pop();
   const [bot, top] = evalStack.tail(2);
   evalStack.push(top);
   evalStack.push(bot);
@@ -91,8 +89,6 @@ export const GLOBAL = createOP(
 );
 
 export const SLHS = createOP(OPCodeIdx.SLHS, function (frame, evalStack, scope, realm, args) {
-  // const obj = evalStack.pop();
-  // const key = evalStack.pop();
   // console.log('SLHS', obj, key);
   // [key, obj]
   frame.lref.push(evalStack.tail(2));

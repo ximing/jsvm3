@@ -82,7 +82,7 @@ export const instructionsToJson = function (instructions: Instruction[]) {
     if (process.env.KEEP_INS_NAME) {
       code = [inst.name];
     }
-    code = [inst.name];
+    // code = [inst.name];
     // @endif
     if (inst.args) {
       for (const a of inst.args) {

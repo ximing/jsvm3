@@ -302,7 +302,7 @@ const { XYZ } = require('./lib/vm/vm');
 // `;
 
 const code1 = require('fs').readFileSync(
-  require('path').join(__dirname, './benchmark/richards.js'),
+  require('path').join(__dirname, './benchmark/raytrace.js'),
   'utf-8'
 );
 // const code1 = 'Function.__proto__.__proto__ === Object.prototype';
@@ -313,7 +313,12 @@ const code1 = require('fs').readFileSync(
 //     module.exports =a/b`
 const script1 = transform(code1, 'sum.js', { hoisting: true, convertES5: false });
 console.log(JSON.stringify(script1.toJSON(), null, 2));
-console.log(script1.source);
+require('fs').writeFileSync(
+  './benchmark/raytrace.out.json',
+  JSON.stringify(script1.toJSON()),
+  'utf-8'
+);
+// console.log(script1.source);
 console.log('===============+> run');
 const vm1 = new XYZ({
   self: global,
@@ -341,7 +346,7 @@ const vm1 = new XYZ({
 });
 const res1 = vm1.go(script1);
 console.log(res1);
-console.log(vm1.realm.global.module.exports);
+console.log(vm1.realm.globalObj.module.exports);
 
 //
 // const code1 = require('fs').readFileSync(
