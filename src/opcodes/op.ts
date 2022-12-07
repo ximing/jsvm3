@@ -1,4 +1,7 @@
+// @if CURRENT != 'exp'
 import { ArrayIterator } from '../vm/builtin';
+// @endif
+
 import { hasProp } from '../utils/helper';
 
 export function inv(o) {
@@ -141,7 +144,7 @@ export function del(obj, key) {
 export function instanceOf(klass, obj) {
   return obj instanceof klass;
 }
-
+// @if CURRENT != 'exp'
 export function enumerateKeys(obj) {
   const keys: string[] = [];
   for (const key in obj) {
@@ -151,3 +154,4 @@ export function enumerateKeys(obj) {
   }
   return new ArrayIterator(keys);
 }
+// @endif

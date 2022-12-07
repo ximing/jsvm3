@@ -5,7 +5,9 @@ import { XYZReferenceError, XYZTypeError } from '../utils/errors';
 import { Scope } from '../vm/scope';
 import { del, enumerateKeys, has, set } from './op';
 import { call, callm, createFunction, createOP, ret } from './utils';
+// @if CURRENT != 'exp'
 import { StopIteration } from '../vm/builtin';
+// @endif
 // @ifdef COMPILER
 import { OPCodeIdx } from './opIdx';
 import { Cannot, property } from './contants';
@@ -83,7 +85,7 @@ export const SWAP = createOP(OPCodeIdx.SWAP, function (frame, evalStack, scope, 
 export const GLOBAL = createOP(
   OPCodeIdx.GLOBAL,
   function (frame, evalStack, scope, realm, args) {
-    evalStack.push(realm.global);
+    evalStack.push(realm.globalObj);
   },
   () => 1
 );
@@ -125,6 +127,7 @@ export const GET = createOP(OPCodeIdx.GET, function (frame, evalStack, scope, re
   // return evalStack.push(get(obj, key));
 });
 
+// @if CURRENT != 'exp'
 /*
  * 设置对象属性
  * */
@@ -140,7 +143,6 @@ export const SET = createOP(OPCodeIdx.SET, function (frame, evalStack, scope, re
   }
   // return evalStack.push(set(obj, key, val));
 });
-
 /*
  * 删除对象属性
  * */
@@ -155,6 +157,7 @@ export const DEL = createOP(OPCodeIdx.DEL, function (frame, evalStack, scope, re
   }
   // return evalStack.push(del(obj, key));
 });
+// @endif
 
 /*
  * 获取局部变量
@@ -172,7 +175,7 @@ export const GETL = createOP(
   },
   () => 1
 );
-
+// @if CURRENT != 'exp'
 /*
  * 设置局部变量
  * */
@@ -185,6 +188,7 @@ export const SETL = createOP(OPCodeIdx.SETL, function (frame, evalStack, scope, 
   }
   evalStack.push(_scope.set(varIndex, evalStack.pop()));
 });
+// @endif
 
 /*
  * 获取全局变量
@@ -195,32 +199,32 @@ export const GETG = createOP(
     const k = frame.script.globalNames[args[0]];
     // name, ignoreNotDefined
     // console.log(args[0], args[1]);
-    if (!hasProp(realm.global, k) && !args[1]) {
+    if (!hasProp(realm.globalObj, k) && !args[1]) {
       throwErr(frame, new XYZReferenceError(`.${k} not def`));
     } else {
-      evalStack.push(realm.global[k]);
+      evalStack.push(realm.globalObj[k]);
     }
-    // console.log(realm.global[args[0]]);
-    // return evalStack.push(realm.global[k]);
+    // console.log(realm.globalObj[args[0]]);
+    // return evalStack.push(realm.globalObj[k]);
   },
   () => 1
 );
-
+// @if CURRENT != 'exp'
 /*
  * 设置全局变量
  * */
 export const SETG = createOP(OPCodeIdx.SETG, function (frame, evalStack, scope, realm, args) {
   const k = frame.script.globalNames[args[0]];
-  evalStack.push((realm.global[k] = evalStack.pop()));
+  evalStack.push((realm.globalObj[k] = evalStack.pop()));
 });
-
+// @endif
 /*
  * 声明全局变量，考虑 __tests__/es5/global.test.ts case
  * */
 export const DECLG = createOP(OPCodeIdx.DECLG, function (frame, evalStack, scope, realm, args) {
   const k = frame.script.globalNames[args[0]];
-  if (!hasProp(realm.global, k)) {
-    realm.global[k] = undefined;
+  if (!hasProp(realm.globalObj, k)) {
+    realm.globalObj[k] = undefined;
   }
 });
 
@@ -359,6 +363,7 @@ export const GTE = createOP(OPCodeIdx.GTE, function (frame, evalStack, scope, re
 export const IN = createOP(OPCodeIdx.IN, function (frame, evalStack, scope, realm, args) {
   evalStack.push(has(evalStack.pop(), evalStack.pop()));
 });
+
 export const INSTANCEOF = createOP(
   OPCodeIdx.INSTANCEOF,
   function (frame, evalStack, scope, realm, args) {
@@ -366,6 +371,7 @@ export const INSTANCEOF = createOP(
     evalStack.push(obj instanceof klass);
   }
 );
+
 export const TYPEOF = createOP(OPCodeIdx.TYPEOF, function (frame, evalStack, scope, realm, args) {
   evalStack.push(typeof evalStack.pop());
 });
@@ -479,8 +485,8 @@ export const JMPF = createOP(OPCodeIdx.JMPF, function (frame, evalStack, scope, 
     frame.ip = args[0];
   }
 });
-
-// push function reference
+// @if CURRENT != 'exp'
+// 创建函数
 export const FUNCTION = createOP(
   OPCodeIdx.FUNCTION,
   function (frame, evalStack, scope, realm, args) {
@@ -551,6 +557,9 @@ export const CALLM = createOP(
     return 1 - (this.args[0] + 1 + 1);
   }
 );
+// @endif
+
+// @if CURRENT != 'exp'
 // calls 'iterator' method
 export const ITER = createOP(OPCodeIdx.ITER, function (frame, evalStack, scope, realm, args) {
   callm(frame, 0, 'iterator', evalStack.pop());
@@ -564,7 +573,7 @@ export const ENUMERATE = createOP(
     evalStack.push(enumerateKeys(evalStack.pop()));
   }
 );
-// calls iterator 'next'
+// 调用迭代器 'next'
 export const NEXT = createOP(OPCodeIdx.NEXT, function (frame, evalStack, scope, realm, args) {
   callm(frame, 0, 'next', evalStack.pop());
   if (frame.evalError instanceof StopIteration) {
@@ -573,7 +582,7 @@ export const NEXT = createOP(OPCodeIdx.NEXT, function (frame, evalStack, scope, 
     frame.ip = args[0];
   }
 });
-// pause frame
+// 终止 frame 执行
 export const PAUSE = createOP(OPCodeIdx.PAUSE, function (frame, evalStack, scope, realm, args) {
   frame.suspended = true;
 });
@@ -605,9 +614,6 @@ export const EXIT_GUARD = createOP(
   }
 );
 
-/*
- * enter nested scope
- * */
 export const ENTER_SCOPE = createOP(
   OPCodeIdx.ENTER_SCOPE,
   function (frame, evalStack, scope, realm, args) {
@@ -615,15 +621,13 @@ export const ENTER_SCOPE = createOP(
   }
 );
 
-/*
- * exit nested scope
- * */
 export const EXIT_SCOPE = createOP(
   OPCodeIdx.EXIT_SCOPE,
   function (frame, evalStack, scope, realm, args) {
     frame.setScope(scope!.parentScope!);
   }
 );
+// @endif
 
 /*
  * 设置行号

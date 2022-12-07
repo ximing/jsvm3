@@ -8,8 +8,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as t from '@babel/types';
 import { terser } from 'rollup-plugin-terser';
-
-import pkg from './package.json';
+import summary from 'rollup-plugin-summary';
 
 const requireFromString = require('require-from-string');
 const OPCodeIdx = requireFromString(
@@ -24,16 +23,16 @@ Object.keys(OPCodeIdx).forEach((key) => {
 });
 
 export default {
-  input: 'src/index.ts',
+  input: 'src/exp.ts',
   output: [
     {
-      file: pkg.main,
+      file: 'dist/exp.js',
       format: 'cjs',
       exports: 'named',
       sourcemap: true,
     },
     {
-      file: pkg.module,
+      file: 'dist/exp.es6.js',
       format: 'es',
       exports: 'named',
       sourcemap: true,
@@ -48,13 +47,9 @@ export default {
       include: ['**/*.ts'],
       context: {
         VM: true,
-        CURRENT: 'all',
+        CURRENT: 'exp',
       },
     }),
-    // typescript({
-    //   tsconfig: 'tsconfig.build.json',
-    //   clean: true,
-    // }),
     commonjs(),
     babel({
       babelrc: false,
@@ -134,5 +129,6 @@ export default {
         },
       },
     }),
+    summary(),
   ],
 };

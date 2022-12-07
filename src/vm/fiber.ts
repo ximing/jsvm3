@@ -33,7 +33,7 @@ export class Fiber {
     t.callStack = [];
     t.evalStack = null;
     t.depth = -1;
-    t.yielded = this.rv = undefined;
+    t.yielded = t.rv = undefined;
     t.suspended = false;
     // fiber-specific registers temporary registers
     t.r1 = t.r2 = t.r3 = null;
@@ -217,10 +217,6 @@ export class Fiber {
     return frame;
   }
 
-  setReturnValue(rv) {
-    return this.callStack[this.depth].evalStack.push(rv);
-  }
-
   suspend() {
     // eslint-disable-next-line no-return-assign
     return (this.suspended = this.callStack[this.depth].suspended = true);
@@ -240,10 +236,6 @@ export class Fiber {
 
   timedOut() {
     return this.timeout === 0;
-  }
-
-  send(obj) {
-    return this.callStack[this.depth].evalStack.push(obj);
   }
 
   isDone() {

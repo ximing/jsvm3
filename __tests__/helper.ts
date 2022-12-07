@@ -9,8 +9,8 @@ export const run = function (code, ctx = {}, hoisting = true, convertES5 = false
   const res = vm.go(script);
   // console.log(res);
   // console.log(JSON.stringify(script.toJSON(), null, 2));
-  // console.log(vm.realm.global);
-  return (vm.realm.global as any).module.exports;
+  // console.log(vm.realm.globalObj);
+  return (vm.realm.globalObj as any).module.exports;
 };
 
 export const runExp = function (code: string, ctx = {}) {

@@ -30,7 +30,7 @@ export const createOP = function (
   const base: Instruction = {
     // runtime
     id,
-    exec: fn,
+    run: fn,
     // runtime end
     // @ifdef COMPILER
     name: OPCodeMap[id],

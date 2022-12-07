@@ -1,7 +1,7 @@
 import { XYZError } from '../utils/errors';
 
 export class StopIteration extends XYZError {
-  static display = 'StopIter';
+  display = 'StopIter';
   value: any;
   message: string;
   constructor(value?, message?) {

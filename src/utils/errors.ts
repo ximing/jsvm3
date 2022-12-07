@@ -38,7 +38,7 @@ export class XYZError {
 
   toString() {
     // @ts-ignore
-    const errName = this.constructor.display;
+    const errName = this.display;
     let rv = `${errName}: ${this.message}`;
     if (this._trace) {
       rv += printTrace(this._trace);
@@ -56,19 +56,19 @@ export class XYZError {
 // }
 
 export class XYZRangeError extends XYZError {
-  static display = 'RangeErr';
+  display = 'RangeErr';
 }
 
 export class XYZReferenceError extends XYZError {
-  static display = 'RefErr';
+  display = 'RefErr';
 }
 
 export class XYZSyntaxError extends XYZError {
-  static display = 'SynErr';
+  display = 'SynErr';
 }
 
 export class XYZTypeError extends XYZError {
-  static display = 'TyErr';
+  display = 'TyErr';
 }
 
 // export class XYZURIError extends XYZError {
@@ -76,7 +76,7 @@ export class XYZTypeError extends XYZError {
 // }
 
 export class XYZTimeoutError extends XYZError {
-  static display = 'TErr';
+  display = 'TErr';
   fiber: any;
 
   constructor(fiber) {

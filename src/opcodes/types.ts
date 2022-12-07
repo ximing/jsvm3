@@ -16,7 +16,7 @@ export type OPExec = (
 export type Instruction = {
   name: string;
   id: number;
-  exec: OPExec;
+  run: OPExec;
   calculateFactor: (this: Instruction) => number;
   args: any[];
   forEachLabel: (this: Instruction, args?: any) => any;

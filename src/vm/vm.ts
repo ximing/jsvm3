@@ -27,7 +27,7 @@ export class XYZ {
 
   createFiber(script: Script, timeout = -1) {
     const fiber = new Fiber(this.realm, timeout);
-    fiber.pushFrame(script, this.realm.global);
+    fiber.pushFrame(script, this.realm.globalObj);
     return fiber;
   }
 }

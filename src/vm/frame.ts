@@ -44,7 +44,7 @@ import type { Script } from './script';
 // import { hasProp } from '../utils/helper';
 // import { call, callm, createFunction, ret } from '../opcodes/utils';
 // import { StopIteration } from './builtin';
-import { Instruction } from '../opcodes/types';
+import type { Instruction } from '../opcodes/types';
 
 export class Frame {
   fiber: Fiber;
@@ -96,12 +96,12 @@ export class Frame {
     t.lref = [];
   }
 
-  calc(ins: Instruction) {
-    if (!this.fiber.insMap.has(ins.name)) {
-      this.fiber.insMap.set(ins.name, { count: 0, time: 0 });
-    }
-    return this.fiber.insMap.get(ins.name);
-  }
+  // calc(ins: Instruction) {
+  //   if (!this.fiber.insMap.has(ins.name)) {
+  //     this.fiber.insMap.set(ins.name, { count: 0, time: 0 });
+  //   }
+  //   return this.fiber.insMap.get(ins.name);
+  // }
 
   run() {
     let len;
@@ -585,7 +585,7 @@ export class Frame {
       // const iii = this.calc(ins);
       // const now = process.hrtime();
 
-      ins.exec(frame, frame.evalStack, this._scope!, frame.realm, ins.args);
+      ins.run(frame, frame.evalStack, this._scope!, frame.realm, ins.args);
 
       // iii.count += 1;
       // const diff = process.hrtime(now);
