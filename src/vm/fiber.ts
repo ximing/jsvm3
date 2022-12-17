@@ -26,6 +26,7 @@ export class Fiber {
   rv: any;
   yielded: any;
   suspended: boolean;
+  insMap = new Map();
 
   constructor(realm: Realm, timeout = -1) {
     const t = this;
@@ -94,6 +95,7 @@ export class Fiber {
       this.injectStackTrace(err);
     }
     if (err) {
+      // console.trace();
       throw err;
     }
   }
@@ -137,6 +139,7 @@ export class Fiber {
       }
       frame = this.popFrame();
     }
+    // console.log('throw error');
     throw err;
   }
 

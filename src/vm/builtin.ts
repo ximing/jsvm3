@@ -7,6 +7,9 @@ export class StopIteration extends JSVMError {
   constructor(value?, message?) {
     super(message);
     this.value = value;
+    if (message == null) {
+      message = 'iter has stopped';
+    }
     this.message = message;
   }
 }
