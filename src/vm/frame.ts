@@ -3,6 +3,7 @@ import { Scope } from './scope';
 import { Realm } from './realm';
 import { EvaluationStack } from './stack';
 import type { Script } from './script';
+import { Instruction } from '../opcodes/types';
 import { Guard } from './types';
 
 /*
@@ -39,6 +40,13 @@ export class Frame {
 
   rv: any; // return value
 
+  /*
+   * 左值引用
+   * 赋值操作：在执行赋值指令（如SET）之前，lref可能被用来存储赋值操作的目标信息。这样，在计算出要赋的值之后，可以通过lref中的信息找到正确的存储位置，并完成赋值操作。
+   * 属性和元素访问：在处理对象属性访问或数组元素访问时，lref可以暂存对象和属性名（或数组和索引），以便之后的GET或SET操作可以使用。
+   * */
+  lref: any[]; // L-value Reference
+
   line: number;
   column: number;
 
@@ -65,6 +73,20 @@ export class Frame {
     t.guards = [];
     t.rv = undefined;
     t.line = t.column = -1;
+    t.lref = [];
+  }
+
+  /*
+   * 用来收集和统计关于指令执行的信息的
+   * 性能分析：通过统计每个指令的执行次数和时间，开发者可以识别出哪些指令是热点，即经常执行或执行时间长的指令，这对于性能优化至关重要。
+   * 调试辅助：在调试过程中，了解哪些指令被频繁执行或执行时间长可以帮助开发者定位问题代码。
+   * 代码优化：基于这些统计数据，开发者可以决定是否需要优化某些指令的实现，或者调整代码结构以减少热点指令的执行。
+   * */
+  calc(ins: Instruction) {
+    if (!this.fiber.insMap.has(ins.name)) {
+      this.fiber.insMap.set(ins.name, { count: 0, time: 0 });
+    }
+    return this.fiber.insMap.get(ins.name);
   }
 
   run() {

@@ -13,6 +13,7 @@ export class StopIteration extends JSVMError {
     this.message = message;
   }
 }
+
 export class ArrayIterator {
   elements: any[];
   index: number;

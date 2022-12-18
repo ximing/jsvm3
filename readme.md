@@ -1,6 +1,7 @@
-# jsvm3
-
-用 JS 实现的 JS 虚拟机（解释器）。
+![build workflow](https://github.com/ximing/jsvm3/actions/workflows/build.yml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/ximing/jsvm3/badge.svg?branch=master)](https://coveralls.io/github/ximing/jsvm2?branch=master)
+![NPM](https://img.shields.io/npm/l/jsvm3?style=flat-square)
+![npm bundle size](https://img.shields.io/bundlephobia/min/jsvm3?style=flat-square)
 
 ## Specification
 

@@ -57,5 +57,9 @@ export class Realm {
       this.globalObj[k] = v;
     }
 
+    const $exports = {};
+    const $module = { exports: $exports };
+    (this.globalObj as any).module = $module;
+    (this.globalObj as any).exports = $exports;
   }
 }

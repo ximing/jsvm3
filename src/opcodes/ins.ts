@@ -2,6 +2,7 @@
 import { hasProp } from '../utils/helper';
 import { throwErr } from '../utils/opcodes';
 import { JSVMReferenceError, JSVMTypeError } from '../utils/errors';
+import { Scope } from '../vm/scope';
 import { del, enumerateKeys, has, set } from './op';
 import { call, callm, createFunction, createOP, ret } from './utils';
 // @if CURRENT != 'exp'
@@ -12,6 +13,7 @@ import { OPCodeIdx } from './opIdx';
 import { Cannot, property } from './contants';
 // @endif
 export const InsMap = new Map();
+
 /*
  * 存储到寄存器1
  * */
@@ -219,6 +221,7 @@ export const DECLG = createOP(OPCodeIdx.DECLG, function (frame, evalStack, scope
     realm.globalObj[k] = undefined;
   }
 });
+
 /*
  * invert signal
  * */
@@ -351,6 +354,17 @@ export const GTE = createOP(OPCodeIdx.GTE, function (frame, evalStack, scope, re
   const [l, r] = evalStack.tail(2);
   evalStack.push(l >= r);
 });
+export const IN = createOP(OPCodeIdx.IN, function (frame, evalStack, scope, realm, args) {
+  evalStack.push(has(evalStack.pop(), evalStack.pop()));
+});
+
+export const INSTANCEOF = createOP(
+  OPCodeIdx.INSTANCEOF,
+  function (frame, evalStack, scope, realm, args) {
+    const [obj, klass] = evalStack.tail(2);
+    evalStack.push(obj instanceof klass);
+  }
+);
 
 export const TYPEOF = createOP(OPCodeIdx.TYPEOF, function (frame, evalStack, scope, realm, args) {
   evalStack.push(typeof evalStack.pop());
@@ -386,6 +400,60 @@ export const STRING_LITERAL = createOP(
     evalStack.push(frame.script.strings[args[0]]);
   },
   () => 1
+);
+
+export const REGEXP_LITERAL = createOP(
+  OPCodeIdx.REGEXP_LITERAL,
+  function (frame, evalStack, scope, realm, args) {
+    evalStack.push(frame.script.regexps[args[0]]);
+  },
+  () => 1
+);
+// 对象字面量
+export const OBJECT_LITERAL = createOP(
+  OPCodeIdx.OBJECT_LITERAL,
+  function (frame, evalStack, scope, realm, args) {
+    const obj = {};
+    const length = args[0];
+    // // 对象里面有多少个属性
+    // let length = args[0];
+    // const rv: any[] = [];
+    // // 这里指令是反的，因为先进栈的后出栈，所以为了保持 for in 遍历对象的顺序，要再生成对象的时候做个revert
+    // while (length--) {
+    //   rv.push([evalStack.pop(), evalStack.pop()]);
+    // }
+    // for (const [key, val] of rv.reverse()) {
+    //   obj[key] = val;
+    //   // set(obj, key, val);
+    // }
+    const rv = evalStack.tail(length + length);
+    const l = rv.length;
+    let i = 0;
+    while (i < l) {
+      const val = rv[i++];
+      const key = rv[i++];
+      obj[key] = val;
+    }
+    evalStack.push(obj);
+  },
+  function () {
+    return 1 - this.args[0] * 2;
+  }
+);
+export const ARRAY_LITERAL = createOP(
+  OPCodeIdx.ARRAY_LITERAL,
+  function (frame, evalStack, scope, realm, args) {
+    // let length = args[0];
+    // const rv = new Array(length);
+    // while (length--) {
+    //   rv[length] = evalStack.pop();
+    // }
+    const rv = evalStack.tail(args[0]);
+    evalStack.push(rv);
+  },
+  function () {
+    return 1 - this.args[0];
+  }
 );
 
 /*
@@ -508,6 +576,15 @@ export const NEXT = createOP(OPCodeIdx.NEXT, function (frame, evalStack, scope, 
     frame.ip = args[0];
   }
 });
+// 终止 frame 执行
+export const PAUSE = createOP(OPCodeIdx.PAUSE, function (frame, evalStack, scope, realm, args) {
+  frame.suspended = true;
+});
+// yield value from generator
+export const YIELD = createOP(OPCodeIdx.YIELD, function (frame, evalStack, scope, realm, args) {
+  frame.fiber.yielded = evalStack.pop();
+  frame.fiber.suspend();
+});
 
 export const THROW = createOP(OPCodeIdx.THROW, function (frame, evalStack, scope, realm, args) {
   throwErr(frame, evalStack.pop());
@@ -530,3 +607,36 @@ export const EXIT_GUARD = createOP(
     }
   }
 );
+
+export const ENTER_SCOPE = createOP(
+  OPCodeIdx.ENTER_SCOPE,
+  function (frame, evalStack, scope, realm, args) {
+    frame.setScope(new Scope(scope, frame.script.localNames, frame.script.localLength));
+  }
+);
+
+export const EXIT_SCOPE = createOP(
+  OPCodeIdx.EXIT_SCOPE,
+  function (frame, evalStack, scope, realm, args) {
+    frame.setScope(scope!.parentScope!);
+  }
+);
+// @endif
+
+/*
+ * 设置行号
+ * */
+export const LINE = createOP(OPCodeIdx.LINE, function (frame, evalStack, scope, realm, args) {
+  frame.setLine(args[0]);
+});
+
+/*
+ * 设置列号
+ * */
+export const COLUMN = createOP(OPCodeIdx.COLUMN, function (frame, evalStack, scope, realm, args) {
+  frame.setColumn(args[0]);
+});
+
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const DEBUG = createOP(OPCodeIdx.DEBUG, function (frame, evalStack, scope, realm, args) {});

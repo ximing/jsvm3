@@ -48,6 +48,7 @@ import {
   SETL,
   SLHS,
   SR1,
+  SR2,
   SR3,
   SREXP,
   STRING_LITERAL,
@@ -1383,11 +1384,89 @@ export class Emitter extends Visitor {
     return node;
   }
 
+  WithStatement(_) {
+    throw new Error('not implemented');
+    return _;
+  }
+
+  YieldExpression(node) {
+    throw new Error('not implemented');
+    return node;
+  }
+
+  ComprehensionExpression() {
+    // An array comprehension. The blocks array corresponds to the sequence
+    // of for and for each blocks. The optional filter expression corresponds
+    // to the final if clause, if present
+    throw new Error('not implemented');
+  }
+
+  ComprehensionBlock() {
+    // A for or for each block in an array comprehension or generator expression
+    throw new Error('not implemented');
+  }
+
+  ClassExpression(_) {
+    throw new Error('not implemented');
+  }
+
+  ClassBody(_) {
+    throw new Error('not implemented');
+  }
+
+  ClassDeclaration(_) {
+    throw new Error('not implemented');
+  }
+
+  ClassHeritage(_) {
+    throw new Error('not implemented');
+  }
+
+  ExportBatchSpecifier(_) {
+    throw new Error('not implemented');
+  }
+
+  ExportSpecifier(_) {
+    throw new Error('not implemented');
+  }
+
+  ExportDeclaration(_) {
+    throw new Error('not implemented');
+  }
+
+  ImportSpecifier(_) {
+    throw new Error('not implemented');
+  }
+
+  ImportDeclaration(_) {
+    throw new Error('not implemented');
+  }
+
+  MethodDefinition(_) {
+    throw new Error('not implemented');
+  }
+
   Property(_) {
     throw new Error('not implemented');
   }
 
+  ModuleDeclaration(_) {
+    throw new Error('not implemented');
+  }
+
   SpreadElement(_) {
+    throw new Error('not implemented');
+  }
+
+  TemplateElement(_) {
+    throw new Error('not implemented');
+  }
+
+  TaggedTemplateExpression(_) {
+    throw new Error('not implemented');
+  }
+
+  TemplateLiteral(_) {
     throw new Error('not implemented');
   }
 }

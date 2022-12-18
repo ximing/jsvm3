@@ -9,8 +9,12 @@ export const OPCodeIdx = {
 
   SREXP: 7,
 
+  LINE: 8,
+  COLUMN: 9,
+
   GETL: 3,
   SETL: 6,
+
   POP: 10,
   DUP: 11,
   SWAP: 14,
@@ -20,11 +24,13 @@ export const OPCodeIdx = {
   GET: 1,
   SET: 2,
   DEL: 18,
+
   GETG: 4,
   SETG: 5,
   SLHS: 21,
   LLHS: 22,
   DECLG: 23,
+
   PLU: 25,
   INV: 26,
   LNOT: 27,
@@ -54,6 +60,9 @@ export const OPCodeIdx = {
 
   GT: 50,
   GTE: 51,
+
+  IN: 52,
+  INSTANCEOF: 53,
   TYPEOF: 54,
   VOID: 55,
 
@@ -61,7 +70,13 @@ export const OPCodeIdx = {
 
   LITERAL: 60,
   STRING_LITERAL: 61,
+  REGEXP_LITERAL: 62,
+  OBJECT_LITERAL: 63,
+  ARRAY_LITERAL: 64,
+
+  ITER: 66,
   ENUMERATE: 67,
+  NEXT: 68,
 
   JMP: 69,
   JMPT: 70,
@@ -75,7 +90,14 @@ export const OPCodeIdx = {
   NEW: 77,
   CALL: 78,
   CALLM: 79,
+  PAUSE: 80,
+  YIELD: 81,
   THROW: 82,
   ENTER_GUARD: 83,
   EXIT_GUARD: 84,
+
+  ENTER_SCOPE: 86,
+  EXIT_SCOPE: 87,
+
+  DEBUG: 88,
 };

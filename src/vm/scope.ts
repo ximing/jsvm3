@@ -41,6 +41,8 @@ export class Scope {
         rv[v] = parseInt(k);
       }
     }
+    rv.this = 0;
+    rv.arguments = 1;
     return rv;
   }
 }

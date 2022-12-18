@@ -28,6 +28,8 @@ export const binaryOp = {
   '&': 'AND',
   '^': 'XOR',
   '**': 'EXP',
+  in: 'IN',
+  instanceof: 'INSTANCEOF',
 };
 
 export const assignOp = {

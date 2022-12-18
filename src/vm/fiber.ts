@@ -20,6 +20,7 @@ export class Fiber {
   timeout: number;
   maxDepth: number;
   maxTraceDepth: number;
+  // callStack
   callStack: any[];
   evalStack: any;
   depth: number;
@@ -111,6 +112,7 @@ export class Fiber {
       const ip = frame.ip - 1;
       if ((len = frame.guards.length)) {
         const guard = frame.guards[len - 1];
+        // @ts-ignore
         if (guard.start <= ip && ip <= guard.end) {
           if (guard.handler !== null) {
             // try/catch
@@ -118,11 +120,13 @@ export class Fiber {
               // 扔到保护区内
               frame.evalStack.push(err);
               frame.evalError = null;
+              // @ts-ignore
               frame.ip = guard.handler;
             } else {
               // 扔到保护区外(eg: catch or finally block)
               if (guard.finalizer && frame.ip <= guard.finalizer) {
                 // 有一个 finally 块，它被扔进了 catch 块，确保执行
+                // @ts-ignore
                 frame.ip = guard.finalizer;
               } else {
                 frame = this.popFrame();
@@ -131,6 +135,7 @@ export class Fiber {
             }
           } else {
             // try/finally
+            // @ts-ignore
             frame.ip = guard.finalizer;
           }
           frame.suspended = false;
@@ -176,6 +181,7 @@ export class Fiber {
       err._trace = trace;
     }
     // show stack trace on node.js
+    // @ts-ignore
     return (err.stack = err.toString());
   }
 

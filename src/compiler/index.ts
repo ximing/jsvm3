@@ -1,6 +1,7 @@
 import * as babel from '@babel/core';
 import { parse, parseExpression } from '@babel/parser';
 import { Emitter } from './emitter';
+import { printCodeWithLine } from './utils';
 
 export const transform = (
   code: string,
@@ -21,6 +22,25 @@ export const transform = (
           },
         ],
       ],
+      // @ts-ignore
+      assumptions: {
+        noDocumentAll: true,
+        noClassCalls: true,
+        enumerableModuleMeta: true,
+        constantReexports: true,
+        iterableIsArray: true,
+        noNewArrows: true,
+        objectRestNoSymbols: true,
+        privateFieldsAsProperties: true,
+        setClassMethods: true,
+        setComputedProperties: true,
+        setPublicClassFields: true,
+        setSpreadProperties: true,
+        superIsCallableConstructor: true,
+        skipForOfIteratorClosing: true,
+      },
+      configFile: false,
+      babelrc: false,
     });
 
     transformCode = result!.code!;
@@ -34,6 +54,9 @@ export const transform = (
   if (hoisting) {
     plugins.unshift(require('./plugin/hoisting'));
   }
+  if (process.env.JSVM_DEBUG) {
+    printCodeWithLine(transformCode);
+  }
   const result = babel.transformSync(transformCode, {
     plugins,
     configFile: false,
@@ -44,8 +67,11 @@ export const transform = (
     sourceType: 'module',
     plugins: [],
   });
+  // console.log(transformCode);
   const emitter = new Emitter([], fName, null, transformCode.split('\n'), transformCode);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ast = emitter.visit(ast.program);
+  // console.log(ast);
   return emitter.end();
 };
 
