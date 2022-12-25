@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" font-family="'SF Mono','Menlo','Monaco','Cascadia Code','Consolas',monospace">
+  <rect width="800" height="200" rx="8" fill="#0f172a"/>
+  <text x="400" y="28" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="600" letter-spacing="2">OPCODE CATEGORIES</text>
+
+  <rect x="20" y="46" width="140" height="60" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="90" y="72" text-anchor="middle" fill="#a78bfa" font-size="12" font-weight="600">Register Ops</text>
+  <text x="90" y="92" text-anchor="middle" fill="#64748b" font-size="10">SR1 · LR1 · SR2 · LR2 · SR3 · LR3 · SREXP · LREXP</text>
+
+  <rect x="175" y="46" width="140" height="60" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="245" y="72" text-anchor="middle" fill="#34d399" font-size="12" font-weight="600">Load/Store</text>
+  <text x="245" y="92" text-anchor="middle" fill="#64748b" font-size="10">PUSH · POP · LOAD · STORE · LOAD_VAR · STORE_VAR</text>
+
+  <rect x="330" y="46" width="140" height="60" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="400" y="72" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="600">Arithmetic</text>
+  <text x="400" y="92" text-anchor="middle" fill="#64748b" font-size="10">ADD · SUB · MUL · DIV · MOD · NEG · INC · DEC</text>
+
+  <rect x="485" y="46" width="140" height="60" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="555" y="72" text-anchor="middle" fill="#f472b6" font-size="12" font-weight="600">Control Flow</text>
+  <text x="555" y="92" text-anchor="middle" fill="#64748b" font-size="10">JMP · JMPT · JMPF · CALL · RETURN · FOR · FOR_IN</text>
+
+  <rect x="640" y="46" width="140" height="60" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="710" y="72" text-anchor="middle" fill="#38bdf8" font-size="12" font-weight="600">Object</text>
+  <text x="710" y="92" text-anchor="middle" fill="#64748b" font-size="10">NEW · GET · SET · DELETE · KEYS · HAS</text>
+
+  <rect x="20" y="120" width="140" height="60" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="90" y="146" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Function</text>
+  <text x="90" y="166" text-anchor="middle" fill="#64748b" font-size="10">FUN · CALL · CALLM · BIND · APPLY</text>
+
+  <rect x="175" y="120" width="140" height="60" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="245" y="146" text-anchor="middle" fill="#fb923c" font-size="12" font-weight="600">Exception</text>
+  <text x="245" y="166" text-anchor="middle" fill="#64748b" font-size="10">THROW · TRY · CATCH · FINALLY · GUARD</text>
+
+  <rect x="330" y="120" width="140" height="60" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="400" y="146" text-anchor="middle" fill="#a78bfa" font-size="12" font-weight="600">Type/Conv</text>
+  <text x="400" y="166" text-anchor="middle" fill="#64748b" font-size="10">TYPEOF · TO_OBJ · TO_NUM · TO_STR · INSTANCEOF</text>
+
+  <rect x="485" y="120" width="140" height="60" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="555" y="146" text-anchor="middle" fill="#10b981" font-size="12" font-weight="600">Built-in</text>
+  <text x="555" y="166" text-anchor="middle" fill="#64748b" font-size="10">STOP_ITERATION · CREATE_ITER · ARRAY · OBJECT</text>
+</svg>

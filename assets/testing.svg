@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 140" font-family="'SF Mono','Menlo','Monaco','Cascadia Code','Consolas',monospace">
+  <rect width="800" height="140" rx="8" fill="#0f172a"/>
+  <text x="400" y="28" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="600" letter-spacing="2">TEST SUITES</text>
+
+  <rect x="20" y="46" width="240" height="76" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="140" y="70" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">es5-testsuite</text>
+  <text x="140" y="90" text-anchor="middle" fill="#64748b" font-size="11">kangax ES5 compliance suite</text>
+  <text x="140" y="110" text-anchor="middle" fill="#34d399" font-size="11">✅ 27 test files</text>
+
+  <rect x="280" y="46" width="240" height="76" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="400" y="70" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Test262</text>
+  <text x="400" y="90" text-anchor="middle" fill="#64748b" font-size="11">ECMAScript conformance</text>
+  <text x="400" y="110" text-anchor="middle" fill="#34d399" font-size="11">✅ Selected tests</text>
+
+  <rect x="540" y="46" width="240" height="76" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="660" y="70" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Benchmark</text>
+  <text x="660" y="90" text-anchor="middle" fill="#64748b" font-size="11">Richards · RayTrace · Lodash</text>
+  <text x="660" y="110" text-anchor="middle" fill="#38bdf8" font-size="11">📊 performance tracking</text>
+</svg>
