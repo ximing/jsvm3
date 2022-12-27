@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react'
-import { JSVM, fromJson } from 'jsvm3'
+import { JSVM } from 'jsvm3/lib/vm/vm.js'
 import { parse } from '@babel/parser'
-import { Emitter } from '../../lib/compiler/emitter.js'
+import { Emitter } from 'jsvm3/lib/compiler/emitter.js'
 
 const DEFAULT_CODE = `// jsvm3 演示 - 输入 JavaScript 代码并运行
 function fibonacci(n) {
@@ -121,10 +121,9 @@ function App() {
         // 编译代码
         const compiled = compileCode(code)
 
-        // 反序列化并执行
+        // 编译产物即 VM 的 Script，直接执行
         const vm = new JSVM()
-        const script = fromJson(compiled)
-        const result = vm.exec(script)
+        const result = vm.exec(compiled)
 
         // 恢复 console.log
         console.log = originalLog
