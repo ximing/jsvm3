@@ -35,13 +35,13 @@ export const fromJson = function (json: any) {
     children,
     localNames,
     localLength,
+    json[9] || [],
     guards,
     stackSize,
     strings,
     regexps,
     source
   );
-  script.globalNames = script[9];
   return script;
 };
 

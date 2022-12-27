@@ -57,8 +57,9 @@ export const createOP = function (
     },
     // @endif
   };
-  InsMap.set(id, base);
-  return (args: any) => Object.assign({ args }, base) as Instruction;
+  const factory = (args: any) => Object.assign({ args }, base) as Instruction;
+  InsMap.set(id, factory);
+  return factory;
 };
 
 // const createGenerator = function (caller, script, scope, realm, target, args, fn, callname) {
