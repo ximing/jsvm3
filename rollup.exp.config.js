@@ -7,7 +7,7 @@ import babel from '@rollup/plugin-babel';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as t from '@babel/types';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 
 const requireFromString = require('require-from-string');
 const OPCodeIdx = requireFromString(
