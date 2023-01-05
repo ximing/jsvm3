@@ -16,7 +16,7 @@
 新增独立的 GitHub Actions workflow：
 
 1. 触发条件为 `push` 到 `master`，路径覆盖 `src/**`、`demo/**`、根目录依赖锁文件、构建配置和 `.github/**`；同时对 `pull_request` 使用相同路径做构建检查。
-2. 使用 Node.js 18，安装根项目依赖并执行根项目构建，使 demo 对根目录源码的 alias 能够正常解析。
+2. 使用 Node.js 20，安装根项目依赖并执行根项目构建，使 demo 对根目录源码的 alias 能够正常解析；仓库锁定的 `serialize-javascript@7.0.7` 要求 Node.js 20 或更高版本。
 3. 进入 `demo/`，使用已提交的 `demo/package-lock.json` 安装依赖并执行 `npm run build`，产物为 `demo/dist`。
 4. push 任务上传 Pages artifact，并由独立 deploy job 部署；deploy job 只在 `push` 任务执行，PR 只运行 build job。
 5. 设置 `pages: write` 和 `id-token: write` 权限，并为 Pages 部署设置串行 concurrency，避免并发发布导致旧版本覆盖新版本。
@@ -45,4 +45,3 @@
 - 在 `demo/` 执行锁文件一致的依赖安装和 `npm run build`。
 - 检查 workflow YAML 的触发路径、权限、job 条件和 artifact 路径。
 - 提交后通过 `gh run` 检查 workflow 是否被识别及执行结果。
-

@@ -6,13 +6,13 @@
 
 **Architecture:** 新增独立 workflow，使用同一个 build job 处理 push 和 pull request；push 成功后通过 Pages artifact 连接到 deploy job。workflow 不直接写入 `gh-pages` 分支，部署权限仅授予 Pages 所需的 OIDC 和 pages 权限。
 
-**Tech Stack:** GitHub Actions、Node.js 18、pnpm、npm、Vite、GitHub Pages artifact/deploy actions。
+**Tech Stack:** GitHub Actions、Node.js 20、pnpm、npm、Vite、GitHub Pages artifact/deploy actions。
 
 ## Global Constraints
 
 - 只对 `master` push 发布；pull request 不发布。
 - 触发路径覆盖 `src/**`、`demo/**`、依赖锁文件、构建配置和 `.github/**`。
-- 根项目使用 `pnpm install` 和 `npm run build`。
+- 根项目使用 Node.js 20、`pnpm install` 和 `npm run build`。
 - demo 使用 `npm ci` 和 `npm run build`，产物目录为 `demo/dist`。
 - 使用 Pages artifact/deploy 流程，不直接推送 `gh-pages`。
 
@@ -33,7 +33,7 @@
 
 - [ ] **Step 2: Add the build job**
 
-  Use `ubuntu-latest`, checkout the commit, setup Node.js 18 with npm cache, install pnpm, run `pnpm install --frozen-lockfile`, run `npm run build`, then run `npm ci` and `npm run build` from `demo/`. Upload `demo/dist` with `actions/upload-pages-artifact` only for push/manual runs.
+  Use `ubuntu-latest`, checkout the commit, setup Node.js 20 with npm cache, install pnpm, run `pnpm install --frozen-lockfile`, run `npm run build`, then run `npm ci` and `npm run build` from `demo/`. Upload `demo/dist` with `actions/upload-pages-artifact` only for push/manual runs.
 
 - [ ] **Step 3: Add the conditional deploy job**
 
@@ -75,4 +75,3 @@
 - [ ] **Step 4: Trigger and inspect the workflow**
 
   After the workflow commit is available on GitHub, use `gh workflow run deploy-demo.yml --ref master` for a manual deployment if needed, then use `gh run list --workflow deploy-demo.yml` and `gh run watch` to inspect the result. Confirm the deployed URL from `gh api repos/{owner}/{repo}/pages`.
-
