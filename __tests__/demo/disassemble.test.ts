@@ -2,7 +2,8 @@ import { disassembleScript } from '../../demo/src/disassemble'
 
 // 构造一个最小的 Script 结构（鸭子类型，与 lib 的 Script 结构一致）
 const fakeScript = {
-  name: '<demo>',
+  name: null,
+  fName: '<demo>',
   stackSize: 4,
   localNames: ['result'],
   globalNames: ['fibonacci'],
@@ -13,11 +14,12 @@ const fakeScript = {
     { name: 'POP', args: null },
     { name: 'STRING_LITERAL', args: [0] },
     { name: 'GETL', args: [0, 0] },
-    { name: 'JMPF', args: [{ ip: 6, id: 1, emitter: {} }] },
+    { name: 'JMPF', args: [6] },
   ],
   children: [
     {
       name: 'fibonacci',
+      fName: null,
       stackSize: 2,
       localNames: ['n'],
       globalNames: [],
@@ -53,6 +55,13 @@ describe('disassembleScript', () => {
   it('Label 参数渲染为跳转目标地址', () => {
     const lines = disassembleScript(fakeScript)
     expect(lines[8]).toBe('0005  JMPF            -> 0006')
+  })
+
+  it('非跳转指令的数字参数不做箭头渲染', () => {
+    const lines = disassembleScript(fakeScript)
+    // SETG 的 args[0] 也是数字，但必须保持 [n] 形式
+    expect(lines[4]).toContain('[0]')
+    expect(lines[4]).not.toContain('->')
   })
 
   it('递归渲染子函数并缩进', () => {
