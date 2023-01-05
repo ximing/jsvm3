@@ -12,7 +12,7 @@ body {
 }
 
 .app {
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 24px 20px;
   min-height: 100vh;
@@ -79,13 +79,14 @@ body {
 /* Main layout */
 .main {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
   flex: 1;
   min-height: 0;
 }
 
 .editor-panel,
+.bytecode-panel,
 .output-panel {
   display: flex;
   flex-direction: column;
@@ -211,6 +212,23 @@ body {
   font-style: italic;
 }
 
+/* Bytecode */
+.bytecode {
+  flex: 1;
+  padding: 16px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow: auto;
+  min-height: 360px;
+  max-height: 500px;
+}
+
+.bytecode pre {
+  margin: 0;
+  white-space: pre;
+}
+
 /* Footer */
 .footer {
   margin-top: 32px;
@@ -253,6 +271,7 @@ body {
   }
 
   .editor,
+  .bytecode,
   .output {
     min-height: 240px;
   }
