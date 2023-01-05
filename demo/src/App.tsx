@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react'
 import { JSVM } from 'jsvm3/lib/vm/vm.js'
 import { parse } from '@babel/parser'
 import { Emitter } from 'jsvm3/lib/compiler/emitter.js'
+import { disassembleScript } from './disassemble'
 
 const DEFAULT_CODE = `// jsvm3 演示 - 输入 JavaScript 代码并运行
 function fibonacci(n) {
@@ -85,6 +86,7 @@ function compileCode(code: string) {
 function App() {
   const [code, setCode] = useState(DEFAULT_CODE)
   const [output, setOutput] = useState<string[]>([])
+  const [bytecode, setBytecode] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [running, setRunning] = useState(false)
 
@@ -118,8 +120,15 @@ function App() {
           )
         }
 
-        // 编译代码
-        const compiled = compileCode(code)
+        // 编译代码并展示字节码（编译失败时字节码面板显示错误）
+        let compiled
+        try {
+          compiled = compileCode(code)
+          setBytecode(disassembleScript(compiled))
+        } catch (e: any) {
+          setBytecode([`编译错误: ${e.message || String(e)}`])
+          throw e
+        }
 
         // 编译产物即 VM 的 Script，直接执行
         const vm = new JSVM()
@@ -159,6 +168,7 @@ function App() {
   const loadExample = useCallback((exampleCode: string) => {
     setCode(exampleCode)
     setOutput([])
+    setBytecode([])
     setError(null)
   }, [])
 
@@ -207,6 +217,19 @@ function App() {
           >
             {running ? '⏳ 运行中...' : '▶ 运行'}
           </button>
+        </div>
+
+        <div className="bytecode-panel">
+          <div className="panel-header">
+            <span className="panel-title">字节码</span>
+          </div>
+          <div className="bytecode">
+            {bytecode.length > 0 ? (
+              <pre>{bytecode.join('\n')}</pre>
+            ) : (
+              <span className="placeholder">点击 "运行" 查看字节码</span>
+            )}
+          </div>
         </div>
 
         <div className="output-panel">
