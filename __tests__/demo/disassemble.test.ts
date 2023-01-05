@@ -1,4 +1,5 @@
 import { disassembleScript } from '../../demo/src/disassemble'
+import { transform } from '../../src/compiler'
 
 // 构造一个最小的 Script 结构（鸭子类型，与 lib 的 Script 结构一致）
 const fakeScript = {
@@ -52,7 +53,7 @@ describe('disassembleScript', () => {
     expect(lines[7]).toBe('0004  GETL            [0, 0]  ; result')
   })
 
-  it('Label 参数渲染为跳转目标地址', () => {
+  it('跳转指令参数渲染为 -> 目标地址', () => {
     const lines = disassembleScript(fakeScript)
     expect(lines[8]).toBe('0005  JMPF            -> 0006')
   })
@@ -69,5 +70,31 @@ describe('disassembleScript', () => {
     expect(lines).toContain('  === fibonacci ===')
     expect(lines).toContain('  stackSize: 2   locals: [n]')
     expect(lines).toContain('  0000  GETL            [0, 0]  ; n')
+  })
+
+  // 真实编译器冒烟测试：锁定真实的 GETL/SETL 参数形状（[scopeDepth, varIndex]），
+  // 防止手工构造的 fixture 与真实编译产物漂移
+  it('真实编译器产物：闭包变量跨层注释', () => {
+    const script = transform(
+      `function createCounter(init) {
+  var count = init || 0;
+  return {
+    increment: function() { count++; }
+  };
+}`,
+      'test.js',
+      { hoisting: true, convertES5: false }
+    )
+    const lines = disassembleScript(script as any)
+
+    // (a) 存在脚本头
+    expect(lines.some((l) => l.includes('=== '))).toBe(true)
+    // (b) 至少一条跳转指令渲染为 -> NNNN
+    expect(lines.some((l) => /-> \d{4}/.test(l))).toBe(true)
+    // (c) increment 内的跨层 GETL/SETL [1, 4] 带上外层变量名注释
+    const closureLines = lines.filter(
+      (l) => /\b(GETL|SETL)\s+\[1, \d+\]/.test(l) && l.includes('; count')
+    )
+    expect(closureLines.length).toBeGreaterThan(0)
   })
 })

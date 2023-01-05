@@ -121,14 +121,15 @@ function App() {
         }
 
         // 编译代码并展示字节码（编译失败时字节码面板显示错误）
+        // 注意只有编译放在 try 里，反汇编异常不应被误标为「编译错误」
         let compiled
         try {
           compiled = compileCode(code)
-          setBytecode(disassembleScript(compiled))
         } catch (e: any) {
           setBytecode([`编译错误: ${e.message || String(e)}`])
           throw e
         }
+        setBytecode(disassembleScript(compiled))
 
         // 编译产物即 VM 的 Script，直接执行
         const vm = new JSVM()
