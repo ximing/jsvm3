@@ -80,3 +80,5 @@ debugger_app
 lib
 
 compiler
+
+.worktrees/
