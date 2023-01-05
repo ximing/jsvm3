@@ -48,7 +48,11 @@ function renderInstructionArgs(ins: InstructionLike): string {
   return args.length > 0 ? renderArg(args) : ''
 }
 
-function renderComment(ins: InstructionLike, script: ScriptLike): string {
+function renderComment(
+  ins: InstructionLike,
+  script: ScriptLike,
+  ancestors: ScriptLike[]
+): string {
   const args = ins.args ?? []
   switch (ins.name) {
     case 'GETG':
@@ -58,8 +62,20 @@ function renderComment(ins: InstructionLike, script: ScriptLike): string {
     }
     case 'GETL':
     case 'SETL': {
-      const name = script.localNames[args[1]]
-      return name != null ? `  ; ${name}` : ''
+      // args = [scopeDepth, varIndex]；scopeDepth 是跨越的函数作用域数，
+      // 0 表示当前脚本，d > 0 表示沿祖先链向上第 d 层脚本
+      const depth = args[0]
+      const varIndex = args[1]
+      let name: string | undefined
+      if (depth === 0) {
+        name = script.localNames[varIndex]
+      } else {
+        const ancestor = ancestors[ancestors.length - depth]
+        if (ancestor) name = ancestor.localNames[varIndex]
+      }
+      if (name != null) return `  ; ${name}`
+      // depth 0 解析失败时保持现状不加注释；跨层则标注 outer 便于排查
+      return depth > 0 ? `  ; outer[${varIndex}]` : ''
     }
     case 'FUNCTION': {
       const child = script.children[args[0]]
@@ -77,24 +93,28 @@ function renderComment(ins: InstructionLike, script: ScriptLike): string {
 export function disassembleScript(script: ScriptLike): string[] {
   const lines: string[] = []
 
-  const walk = (s: ScriptLike, depth: number) => {
+  // ancestors 为当前脚本之上的祖先链（根在前，父脚本在最后），
+  // 供 GETL/SETL 按 scopeDepth 解析闭包变量名
+  const walk = (s: ScriptLike, depth: number, ancestors: ScriptLike[]) => {
     const indent = '  '.repeat(depth)
     lines.push(`${indent}=== ${s.name || s.fName || '<anonymous>'} ===`)
-    lines.push(`${indent}stackSize: ${s.stackSize}   locals: [${s.localNames.join(', ')}]`)
+    // localNames 以 varIndex 为下标、可能是稀疏数组，过滤空位避免渲染出 ", ,"
+    const locals = s.localNames.filter((n) => n != null)
+    lines.push(`${indent}stackSize: ${s.stackSize}   locals: [${locals.join(', ')}]`)
     lines.push('')
     s.instructions.forEach((ins, ip) => {
       const argsStr = renderInstructionArgs(ins)
-      const comment = renderComment(ins, s)
+      const comment = renderComment(ins, s, ancestors)
       lines.push(
         `${indent}${pad4(ip)}  ${ins.name.padEnd(NAME_WIDTH)}${argsStr}${comment}`.trimEnd()
       )
     })
     s.children.forEach((child) => {
       lines.push('')
-      walk(child, depth + 1)
+      walk(child, depth + 1, [...ancestors, s])
     })
   }
 
-  walk(script, 0)
+  walk(script, 0, [])
   return lines
 }
