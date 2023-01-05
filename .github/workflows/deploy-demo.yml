@@ -9,14 +9,24 @@ on:
       - 'demo/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
-      - '.github/workflows/deploy-demo.yml'
+      - 'demo/package.json'
+      - 'demo/package-lock.json'
+      - 'rollup.config.js'
+      - 'rollup.exp.config.js'
+      - 'tsconfig*.json'
+      - '.github/**'
   pull_request:
     paths:
       - 'src/**'
       - 'demo/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
-      - '.github/workflows/deploy-demo.yml'
+      - 'demo/package.json'
+      - 'demo/package-lock.json'
+      - 'rollup.config.js'
+      - 'rollup.exp.config.js'
+      - 'tsconfig*.json'
+      - '.github/**'
   workflow_dispatch:
 
 permissions:
@@ -38,6 +48,7 @@ jobs:
         with:
           node-version: '18'
           cache: npm
+          cache-dependency-path: demo/package-lock.json
 
       - name: Install pnpm
         run: npm install --global pnpm
