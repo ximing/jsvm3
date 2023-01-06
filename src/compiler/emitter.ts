@@ -997,8 +997,8 @@ export class Emitter extends Visitor {
       }
       if (emitAfterTest) {
         // do while case
-        // cont.mark();
-        currentLabel?.cont?.mark();
+        // continue 要跳转到 condition 语句，而不是循环顶部
+        contStmt.mark();
         emitAfterTest();
         this.createINS(JMPF, brk);
       }
@@ -1009,15 +1009,14 @@ export class Emitter extends Visitor {
     const start = this.newLabel();
     const cont = this.newLabel();
     const brk = this.newLabel();
+    // do...while 的 continue 目标是循环底部的条件判断，其余循环是顶部
+    const contStmt = emitAfterTest ? this.newLabel() : cont;
 
     if ((currentLabel != null ? currentLabel.stmt : undefined) === node) {
       // 调整当前标签 'cont' 以便 'continue label' 起作用
-      currentLabel!.cont = cont;
-      if (emitAfterTest) {
-        currentLabel!.cont = this.newLabel();
-      }
+      currentLabel!.cont = contStmt;
     }
-    this.pushLabel(null, node, brk, cont);
+    this.pushLabel(null, node, brk, contStmt);
     if (node.body.type === 'BlockStatement') {
       node.body.blockInit = blockInit;
       node.body.blockCleanup = blockCleanup;

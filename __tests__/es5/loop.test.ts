@@ -69,6 +69,46 @@ describe('do while', () => {
     expect(res).toEqual(4);
   });
 
+  it('do while continue jumps to the condition', function () {
+    const res = run(`
+      var i = 0;
+      do{
+        i++;
+        continue;
+      }while(i<10)
+      module.exports = i;
+    `);
+    expect(res).toEqual(10);
+  });
+
+  it('do while conditional continue re-evaluates the condition', function () {
+    const res = run(`
+      var i = 0;
+      do{
+        i++;
+        if(i<100){ continue }
+      }while(i<10)
+      module.exports = i;
+    `);
+    expect(res).toEqual(10);
+  });
+
+  it('do while continue in nested loops', function () {
+    const res = run(`
+      var s = 0;
+      for(var i = 0; i < 3; i++){
+        var j = 0;
+        do{
+          j++;
+          continue;
+        }while(j<2)
+        s += j;
+      }
+      module.exports = s;
+    `);
+    expect(res).toEqual(6);
+  });
+
   it('do while break', function () {
     const res = run(`
       var i = 0;
