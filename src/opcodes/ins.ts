@@ -578,7 +578,11 @@ export const NEXT = createOP(OPCodeIdx.NEXT, function (frame, evalStack, scope, 
 });
 // 终止 frame 执行
 export const PAUSE = createOP(OPCodeIdx.PAUSE, function (frame, evalStack, scope, realm, args) {
-  frame.suspended = true;
+  // 仅在 finally 之后还有未处理的异常需要继续抛出时才挂起，
+  // 否则正常落下路径挂起后 Fiber.run() 会在 else 分支上空转
+  if (frame.evalError) {
+    frame.suspended = true;
+  }
 });
 // yield value from generator
 export const YIELD = createOP(OPCodeIdx.YIELD, function (frame, evalStack, scope, realm, args) {
