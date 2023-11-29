@@ -1,5 +1,4 @@
 import { run } from '../helper';
-import { ErrNotDefined } from '../../old-src/error';
 
 describe('assignment spec:', () => {
   it('base', () => {

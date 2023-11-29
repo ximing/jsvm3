@@ -3,49 +3,12 @@ import { Scope } from './scope';
 import { Realm } from './realm';
 import { EvaluationStack } from './stack';
 import type { Script } from './script';
-/* eslint @typescript-eslint/no-unused-vars: 0 */ // --> OFF
-// import { OPCodeIdx } from '../opcodes/opIdx';
-// import { throwErr } from '../utils/opcodes';
-// import { XYZReferenceError, XYZTypeError } from '../utils/errors';
-// import { Cannot, property } from '../opcodes/contants';
-// import {
-//   add,
-//   and,
-//   ceq,
-//   cid,
-//   cneq,
-//   cnid,
-//   dec,
-//   del,
-//   div,
-//   enumerateKeys,
-//   exp,
-//   gt,
-//   gte,
-//   has,
-//   inc,
-//   instanceOf,
-//   inv,
-//   lnot,
-//   lt,
-//   lte,
-//   mod,
-//   mul,
-//   not,
-//   or,
-//   plu,
-//   sar,
-//   set,
-//   shl,
-//   shr,
-//   sub,
-//   xor,
-// } from '../opcodes/op';
-// import { hasProp } from '../utils/helper';
-// import { call, callm, createFunction, ret } from '../opcodes/utils';
-// import { StopIteration } from './builtin';
-import type { Instruction } from '../opcodes/types';
 
+/*
+* 在 JavaScript 的执行环境中，每当一个函数被调用时，都会创建一个新的执行上下文，这个上下文就是 Frame。
+* 每个 Frame 包含了函数的参数、局部变量以及 this 值等信息。
+* 所有的 Frame 一起形成了一个调用栈，用于跟踪函数的执行过程
+* */
 export class Frame {
   fiber: Fiber;
   script: Script;
@@ -185,7 +148,7 @@ export class Frame {
       //     // console.log('--->GET', obj, key);
       //     if (obj == null) {
       //       // console.trace();
-      //       throwErr(frame, new XYZTypeError(`[XYZ] ${Cannot} get ${property} ${key} of ${obj}`));
+      //       throwErr(frame, new JSVMTypeError(`[JSVM] ${Cannot} get ${property} ${key} of ${obj}`));
       //     } else {
       //       evalStack.push(obj[key]);
       //     }
@@ -198,7 +161,7 @@ export class Frame {
       //     const key = evalStack.pop();
       //     const val = evalStack.pop();
       //     if (obj == null) {
-      //       throwErr(frame, new XYZTypeError(`${Cannot} set ${property} ${key} of ${obj}`));
+      //       throwErr(frame, new JSVMTypeError(`${Cannot} set ${property} ${key} of ${obj}`));
       //     } else {
       //       evalStack.push(set(obj, key, val));
       //     }
@@ -208,7 +171,7 @@ export class Frame {
       //     const obj = evalStack.pop();
       //     const key = evalStack.pop();
       //     if (obj == null) {
-      //       throwErr(frame, new XYZTypeError(`${Cannot} convert null to object`));
+      //       throwErr(frame, new JSVMTypeError(`${Cannot} convert null to object`));
       //     } else {
       //       evalStack.push(del(obj, key));
       //     }
@@ -240,7 +203,7 @@ export class Frame {
       //     // name, ignoreNotDefined
       //     // console.log(args[0], args[1]);
       //     if (!hasProp(realm.global, k) && !args[1]) {
-      //       throwErr(frame, new XYZReferenceError(`.${k} not def`));
+      //       throwErr(frame, new JSVMReferenceError(`.${k} not def`));
       //     } else {
       //       evalStack.push(realm.global[k]);
       //     }

@@ -4,9 +4,6 @@ export class EvaluationStack {
   fiber: Fiber;
   array: Array<any>;
   idx: number;
-  push = this.p;
-  pop = this.u;
-  top = this.t;
 
   constructor(size, fiber) {
     this.fiber = fiber;
@@ -14,7 +11,7 @@ export class EvaluationStack {
     this.idx = 0;
   }
 
-  p(item) {
+  push(item) {
     // console.log('-----> push', this.idx + 1);
     if (this.idx === this.array.length) {
       // maximum
@@ -23,12 +20,11 @@ export class EvaluationStack {
     return (this.array[this.idx++] = item);
   }
 
-  u() {
-    // console.log('-----> pop', this.idx - 1);
+  pop() {
     return this.array[--this.idx];
   }
 
-  t() {
+  top() {
     return this.array[this.idx - 1];
   }
 

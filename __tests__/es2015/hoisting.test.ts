@@ -1,4 +1,3 @@
-import { ErrNotDefined } from '../../old-src/error';
 import { run } from '../helper';
 
 describe('es2015 hoisting spec:', () => {

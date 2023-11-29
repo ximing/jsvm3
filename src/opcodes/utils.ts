@@ -1,6 +1,6 @@
 import { Instruction, OPExec } from './types';
 import { Fiber } from '../vm/fiber';
-import { XYZTypeError } from '../utils/errors';
+import { JSVMTypeError } from '../utils/errors';
 import { Script } from '../vm/script';
 import { Scope } from '../vm/scope';
 import { Realm } from '../vm/realm';
@@ -32,6 +32,7 @@ export const createOP = function (
     id,
     run: fn,
     // runtime end
+
     // @ifdef COMPILER
     name: OPCodeMap[id],
     calculateFactor:
@@ -71,10 +72,10 @@ export const createOP = function (
 //
 //   const send = function (obj) {
 //     if (newborn && obj !== undefined) {
-//       throw new XYZTypeError('no argument must be passed when starting generator');
+//       throw new JSVMTypeError('no argument must be passed when starting generator');
 //     }
 //     if (fiber.done()) {
-//       throw new XYZError('generator closed');
+//       throw new JSVMError('generator closed');
 //     }
 //     frame = fiber.callStack[fiber.depth];
 //     if (newborn) {
@@ -101,7 +102,7 @@ export const createOP = function (
 //       return e;
 //     }
 //     if (fiber.done()) {
-//       throw new XYZError('generator closed');
+//       throw new JSVMError('generator closed');
 //     }
 //     frame = fiber.callStack[fiber.depth];
 //     frame!.evalError = e;
@@ -155,7 +156,7 @@ export const createFunction = function (
 ) {
   let fun;
   if (generator) {
-    throw new Error('*fun not work');
+    throw new Error('generator function not support');
     // fun = function (this: any) {
     //   let fiber;
     //   const name = fun.__cname__ || script.name;
@@ -191,16 +192,16 @@ export const createFunction = function (
       }
     };
   }
-  defProp(fun, '__xyzFun__', { value: true });
+  defProp(fun, '__JSVMFun__', { value: true });
   defProp(fun, 'length', { value: script.paramsSize });
   // @ifdef COMPILER
   defProp(fun, '__source__', { value: script.source });
   // @endif
-  defProp(fun, '__name__', { value: script.name });
-  defProp(fun, 'name', { value: script.name });
   defProp(fun, '__con__', { value: null, writable: true });
   defProp(fun, '__fiber__', { value: null, writable: true });
   defProp(fun, '__cname__', { value: null, writable: true });
+  defProp(fun, '__name__', { value: script.name });
+  defProp(fun, 'name', { value: script.name });
   return fun;
 };
 
@@ -208,20 +209,20 @@ export const ret = function (frame: Frame) {
   frame.evalStack.clear();
   return (frame.exitIp = frame.ip);
 };
-//
+
 // // https://stackoverflow.com/questions/3362471/how-can-i-call-a-javascript-constructor-using-call-or-apply
 // const callDateConstructor = function (a: any[]) {
 //   // @ts-ignore
 //   return new Date(...a);
 // };
-//
+
 // const callArrayConstructor = function (a) {
 //   if (a.length === 1 && (a[0] | 0) === a[0]) {
 //     return new Array(a[0]);
 //   }
 //   return a.slice();
 // };
-//
+
 // const callRegExpConstructor = function (a) {
 //   if (a.length === 1) {
 //     return new RegExp(a[0]);
@@ -255,13 +256,10 @@ const createNativeInstance = function (constructor, args) {
   //   // const rv = new constructorProxy();
   //   // return rv;
   // }
+
 };
 
 export const getParams = function (length: number, evalStack: EvaluationStack) {
-  // const args: any = { length };
-  // while (length) {
-  //   args[--length] = evalStack.pop();
-  // }
   const args = evalStack.tail(length);
   args.length = length;
   return args;
@@ -270,7 +268,7 @@ export const getParams = function (length: number, evalStack: EvaluationStack) {
 export const callFun = function (frame, func, args, target, name, construct = false) {
   const { evalStack, fiber, realm } = frame;
   if (typeof func !== 'function') {
-    return throwErr(frame, new XYZTypeError(`${name || 'obj'} is not a function`));
+    return throwErr(frame, new JSVMTypeError(`${name || 'obj'} is not a function`));
   }
   // "" 字符串情况 @TODO 严格模式？
   if (target == null) {
@@ -278,7 +276,7 @@ export const callFun = function (frame, func, args, target, name, construct = fa
   }
   let push = true;
   // args = Array.prototype.slice.call(args);
-  if (hasProp(func, '__xyzFun__')) {
+  if (hasProp(func, '__JSVMFun__')) {
     func.__cname__ = name;
     func.__fiber__ = fiber;
     func.__con__ = construct;
@@ -327,7 +325,7 @@ export const callm = function (
     if (target === undefined) {
       id = 'undefined';
     }
-    return throwErr(frame, new XYZTypeError(`${Cannot} cal method '${key}' of ${id}`));
+    return throwErr(frame, new JSVMTypeError(`${Cannot} cal method '${key}' of ${id}`));
   }
   const { constructor } = target;
   const targetName = constructor.__name__ || constructor.name || 'Object';
@@ -339,9 +337,9 @@ export const callm = function (
   }
   if (func == null) {
     // stack.pop(); // pop target
-    return throwErr(frame, new XYZTypeError(`Object #<${name}> has no fun '${key}'`));
+    return throwErr(frame, new JSVMTypeError(`Object #<${name}> has no fun '${key}'`));
   } else {
     // stack.pop(); // pop target
-    return throwErr(frame, new XYZTypeError(`'${key}' of object #<${name}> is not a function`));
+    return throwErr(frame, new JSVMTypeError(`'${key}' of object #<${name}> is not a function`));
   }
 };

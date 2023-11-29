@@ -2,7 +2,7 @@ import { Realm } from './realm';
 import { Fiber } from './fiber';
 import { Script } from './script';
 
-export class XYZ {
+export class JSVM {
   realm: Realm;
 
   constructor(merge = {}) {

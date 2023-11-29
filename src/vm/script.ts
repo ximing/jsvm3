@@ -1,6 +1,7 @@
 // convert compiled children from/to json-compatible structure
 import { Instruction } from '../opcodes/types';
 // @ifdef COMPILER
+
 import { scriptToJson } from '../utils/convert';
 // import { scriptToJsonObject } from '../utils/convert';
 // @endif

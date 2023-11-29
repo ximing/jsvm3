@@ -1,5 +1,5 @@
 import { transform } from './src/compiler';
-import { XYZ } from './src/vm/vm';
+import { JSVM } from './src/vm/vm';
 
 const code = `
 let a = 4;
@@ -9,7 +9,7 @@ let c = (a+b)*5
 
 const script = transform(code, 'sum.js');
 
-const vm = new XYZ();
+const vm = new JSVM();
 const res = vm.go(script);
 console.log(script.toJSON());
 console.log(res);

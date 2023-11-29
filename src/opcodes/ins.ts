@@ -1,7 +1,7 @@
 /* eslint @typescript-eslint/no-unused-vars: 0 */
 import { hasProp } from '../utils/helper';
 import { throwErr } from '../utils/opcodes';
-import { XYZReferenceError, XYZTypeError } from '../utils/errors';
+import { JSVMReferenceError, JSVMTypeError } from '../utils/errors';
 import { Scope } from '../vm/scope';
 import { del, enumerateKeys, has, set } from './op';
 import { call, callm, createFunction, createOP, ret } from './utils';
@@ -115,7 +115,7 @@ export const GET = createOP(OPCodeIdx.GET, function (frame, evalStack, scope, re
   // console.log('--->GET', obj, key);
   if (obj == null) {
     // console.trace();
-    throwErr(frame, new XYZTypeError(`[XYZ] ${Cannot} get ${property} ${key} of ${obj}`));
+    throwErr(frame, new JSVMTypeError(`[JSVM] ${Cannot} get ${property} ${key} of ${obj}`));
   } else {
     evalStack.push(obj[key]);
   }
@@ -133,7 +133,7 @@ export const SET = createOP(OPCodeIdx.SET, function (frame, evalStack, scope, re
   // const val = evalStack.pop();
   const [val, key, obj] = evalStack.tail(3);
   if (obj == null) {
-    throwErr(frame, new XYZTypeError(`${Cannot} set ${property} ${key} of ${obj}`));
+    throwErr(frame, new JSVMTypeError(`${Cannot} set ${property} ${key} of ${obj}`));
   } else {
     evalStack.push(set(obj, key, val));
   }
@@ -147,7 +147,7 @@ export const DEL = createOP(OPCodeIdx.DEL, function (frame, evalStack, scope, re
   // const key = evalStack.pop();
   const [key, obj] = evalStack.tail(2);
   if (obj == null) {
-    throwErr(frame, new XYZTypeError(`${Cannot} convert null to object`));
+    throwErr(frame, new JSVMTypeError(`${Cannot} convert null to object`));
   } else {
     evalStack.push(del(obj, key));
   }
@@ -196,7 +196,7 @@ export const GETG = createOP(
     // name, ignoreNotDefined
     // console.log(args[0], args[1]);
     if (!hasProp(realm.globalObj, k) && !args[1]) {
-      throwErr(frame, new XYZReferenceError(`.${k} not def`));
+      throwErr(frame, new JSVMReferenceError(`GETG ${k} not def`));
     } else {
       evalStack.push(realm.globalObj[k]);
     }

@@ -3,9 +3,14 @@ import { Scope } from './scope';
 import { Trace } from './types';
 import { isArray } from '../utils/helper';
 import { Realm } from './realm';
-import { XYZError, XYZTimeoutError } from '../utils/errors';
+import { JSVMError, JSVMTimeoutError } from '../utils/errors';
 import { Script } from './script';
 
+/*
+* 在 JavaScript 中，Fiber 是用于实现协程（Coroutine）的一种机制，它可以让我们编写非阻塞的异步代码。
+* 每个 Fiber 可以看作是一个轻量级的线程，它们在同一个线程中并行运行，但只有一个 Fiber 可以在任何给定的时间点运行。
+* Fiber 可以将执行权交给其他 Fiber，这样可以实现非阻塞的 I/O 或计算操作。
+* */
 export class Fiber {
   realm: Realm;
   r1: any;
@@ -49,7 +54,7 @@ export class Fiber {
         frame = this.unwind(err);
       }
       frame.run();
-      if ((err = frame.evalError) instanceof XYZError) {
+      if ((err = frame.evalError) instanceof JSVMError) {
         this.injectStackTrace(err);
       }
       if (frame.isDone()) {
@@ -84,7 +89,7 @@ export class Fiber {
       }
     }
     if (this.timedOut()) {
-      err = new XYZTimeoutError(this);
+      err = new JSVMTimeoutError(this);
       this.injectStackTrace(err);
     }
     if (err) {
@@ -136,7 +141,7 @@ export class Fiber {
     throw err;
   }
 
-  injectStackTrace(err: XYZError) {
+  injectStackTrace(err: JSVMError) {
     const trace: Trace[] = [];
     let minDepth = 0;
     if (this.depth > this.maxTraceDepth) {
@@ -202,7 +207,7 @@ export class Fiber {
 
   checkCallStack() {
     if (this.depth === this.maxDepth) {
-      this.callStack[this.depth].evalError = new XYZError('maximum cStack size.');
+      this.callStack[this.depth].evalError = new JSVMError('maximum cStack size.');
       this.suspend();
       return false;
     }

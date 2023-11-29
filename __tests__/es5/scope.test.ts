@@ -1,8 +1,7 @@
 import { run } from '../helper';
-import { ErrDuplicateDeclare } from '../../old-src/error';
-import { ScopeType } from '../../old-src/types';
-import { Scope } from '../../old-src/scope';
-import { Context } from '../../old-src';
+import { ScopeType } from 'jsvm2/lib';
+import { Scope } from 'jsvm2/lib';
+import { Context } from 'jsvm2/lib';
 
 describe('for scope spec:', () => {
   it('base root', function () {
@@ -60,7 +59,7 @@ describe('for scope spec:', () => {
 
     expect(() => {
       scope.declareLet('name', 'hello'); // redeclare
-    }).toThrowError(ErrDuplicateDeclare('name').message);
+    }).toThrowError(`Identifier 'name' has already been declared`);
   });
 
   it("onst can't be redeclare", () => {
@@ -72,8 +71,9 @@ describe('for scope spec:', () => {
 
     expect(() => {
       scope.declareConst('name', 'hello'); // redeclare
-    }).toThrowError(ErrDuplicateDeclare('name').message);
+    }).toThrowError( `Identifier 'name' has already been declared`);
   });
+
 
   it('delete variable from a scope', () => {
     const scope = new Scope(ScopeType.Root, null);
