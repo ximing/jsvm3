@@ -46,7 +46,7 @@ export default {
       include: ['**/*.ts'],
       context: {
         VM: true,
-        CURRENT: 'mini',
+        CURRENT: 'exp',
       },
     }),
     commonjs(),

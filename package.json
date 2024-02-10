@@ -6,9 +6,9 @@
   "module": "dist/es.es6.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:all && npm run build:mini",
-    "build:all": "rollup -c",
-    "build:mini": "rollup -c rollup.mini.config.js",
+    "build": "npm run build:all",
+    "build:all": "rollup -c && npm run build:exp && npm run build-compiler",
+    "build:exp": "rollup -c rollup.exp.config.js",
     "build-compiler": "tsc",
     "test:coverage": "jest --coverage",
     "test": "jest",
