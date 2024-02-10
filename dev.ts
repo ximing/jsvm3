@@ -1,10 +1,19 @@
 import { transform } from './src/compiler';
 import { JSVM } from './src/vm/vm';
 
+// const code = `
+// let a = 4;
+// let b = 1;
+// let c = (a+b)*5
+// `;
+
 const code = `
-let a = 4;
-let b = 1;
-let c = (a+b)*5
+let a = 6;
+if(a){
+ a++;
+}else{
+ console.log(a);
+}
 `;
 
 // const code = `function b(a,b){return a+b+1}`;

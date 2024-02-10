@@ -56,7 +56,7 @@ export const LR3 = createOP(
   () => 1
 );
 /*
- * 存储到表达式寄存器
+ * 存储表达式结果到(表达式)寄存器中  Store Result of EXPression
  * */
 export const SREXP = createOP(OPCodeIdx.SREXP, function (frame, evalStack, scope, realm, args) {
   evalStack.fiber.rexp = evalStack.pop();
@@ -193,15 +193,13 @@ export const GETG = createOP(
   OPCodeIdx.GETG,
   function (frame, evalStack, scope, realm, args) {
     const k = frame.script.globalNames[args[0]];
-    // name, ignoreNotDefined
+    // args: [name, ignoreNotDefined]
     // console.log(args[0], args[1]);
     if (!hasProp(realm.globalObj, k) && !args[1]) {
       throwErr(frame, new JSVMReferenceError(`GETG ${k} not def`));
     } else {
-      evalStack.push(realm.globalObj[k]);
+      return evalStack.push(realm.globalObj[k]);
     }
-    // console.log(realm.globalObj[args[0]]);
-    // return evalStack.push(realm.globalObj[k]);
   },
   () => 1
 );
