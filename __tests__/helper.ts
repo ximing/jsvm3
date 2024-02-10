@@ -6,7 +6,7 @@ export const run = function (code, ctx = {}, hoisting = true, convertES5 = false
   const vm = new JSVM(Object.assign({ Map: Map, WeakMap: WeakMap, Set: Set, Proxy: Proxy }, ctx));
   // console.log(JSON.stringify(script.toJSON(), null, 2));
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const res = vm.go(script);
+  const res = vm.exec(script);
   // console.log(res);
   // console.log(JSON.stringify(script.toJSON(), null, 2));
   // console.log(vm.realm.globalObj);
@@ -16,6 +16,6 @@ export const run = function (code, ctx = {}, hoisting = true, convertES5 = false
 export const runExp = function (code: string, ctx = {}) {
   const script = transformEXP(code);
   const vm = new JSVM(ctx);
-  const res = vm.go(script);
+  const res = vm.exec(script);
   return res;
 };

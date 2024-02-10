@@ -9,4 +9,4 @@ const vm1 = new JSVM({
   require,
 });
 
-vm1.go(script);
+vm1.exec(script);

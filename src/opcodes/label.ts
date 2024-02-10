@@ -1,4 +1,4 @@
-import { Emitter } from '../compiler/emitter';
+import type { Emitter } from '../compiler/emitter';
 
 export class Label {
   static id = 1;

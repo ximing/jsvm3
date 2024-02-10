@@ -124,7 +124,7 @@ export default {
         module: true,
         reserved: [],
         properties: {
-          reserved: ['go'],
+          reserved: ['exec'],
         },
       },
     }),

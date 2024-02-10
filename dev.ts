@@ -10,6 +10,6 @@ let c = (a+b)*5
 const script = transform(code, 'sum.js');
 
 const vm = new JSVM();
-const res = vm.go(script);
+const res = vm.exec(script);
 console.log(script.toJSON());
 console.log(res);

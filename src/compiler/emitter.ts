@@ -94,7 +94,13 @@ export class Emitter extends Visitor {
   regexps: RegExp[];
   ignoreNotDefined: number;
 
-  constructor(scopes, fName: string, name: string | null, original: string[], source: string) {
+  constructor(
+    scopes: any[] | null,
+    fName: string,
+    name: string | null,
+    original: string[],
+    source: string
+  ) {
     super();
     this.fName = fName;
     this.name = name;
@@ -106,8 +112,7 @@ export class Emitter extends Visitor {
     this.tryStatements = [];
     this.withLevel = 0;
     // Stack of scopes. Each scope maintains a name -> index association
-    // where index is unique per script(function or code executing in global
-    // scope)
+    // where index is unique per script(function or code executing in global scope)
     this.scopes = scopes || [];
     if (scopes) {
       this.scriptScope = scopes[0];
@@ -392,6 +397,13 @@ export class Emitter extends Visitor {
     if (node.loc) {
       let idx;
       const { line, column } = node.loc.start;
+      /*
+       * 首先检查节点的起始行号（node.loc.start.line）
+       * 如果这个行号与this.currentLine（当前正在处理的行号）不同，表示代码进入了一个新的行。
+       * 此时，会移除指令列表中末尾的与行号或列号相关的指令（这是为了避免重复或错误地标记行号），然后生成一个新的LINE指令来标记这个新行的开始，并更新this.currentLine。
+       * 如果节点的起始列号（node.loc.start.column）与this.currentColumn不同，
+       * 同样会移除指令列表中末尾的与列号相关的指令，生成一个新的COLUMN指令来标记新列的开始，并更新this.currentColumn。
+       * */
       if (line !== this.currentLine) {
         idx = this.instructions.length - 1;
         while (

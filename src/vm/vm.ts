@@ -13,14 +13,10 @@ export class JSVM {
     // }
   }
 
-  go(script: Script, timeout = -1) {
+  exec(script: Script, timeout = -1) {
     const fiber = this.createFiber(script, timeout);
     fiber.run();
     if (!fiber.suspended) {
-      // fiber.insMap.forEach((val, key) => {
-      //   console.log(key, val.count, val.time, '--->', val.time / val.count);
-      // });
-      // console.log(Object.fromEntries(fiber.insMap));
       return fiber.rexp;
     }
   }

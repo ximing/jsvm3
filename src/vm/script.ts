@@ -3,7 +3,7 @@ import { Instruction } from '../opcodes/types';
 // @ifdef COMPILER
 
 import { scriptToJson } from '../utils/convert';
-// import { scriptToJsonObject } from '../utils/convert';
+import { scriptToJsonObject } from '../utils/convert';
 // @endif
 
 export class Script {
@@ -60,8 +60,8 @@ export class Script {
 
   // @ifdef COMPILER
   toJSON() {
-    // return scriptToJsonObject(this);
-    return scriptToJson(this);
+    return scriptToJsonObject(this);
+    // return scriptToJson(this);
   }
   // @endif
 }
