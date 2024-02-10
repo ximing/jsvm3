@@ -11,7 +11,7 @@ jobs:
         with:
           node-version: 18.x
 
-      - name: npm install
+      - name: pnpm install
         run: |
           npm i -g pnpm --registry=https://registry.npmjs.org
           pnpm install --registry=https://registry.npmjs.org
