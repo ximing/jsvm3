@@ -163,6 +163,9 @@ devDependencies:
   benchmark:
     specifier: ^2.1.4
     version: 2.1.4
+  chalk:
+    specifier: ^4.1.2
+    version: 4.1.2
   conventional-changelog-cli:
     specifier: ^2.0.34
     version: 2.0.34

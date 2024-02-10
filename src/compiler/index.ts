@@ -1,6 +1,7 @@
 import * as babel from '@babel/core';
 import { parse, parseExpression } from '@babel/parser';
 import { Emitter } from './emitter';
+import { printCodeWithLine } from './utils';
 
 export const transform = (
   code: string,
@@ -54,7 +55,7 @@ export const transform = (
     plugins.unshift(require('./plugin/hoisting'));
   }
   if (process.env.JSVM_DEBUG) {
-    console.log('transformCode', transformCode);
+    printCodeWithLine(transformCode);
   }
   const result = babel.transformSync(transformCode, {
     plugins,

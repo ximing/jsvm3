@@ -711,8 +711,7 @@ export class Emitter extends Visitor {
     }
     if (node.right) {
       if (node.right.type === 'MemberExpression' && !node.right.object) {
-        // destructuring pattern, need to adjust the stack before
-        // getting the value
+        // destructuring pattern, need to adjust the stack before getting the value
         this.visitProperty(node.right);
         this.createINS(SWAP);
         this.createINS(GET);
