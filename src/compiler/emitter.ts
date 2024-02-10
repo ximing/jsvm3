@@ -61,6 +61,7 @@ import { Label } from '../opcodes/label';
 import { Script } from '../vm/script';
 import { binaryOp, unaryOp } from './opMap';
 import { regexpFromString } from '../utils/convert';
+import { Guard } from '../vm/types';
 
 type EmitterLabel = {
   name: string | null;
@@ -85,7 +86,7 @@ export class Emitter extends Visitor {
   globalNames: any[];
   localNames: any[];
   varIndex: number;
-  guards: any[];
+  guards: Guard[];
   currentLine: number;
   currentColumn: number;
   stringIds: Map<string, number>;
@@ -351,14 +352,14 @@ export class Emitter extends Visitor {
       });
     }
     for (const guard of Array.from(this.guards)) {
-      guard.start = guard.start.ip;
+      guard.start = (guard.start as Label).ip;
       if (guard.handler) {
-        guard.handler = guard.handler.ip;
+        guard.handler = (guard.handler as Label).ip;
       }
       if (guard.finalizer) {
-        guard.finalizer = guard.finalizer.ip;
+        guard.finalizer = (guard.finalizer as Label).ip;
       }
-      guard.end = guard.end.ip;
+      guard.end = (guard.end as Label).ip;
     }
     // calculate the maximum evaluation stack size
     // at least 2 stack size is needed for the arguments object

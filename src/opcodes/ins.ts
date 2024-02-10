@@ -629,16 +629,14 @@ export const EXIT_SCOPE = createOP(
  * 设置行号
  * */
 export const LINE = createOP(OPCodeIdx.LINE, function (frame, evalStack, scope, realm, args) {
-  frame.line = args[0];
-  // frame.setLine(args[0]);
+  frame.setLine(args[0]);
 });
 
 /*
  * 设置列号
  * */
 export const COLUMN = createOP(OPCodeIdx.COLUMN, function (frame, evalStack, scope, realm, args) {
-  frame.column = args[0];
-  // frame.setColumn(args[0]);
+  frame.setColumn(args[0]);
 });
 
 // @ts-ignore

@@ -53,6 +53,9 @@ export const transform = (
   if (hoisting) {
     plugins.unshift(require('./plugin/hoisting'));
   }
+  if (process.env.JSVM_DEBUG) {
+    console.log('transformCode', transformCode);
+  }
   const result = babel.transformSync(transformCode, {
     plugins,
     configFile: false,

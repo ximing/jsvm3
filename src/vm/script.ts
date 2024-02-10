@@ -4,6 +4,7 @@ import { Instruction } from '../opcodes/types';
 
 import { scriptToJson } from '../utils/convert';
 import { scriptToJsonObject } from '../utils/convert';
+import { Guard } from './types';
 // @endif
 
 export class Script {
@@ -15,7 +16,7 @@ export class Script {
   localNames: any[];
   globalNames: any[];
   localLength: number;
-  guards: any[];
+  guards: Guard[];
   stackSize: number;
   strings: any;
   regexps: RegExp[];
@@ -60,8 +61,10 @@ export class Script {
 
   // @ifdef COMPILER
   toJSON() {
-    return scriptToJsonObject(this);
-    // return scriptToJson(this);
+    if (process.env.JSVM_DEBUG) {
+      return scriptToJsonObject(this);
+    }
+    return scriptToJson(this);
   }
   // @endif
 }
