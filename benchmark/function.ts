@@ -1,6 +1,6 @@
 import * as Benchmark from 'benchmark';
 
-import { createContext, runInContext } from '../old-src/vm';
+import { createContext, runInContext } from 'jsvm2';
 import { parse } from '@babel/parser';
 
 const ast = parse(

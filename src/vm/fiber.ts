@@ -3,9 +3,14 @@ import { Scope } from './scope';
 import { Trace } from './types';
 import { isArray } from '../utils/helper';
 import { Realm } from './realm';
-import { XYZError, XYZTimeoutError } from '../utils/errors';
+import { JSVMError, JSVMTimeoutError } from '../utils/errors';
 import { Script } from './script';
 
+/*
+ * 在 JavaScript 中，Fiber 是用于实现协程（Coroutine）的一种机制，它可以让我们编写非阻塞的异步代码。
+ * 每个 Fiber 可以看作是一个轻量级的线程，它们在同一个线程中并行运行，但只有一个 Fiber 可以在任何给定的时间点运行。
+ * Fiber 可以将执行权交给其他 Fiber，这样可以实现非阻塞的 I/O 或计算操作。
+ * */
 export class Fiber {
   realm: Realm;
   r1: any;
@@ -22,7 +27,7 @@ export class Fiber {
   rv: any;
   yielded: any;
   suspended: boolean;
-  // insMap = new Map();
+  insMap = new Map();
 
   constructor(realm: Realm, timeout = -1) {
     const t = this;
@@ -49,16 +54,19 @@ export class Fiber {
         frame = this.unwind(err);
       }
       frame.run();
-      if ((err = frame.evalError) instanceof XYZError) {
+      if ((err = frame.evalError) instanceof JSVMError) {
         this.injectStackTrace(err);
       }
       if (frame.isDone()) {
         if (frame.guards.length) {
           const guard = frame.guards.pop();
+          // @ts-ignore
           if (guard.finalizer) {
             // we returned in the middle of a 'try' statement.
             // if there's a finalizer, it be executed before returning
+            // @ts-ignore
             frame.ip = guard.finalizer;
+            // @ts-ignore
             frame.exitIp = guard.end;
             frame.suspended = false;
             continue;
@@ -84,7 +92,7 @@ export class Fiber {
       }
     }
     if (this.timedOut()) {
-      err = new XYZTimeoutError(this);
+      err = new JSVMTimeoutError(this);
       this.injectStackTrace(err);
     }
     if (err) {
@@ -104,6 +112,7 @@ export class Fiber {
       const ip = frame.ip - 1;
       if ((len = frame.guards.length)) {
         const guard = frame.guards[len - 1];
+        // @ts-ignore
         if (guard.start <= ip && ip <= guard.end) {
           if (guard.handler !== null) {
             // try/catch
@@ -111,11 +120,13 @@ export class Fiber {
               // 扔到保护区内
               frame.evalStack.push(err);
               frame.evalError = null;
+              // @ts-ignore
               frame.ip = guard.handler;
             } else {
               // 扔到保护区外(eg: catch or finally block)
               if (guard.finalizer && frame.ip <= guard.finalizer) {
                 // 有一个 finally 块，它被扔进了 catch 块，确保执行
+                // @ts-ignore
                 frame.ip = guard.finalizer;
               } else {
                 frame = this.popFrame();
@@ -124,6 +135,7 @@ export class Fiber {
             }
           } else {
             // try/finally
+            // @ts-ignore
             frame.ip = guard.finalizer;
           }
           frame.suspended = false;
@@ -136,7 +148,7 @@ export class Fiber {
     throw err;
   }
 
-  injectStackTrace(err: XYZError) {
+  injectStackTrace(err: JSVMError) {
     const trace: Trace[] = [];
     let minDepth = 0;
     if (this.depth > this.maxTraceDepth) {
@@ -176,11 +188,11 @@ export class Fiber {
   // <a>
   pushFrame(
     script: Script,
-    target: any,
+    globalObj: any,
     parent: Scope | null = null,
     args: any = null,
     self: any = null,
-    name = '<a>',
+    name = '<s>',
     construct = false
   ) {
     if (!this.checkCallStack()) {
@@ -188,7 +200,7 @@ export class Fiber {
     }
     const scope = new Scope(parent, script.localNames, script.localLength);
     // 设置 顶部对象 首次运行的时候是  global对象
-    scope.set(0, target);
+    scope.set(0, globalObj);
     const frame = new Frame(this, script, scope, this.realm, name, construct);
     if (self) {
       frame.evalStack.push(self);
@@ -202,7 +214,7 @@ export class Fiber {
 
   checkCallStack() {
     if (this.depth === this.maxDepth) {
-      this.callStack[this.depth].evalError = new XYZError('maximum cStack size.');
+      this.callStack[this.depth].evalError = new JSVMError('maximum cStack size.');
       this.suspend();
       return false;
     }

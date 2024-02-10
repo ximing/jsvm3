@@ -8,7 +8,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as t from '@babel/types';
 import { terser } from 'rollup-plugin-terser';
-import summary from 'rollup-plugin-summary';
 
 const requireFromString = require('require-from-string');
 const OPCodeIdx = requireFromString(
@@ -125,10 +124,9 @@ export default {
         module: true,
         reserved: [],
         properties: {
-          reserved: ['go'],
+          reserved: ['exec'],
         },
       },
     }),
-    summary(),
   ],
 };

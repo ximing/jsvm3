@@ -79,7 +79,7 @@ export const instructionsToJson = function (instructions: Instruction[]) {
   for (const inst of instructions) {
     let code: any[] = [inst.id];
     // @ifdef COMPILER
-    if (process.env.KEEP_INS_NAME) {
+    if (process.env.JSVM_DEBUG) {
       code = [inst.name];
     }
     // code = [inst.name];

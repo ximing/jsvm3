@@ -1,4 +1,4 @@
-import { Emitter } from '../compiler/emitter';
+import type { Emitter } from '../compiler/emitter';
 
 export class Label {
   static id = 1;
@@ -6,7 +6,7 @@ export class Label {
   id: number;
   ip: number | null;
 
-  constructor(emitter) {
+  constructor(emitter: Emitter) {
     this.emitter = emitter;
     this.id = Label.id++;
     this.ip = null;

@@ -27,7 +27,7 @@ function printTrace(trace: Trace[], indent?: string) {
   return rv;
 }
 
-export class XYZError {
+export class JSVMError {
   message: string;
   _trace: null | Trace[];
 
@@ -51,32 +51,32 @@ export class XYZError {
   }
 }
 
-// export class XYZEvalError extends XYZError {
-//   static display = 'EvalError';
+// export class JSVMEvalError extends JSVMError {
+//   static display = 'JSVMEvalError';
 // }
 
-export class XYZRangeError extends XYZError {
-  display = 'RangeErr';
+export class JSVMRangeError extends JSVMError {
+  display = 'JSVMRangeError';
 }
 
-export class XYZReferenceError extends XYZError {
-  display = 'RefErr';
+export class JSVMReferenceError extends JSVMError {
+  display = 'JSVMReferenceError';
 }
 
-export class XYZSyntaxError extends XYZError {
-  display = 'SynErr';
+export class JSVMSyntaxError extends JSVMError {
+  display = 'JSVMSyntaxError';
 }
 
-export class XYZTypeError extends XYZError {
-  display = 'TyErr';
+export class JSVMTypeError extends JSVMError {
+  display = 'JSVMTypeError';
 }
 
-// export class XYZURIError extends XYZError {
-//   static display = 'URIError';
+// export class JSVMURIError extends JSVMError {
+//   static display = 'JSVMURIError';
 // }
 
-export class XYZTimeoutError extends XYZError {
-  display = 'TErr';
+export class JSVMTimeoutError extends JSVMError {
+  display = 'JSVMTimeoutError';
   fiber: any;
 
   constructor(fiber) {

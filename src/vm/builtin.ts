@@ -1,6 +1,6 @@
-import { XYZError } from '../utils/errors';
+import { JSVMError } from '../utils/errors';
 
-export class StopIteration extends XYZError {
+export class StopIteration extends JSVMError {
   display = 'StopIter';
   value: any;
   message: string;

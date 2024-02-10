@@ -1,15 +1,28 @@
 import { transform } from './src/compiler';
-import { XYZ } from './src/vm/vm';
+import { JSVM } from './src/vm/vm';
+
+// const code = `
+// let a = 4;
+// let b = 1;
+// let c = (a+b)*5
+// `;
 
 const code = `
-let a = 4;
-let b = 1;
-let c = (a+b)*5
+let a = 6;
+if(a){
+ a++;
+}else{
+ console.log(a);
+}
 `;
+
+// const code = `function b(a,b){return a+b+1}`;
 
 const script = transform(code, 'sum.js');
 
-const vm = new XYZ();
-const res = vm.go(script);
-console.log(script.toJSON());
+const vm = new JSVM();
+const res = vm.exec(script);
+// console.log(JSON.stringify(script.toJSON(), null, 2));
+console.dir(script.toJSON(), { depth: null, colors: true });
+
 console.log(res);
