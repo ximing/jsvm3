@@ -1,5 +1,3 @@
-import type { Label } from '../opcodes/label';
-
 export type Trace = {
   at: {
     name: string;
@@ -10,8 +8,8 @@ export type Trace = {
 };
 
 export type Guard = {
-  start: Label | number | null;
-  handler: Label | null | number;
-  finalizer: Label | null | number;
-  end: Label | number | null;
+  start: number | null;
+  handler: number | null;
+  finalizer: number | null;
+  end: number | null;
 };

@@ -215,7 +215,7 @@ export const scriptToJson = function (script: Script) {
 };
 
 export const dumpArtifact = function (
-  // Script.guards still allow Label until PR 2; DumpableScript is the JSON shape.
+  // Script.guards are numeric ips; DumpableScript is the JSON shape.
   script: DumpableScript | Script,
   options?: { format?: 0 | 1; filename?: string; debug?: boolean; compiler?: string }
 ): ScriptJson | Artifact {
