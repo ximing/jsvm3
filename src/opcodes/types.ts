@@ -14,7 +14,8 @@ export type OPExec = (
 ) => any;
 
 export type Instruction = {
-  name: string;
+  // optional without COMPILER: createOP only assigns name in the compiler graph
+  name?: string;
   id: number;
   run: OPExec;
   calculateFactor: (this: Instruction) => number;

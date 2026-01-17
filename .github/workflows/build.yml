@@ -36,5 +36,6 @@ jobs:
           npm i -g pnpm@8.15.9
           pnpm install --registry=https://registry.npmjs.org
           npm run build
+          npm test
         env:
           CI: true
