@@ -1,3 +1,7 @@
+import { registerOpcodes } from './opcodes/ins';
+
+registerOpcodes();
+
 export * from './vm';
 export { fromJson, loadArtifact } from './utils/convert';
 export {

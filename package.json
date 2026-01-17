@@ -2,17 +2,64 @@
   "name": "jsvm3",
   "version": "1.2.5",
   "description": "Javascript Interpreter implemented by Javascript",
-  "main": "dist/index.js",
-  "module": "dist/es.es6.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/es.es6.js",
+  "types": "./dist/runtime.d.ts",
+  "sideEffects": [
+    "./dist/index.js",
+    "./dist/es.es6.js",
+    "./dist/runtime.js",
+    "./dist/runtime.es.js",
+    "./dist/exp.js",
+    "./dist/exp.es6.js",
+    "./src/opcodes/ins.ts",
+    "./src/opcodes/utils.ts",
+    "./lib/opcodes/ins.js",
+    "./lib/opcodes/utils.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.es.js",
+      "require": "./dist/runtime.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.es.js",
+      "require": "./dist/runtime.js"
+    },
+    "./compiler": {
+      "types": "./dist/compiler.d.ts",
+      "import": "./dist/compiler.es.js",
+      "require": "./dist/compiler.js"
+    },
+    "./full": {
+      "types": "./dist/full.d.ts",
+      "import": "./dist/full.es.js",
+      "require": "./dist/full.js"
+    },
+    "./artifact": {
+      "types": "./dist/artifact.d.ts",
+      "import": "./dist/artifact.es.js",
+      "require": "./dist/artifact.js"
+    },
+    "./exp": {
+      "types": "./dist/exp.d.ts",
+      "import": "./dist/exp.es6.js",
+      "require": "./dist/exp.js"
+    },
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "build": "npm run build:all",
-    "build:all": "rollup -c && npm run build:exp && npm run build-compiler",
+    "build:all": "rollup -c && npm run build:dts && npm run build-compiler && npm run check:runtime-imports && npm run check:runtime-bundle",
     "build:exp": "rollup -c rollup.exp.config.js",
+    "build:dts": "node scripts/build-dts.mjs",
     "build-compiler": "tsc",
     "test:coverage": "jest --coverage",
     "test": "jest",
     "check:runtime-imports": "node scripts/check-runtime-imports.mjs",
+    "check:runtime-bundle": "node scripts/check-runtime-bundle.mjs",
     "test:debug": "npx --node-arg=--inspect-brk jest -i",
     "babel": "babel --config-file babel.config.js ./babel/src --out-dir ./babel/result",
     "typecheck": "tsc --project tsconfig.json --noEmit #",
