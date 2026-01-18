@@ -62,7 +62,7 @@
     "check:runtime-bundle": "node scripts/check-runtime-bundle.mjs",
     "test:debug": "npx --node-arg=--inspect-brk jest -i",
     "babel": "babel --config-file babel.config.js ./babel/src --out-dir ./babel/result",
-    "typecheck": "tsc --project tsconfig.json --noEmit #",
+    "typecheck": "tsc --project tsconfig.json --noEmit && tsc --project tsconfig.typecheck.json --noEmit",
     "report-coverage": "cat ./coverage/lcov.info | coveralls"
   },
   "keywords": [],

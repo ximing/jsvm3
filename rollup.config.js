@@ -103,7 +103,7 @@ const runtimeTerser = terser({
     module: true,
     reserved: [],
     properties: {
-      reserved: ['exec', 'realm', 'globalObj', 'createFiber'],
+      reserved: ['exec', 'realm', 'globalObj', 'createFiber', 'defaultTimeout', 'maxDepth'],
     },
   },
 });
