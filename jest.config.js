@@ -8,7 +8,11 @@ module.exports = {
   collectCoverageFrom: ['src/**/*.{ts,tsx}'],
   coverageDirectory: 'coverage',
   coveragePathIgnorePatterns: ['node_modules', '<rootDir>/src/index.ts', '.mock.ts'],
-  // moduleNameMapper: {
-  //   'react-platform': 'react-dom',
-  // },
+  moduleNameMapper: {
+    '^jsvm3/runtime$': '<rootDir>/src/index.ts',
+    '^jsvm3/compiler$': '<rootDir>/src/compiler/index.ts',
+    '^jsvm3/artifact$': '<rootDir>/src/artifact/index.ts',
+    '^jsvm3/full$': '<rootDir>/src/full/index.ts',
+    '^jsvm3/exp$': '<rootDir>/src/exp.ts',
+  },
 };

@@ -46,10 +46,17 @@ export class Script {
   paramsSize: number;
 }
 
+export interface JSVMOptions {
+  timeout?: number;
+  maxDepth?: number;
+}
+
 export class JSVM {
   realm: Realm;
-  constructor(merge?: Record<string, unknown>);
-  exec(script: Script, timeout?: number): unknown;
+  readonly defaultTimeout: number;
+  readonly maxDepth: number;
+  constructor(host?: Record<string, unknown>, options?: JSVMOptions);
+  exec(input: Script | import('./artifact').ArtifactInput, timeout?: number): unknown;
   createFiber(script: Script, timeout?: number): Fiber;
 }
 
