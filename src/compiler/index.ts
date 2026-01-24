@@ -9,6 +9,7 @@ import { printCodeWithLine } from './utils';
 import { dumpArtifact } from '../utils/convert';
 import { CompileError } from '../artifact/errors';
 import { Artifact, CompileOptions, ScriptJson } from '../artifact/types';
+import { SREXP } from '../opcodes';
 
 const babelPlugin = (mod: unknown) => {
   if (typeof mod === 'function') {
@@ -106,6 +107,8 @@ export const transformEXP = (exp: string) => {
   const ast = parseExpression(exp);
   const emitter = new Emitter(null, '<e>', null, exp.split('\n'), exp);
   emitter.visit(ast);
+  // Same tail as ExpressionStatement so exec can store rexp and leave the stack empty.
+  emitter.createINS(SREXP);
   return emitter.end();
 };
 

@@ -5,6 +5,9 @@
   "main": "./dist/index.js",
   "module": "./dist/es.es6.js",
   "types": "./dist/runtime.d.ts",
+  "bin": {
+    "jsvm3": "./dist/cli.js"
+  },
   "sideEffects": [
     "./dist/index.js",
     "./dist/es.es6.js",
