@@ -160,6 +160,18 @@ function isSelfEntry(id) {
   );
 }
 
+function isNodeBuiltin(id) {
+  return (
+    id === 'fs' ||
+    id === 'path' ||
+    id === 'os' ||
+    id === 'util' ||
+    id === 'module' ||
+    id === 'process' ||
+    id.startsWith('node:')
+  );
+}
+
 function keepSelfEntries() {
   return {
     name: 'keep-self-entries',
@@ -253,6 +265,26 @@ const fullPlugins = [
   tsBabel(),
 ];
 
+const cliPlugins = [
+  keepSelfEntries(),
+  keepBabelExternal(),
+  external(),
+  resolve({
+    extensions: ['.ts'],
+    preferBuiltins: true,
+  }),
+  RollupPluginPreprocess({
+    include: ['**/*.ts'],
+    context: {
+      COMPILER: true,
+      VM: true,
+      CURRENT: 'all',
+    },
+  }),
+  commonjs(),
+  tsBabel(),
+];
+
 export default [
   {
     input: 'src/index.ts',
@@ -285,5 +317,17 @@ export default [
     external: (id) => isBabelish(id) || isSelfEntry(id),
     output: [cjsOutput('dist/full.js'), esmOutput('dist/full.es.js')],
     plugins: fullPlugins,
+  },
+  {
+    input: 'src/cli/index.ts',
+    external: (id) => isBabelish(id) || isSelfEntry(id) || isNodeBuiltin(id),
+    output: {
+      file: 'dist/cli.js',
+      format: 'cjs',
+      exports: 'named',
+      sourcemap: true,
+      banner: '#!/usr/bin/env node',
+    },
+    plugins: cliPlugins,
   },
 ];
