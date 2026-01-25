@@ -221,6 +221,28 @@ if (cliBuf) {
   console.log(`ok: ${rel(cliJs)} is a separate full bin (not in runtime)`);
 }
 
+const fixturePath = path.join(repoRoot, '__tests__/fixtures/wide.format0.json');
+const expectedPath = path.join(repoRoot, '__tests__/fixtures/expected.json');
+if (fs.existsSync(runtimeJs) && fs.existsSync(fixturePath) && fs.existsSync(expectedPath)) {
+  try {
+    const { createRequire } = await import('module');
+    const require = createRequire(import.meta.url);
+    const { JSVM, loadArtifact } = require(runtimeJs);
+    const artifact = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+    const expected = JSON.parse(fs.readFileSync(expectedPath, 'utf8'));
+    const vm = new JSVM();
+    vm.exec(loadArtifact(artifact));
+    const got = vm.realm.globalObj.module.exports;
+    if (JSON.stringify(got) !== JSON.stringify(expected.wide)) {
+      fail(`dist/runtime.js exec mismatch: ${JSON.stringify(got)}`);
+    } else {
+      console.log('ok: dist/runtime.js executed wide-opcode fixture');
+    }
+  } catch (err) {
+    fail(`dist/runtime.js failed to exec fixture: ${err && err.stack ? err.stack : err}`);
+  }
+}
+
 if (process.exitCode) {
   process.exit(process.exitCode);
 }

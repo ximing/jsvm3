@@ -53,23 +53,45 @@ const babelPresets = [
   '@babel/preset-typescript',
 ];
 
+function renameStackMethod(name) {
+  if (name === 'push') {
+    return 'p';
+  }
+  if (name === 'pop') {
+    return 'u';
+  }
+  if (name === 'top') {
+    return 't';
+  }
+  return name;
+}
+
+function isEvalStackExpr(node) {
+  if (t.isIdentifier(node) && node.name === 'evalStack') {
+    return true;
+  }
+  return (
+    t.isMemberExpression(node) &&
+    t.isIdentifier(node.property) &&
+    node.property.name === 'evalStack'
+  );
+}
+
 function evalStackRenamePlugin() {
   return {
     visitor: {
+      ClassMethod(path) {
+        const cls = path.findParent((p) => p.isClassDeclaration() || p.isClassExpression());
+        const id = cls && cls.node.id;
+        if (!id || id.name !== 'EvaluationStack' || !t.isIdentifier(path.node.key)) {
+          return;
+        }
+        path.node.key.name = renameStackMethod(path.node.key.name);
+      },
       CallExpression({ node }) {
-        if (t.isMemberExpression(node.callee)) {
-          if (t.isIdentifier(node.callee.object) && node.callee.object.name === 'evalStack') {
-            if (t.isIdentifier(node.callee.property)) {
-              if (node.callee.property.name === 'push') {
-                node.callee.property.name = 'p';
-              }
-              if (node.callee.property.name === 'pop') {
-                node.callee.property.name = 'u';
-              }
-              if (node.callee.property.name === 'top') {
-                node.callee.property.name = 't';
-              }
-            }
+        if (t.isMemberExpression(node.callee) && isEvalStackExpr(node.callee.object)) {
+          if (t.isIdentifier(node.callee.property)) {
+            node.callee.property.name = renameStackMethod(node.callee.property.name);
           }
         }
       },
@@ -99,11 +121,29 @@ function tsBabel(extraPlugins = []) {
 }
 
 const runtimeTerser = terser({
+  compress: {
+    passes: 3,
+    pure_getters: true,
+    unsafe: true,
+  },
   mangle: {
     module: true,
     reserved: [],
     properties: {
-      reserved: ['exec', 'realm', 'globalObj', 'createFiber', 'defaultTimeout', 'maxDepth'],
+      reserved: [
+        'exec',
+        'realm',
+        'globalObj',
+        'createFiber',
+        'defaultTimeout',
+        'maxDepth',
+        'module',
+        'exports',
+        'magic',
+        'format',
+        'opcode',
+        'body',
+      ],
     },
   },
 });
