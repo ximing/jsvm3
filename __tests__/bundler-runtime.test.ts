@@ -27,6 +27,8 @@ function resolveRuntimeEntry(): string {
 }
 
 describeBundler('bundler fixture (jsvm3/runtime only)', () => {
+  // Rollup + Babel over the full runtime source is slower than the 5s default,
+  // especially when this file shares a worker with the lodash suite.
   it('rollup-bundles jsvm3/runtime and executes a wide-opcode fixture', async () => {
     const { rollup } = rollupMod as { rollup: Function };
     const resolve = pluginDefault(tryRequire('@rollup/plugin-node-resolve'));
@@ -96,5 +98,5 @@ describeBundler('bundler fixture (jsvm3/runtime only)', () => {
       fs.readFileSync(path.join(__dirname, 'fixtures/expected.json'), 'utf8')
     );
     expect(mod.runArtifact(artifact)).toEqual(expected.wide);
-  });
+  }, 30000);
 });
