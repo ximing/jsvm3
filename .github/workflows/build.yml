@@ -11,6 +11,9 @@ on:
       - 'src/**'
       - '__tests__/**'
       - '.github/**'
+      - 'package.json'
+      - 'rollup.config.js'
+      - 'scripts/**'
 jobs:
   build:
     name: Build

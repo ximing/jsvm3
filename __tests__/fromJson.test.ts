@@ -1,7 +1,7 @@
 import { transform } from '../src/compiler';
 import { dumpArtifact, fromJson, loadArtifact, scriptToJson } from '../src/utils/convert';
 import { Artifact, ARTIFACT_MAGIC } from '../src/artifact';
-import { ArtifactFormatError, ArtifactVersionError } from '../src/artifact/errors';
+import { ArtifactFormatError, ArtifactLoadError, ArtifactVersionError } from '../src/artifact/errors';
 import { JSVM } from '../src/vm/vm';
 
 const execRestored = function (restored: ReturnType<typeof fromJson>) {
@@ -77,6 +77,21 @@ describe('fromJson', function () {
       expect((err as ArtifactVersionError).expected).toBe('1-1');
       expect((err as ArtifactVersionError).actual).toBe('99');
     }
+  });
+
+  it('should throw ArtifactVersionError for a bad format', function () {
+    const script = transform(`module.exports = 1;`, 'test.js', {
+      hoisting: true,
+      convertES5: false,
+    });
+    const envelope = dumpArtifact(script, { format: 1 }) as Artifact;
+    expect(() => fromJson({ ...envelope, format: 99 })).toThrow(ArtifactVersionError);
+  });
+
+  it('should throw ArtifactLoadError for a missing envelope body', function () {
+    expect(() =>
+      fromJson({ magic: ARTIFACT_MAGIC, format: 1, opcode: 1 })
+    ).toThrow(ArtifactLoadError);
   });
 
   it('should restore regexp literals', function () {

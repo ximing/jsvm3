@@ -4,6 +4,7 @@ import { InsMap } from '../opcodes/ins';
 import {
   ARTIFACT_FORMAT,
   ARTIFACT_MAGIC,
+  COMPILER_VERSION,
   FORMAT_MAX,
   FORMAT_MIN,
   OPCODE_MAX,
@@ -13,7 +14,15 @@ import {
 import { Artifact, DumpableScript, ScriptJson } from '../artifact/types';
 import { ArtifactFormatError, ArtifactLoadError, ArtifactVersionError } from '../artifact/errors';
 
+const assertScriptJson = function (json: unknown): any {
+  if (!Array.isArray(json) || json.length < 9) {
+    throw new ArtifactLoadError('invalid script json: expected a 10-tuple array');
+  }
+  return json;
+};
+
 const scriptFromJson = function (json: any) {
+  json = assertScriptJson(json);
   const fName = json[0] !== 0 ? json[0] : null;
   const name = json[1] !== 0 ? json[1] : null;
   const instructions = instructionsFromJson(json[2]);
@@ -86,6 +95,9 @@ export const loadArtifact = function (input: unknown) {
     const artifact = input as Artifact;
     assertVersion('format', artifact.format, FORMAT_MIN, FORMAT_MAX);
     assertVersion('opcode', artifact.opcode, OPCODE_MIN, OPCODE_MAX);
+    if (!Array.isArray(artifact.body)) {
+      throw new ArtifactLoadError('invalid artifact body: expected ScriptJson array');
+    }
     return scriptFromJson(artifact.body);
   }
   throw new ArtifactFormatError(
@@ -236,7 +248,7 @@ export const dumpArtifact = function (
     magic: ARTIFACT_MAGIC,
     format: ARTIFACT_FORMAT,
     opcode: OPCODE_VERSION,
-    compiler: options?.compiler ?? '1.3.0',
+    compiler: options?.compiler ?? COMPILER_VERSION,
     body,
   };
   if (options?.filename !== undefined) {

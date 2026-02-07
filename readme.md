@@ -72,7 +72,7 @@ const exports = run(userScript, {
 
 ```
 jsvm3 compile <input.js> -o <out.json> [--format 0|1] [--no-hoisting] [--no-es5] [--debug] [--filename name]
-jsvm3 run <input.js>
+jsvm3 run <artifact.json|input.js>
 jsvm3 eval <expr>
 ```
 

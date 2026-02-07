@@ -10,11 +10,11 @@ import { JSVM } from 'jsvm3/runtime';
 
 export const USAGE = `Usage:
   jsvm3 compile <input.js> -o <out.json> [--format 0|1] [--no-hoisting] [--no-es5] [--debug] [--filename name]
-  jsvm3 run <input.js> [--no-hoisting] [--no-es5] [--debug] [--filename name]
+  jsvm3 run <artifact.json|input.js> [--no-hoisting] [--no-es5] [--debug] [--filename name]
   jsvm3 eval <expr>
 
 compile defaults to --format 0 (bare ScriptJson array). --format 1 writes a JSVM3 envelope.
-run compiles then executes and prints module.exports (full path; may need Babel).
+run executes a Path A JSON artifact, or compiles a JS source file and prints module.exports.
 eval compiles an expression via transformEXP and prints exec's rexp.
 
 Device path A does not use the CLI.`;
@@ -145,6 +145,17 @@ function cmdCompile(parsed: ParsedArgs): number {
   return 0;
 }
 
+function isArtifactPayload(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return true;
+  }
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    (value as { magic?: unknown }).magic === 'JSVM3'
+  );
+}
+
 function cmdRun(parsed: ParsedArgs): number {
   if (parsed.help) {
     console.log(USAGE);
@@ -152,12 +163,23 @@ function cmdRun(parsed: ParsedArgs): number {
   }
   const input = parsed.positionals[0];
   if (!input) {
-    throw new Error('run requires <input.js>');
+    throw new Error('run requires <artifact.json> or <input.js>');
   }
-  const source = fs.readFileSync(input, 'utf8');
-  const json = compile(source, compileOptions(parsed, input));
+  const raw = fs.readFileSync(input, 'utf8');
+  let json: unknown;
+  try {
+    const parsedJson = JSON.parse(raw);
+    if (isArtifactPayload(parsedJson)) {
+      json = parsedJson;
+    }
+  } catch {
+    // Source file, not JSON.
+  }
+  if (json === undefined) {
+    json = compile(raw, compileOptions(parsed, input));
+  }
   const vm = new JSVM();
-  vm.exec(json);
+  vm.exec(json as Parameters<JSVM['exec']>[0]);
   printValue((vm.realm.globalObj as { module: { exports: unknown } }).module.exports);
   return 0;
 }
