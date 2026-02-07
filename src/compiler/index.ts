@@ -10,6 +10,7 @@ import { dumpArtifact } from '../utils/convert';
 import { CompileError } from '../artifact/errors';
 import { Artifact, CompileOptions, ScriptJson } from '../artifact/types';
 import { SREXP } from '../opcodes';
+import hoistingPlugin from './plugin/hoisting';
 
 const babelPlugin = (mod: unknown) => {
   if (typeof mod === 'function') {
@@ -79,8 +80,7 @@ export const transform = (
     minifyGuard,
   ];
   if (hoisting) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    plugins.unshift(require('./plugin/hoisting'));
+    plugins.unshift(hoistingPlugin);
   }
   if (process.env.JSVM_DEBUG) {
     printCodeWithLine(transformCode);

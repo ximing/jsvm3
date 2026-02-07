@@ -1,6 +1,6 @@
 {
   "name": "jsvm3",
-  "version": "1.2.5",
+  "version": "1.4.0",
   "description": "Javascript Interpreter implemented by Javascript",
   "main": "./dist/index.js",
   "module": "./dist/es.es6.js",
@@ -85,7 +85,6 @@
     "@babel/plugin-syntax-object-rest-spread": "^7.8.3",
     "@babel/plugin-syntax-optional-chaining": "^7.8.3",
     "@babel/plugin-transform-runtime": "^7.29.7",
-    "@babel/preset-env": "^7.29.7",
     "@babel/preset-typescript": "^7.29.7",
     "@babel/traverse": "^7.29.8",
     "@commitlint/cli": "^19.8.1",
@@ -156,6 +155,7 @@
     "@babel/core": "^7.29.7",
     "@babel/helper-hoist-variables": "^7.24.7",
     "@babel/parser": "^7.29.8",
+    "@babel/preset-env": "^7.29.7",
     "@babel/types": "^7.29.8",
     "babel-plugin-minify-constant-folding": "^0.5.0",
     "babel-plugin-minify-dead-code-elimination": "^0.5.2",
