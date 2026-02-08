@@ -1,8 +1,36 @@
 import * as babel from '@babel/core';
 import { parse, parseExpression } from '@babel/parser';
+import * as presetEnvModule from '@babel/preset-env';
+import * as minifyDCEModule from 'babel-plugin-minify-dead-code-elimination';
+import * as minifyFoldModule from 'babel-plugin-minify-constant-folding';
+import * as minifyGuardModule from 'babel-plugin-minify-guarded-expressions';
 import { Emitter } from './emitter';
 import { printCodeWithLine } from './utils';
+import { dumpArtifact } from '../utils/convert';
+import { CompileError } from '../artifact/errors';
+import { Artifact, CompileOptions, ScriptJson } from '../artifact/types';
+import { SREXP } from '../opcodes';
+import hoistingPlugin from './plugin/hoisting';
 
+const babelPlugin = (mod: unknown) => {
+  if (typeof mod === 'function') {
+    return mod;
+  }
+  if (mod && typeof (mod as { default?: unknown }).default === 'function') {
+    return (mod as { default: unknown }).default;
+  }
+  return mod;
+};
+
+const presetEnv = babelPlugin(presetEnvModule);
+const minifyDCE = babelPlugin(minifyDCEModule);
+const minifyFold = babelPlugin(minifyFoldModule);
+const minifyGuard = babelPlugin(minifyGuardModule);
+
+/**
+ * @deprecated Cross-package callers should use compile() + loadArtifact();
+ * same-process use accepts dual-instance risk. Unchanged behavior.
+ */
 export const transform = (
   code: string,
   fName: string,
@@ -13,7 +41,7 @@ export const transform = (
     const result = babel.transformSync(code, {
       presets: [
         [
-          '@babel/preset-env',
+          presetEnv,
           {
             targets: {
               browsers: ['safari >= 9', 'android >= 4.4'],
@@ -46,13 +74,13 @@ export const transform = (
     transformCode = result!.code!;
   }
   // 性能 编译期优化
-  const plugins = [
-    ['minify-dead-code-elimination', { keepFnName: true, keepFnArgs: true, keepClassName: true }],
-    ['minify-constant-folding'],
-    ['minify-guarded-expressions'],
+  const plugins: any[] = [
+    [minifyDCE, { keepFnName: true, keepFnArgs: true, keepClassName: true }],
+    minifyFold,
+    minifyGuard,
   ];
   if (hoisting) {
-    plugins.unshift(require('./plugin/hoisting'));
+    plugins.unshift(hoistingPlugin);
   }
   if (process.env.JSVM_DEBUG) {
     printCodeWithLine(transformCode);
@@ -79,5 +107,38 @@ export const transformEXP = (exp: string) => {
   const ast = parseExpression(exp);
   const emitter = new Emitter(null, '<e>', null, exp.split('\n'), exp);
   emitter.visit(ast);
+  // Same tail as ExpressionStatement so exec can store rexp and leave the stack empty.
+  emitter.createINS(SREXP);
   return emitter.end();
 };
+
+export { dumpArtifact };
+
+/**
+ * Not a sandbox: compiling untrusted source does not isolate it at runtime.
+ * transform() + dumpArtifact(). Failures throw CompileError with cause.
+ * Defaults: hoisting true, convertES5 true, format 0 (bare ScriptJson array).
+ */
+export function compile(source: string, options?: CompileOptions): ScriptJson | Artifact {
+  const filename = options?.filename;
+  const hoisting = options?.hoisting ?? true;
+  const convertES5 = options?.convertES5 ?? true;
+  const format = options?.format ?? 0;
+  try {
+    const script = transform(source, filename ?? '<anonymous>', { hoisting, convertES5 });
+    return dumpArtifact(script, {
+      format,
+      filename,
+      debug: options?.debug,
+    });
+  } catch (cause) {
+    if (cause instanceof CompileError) {
+      throw cause;
+    }
+    throw new CompileError(
+      cause instanceof Error ? cause.message : String(cause),
+      filename,
+      { cause }
+    );
+  }
+}

@@ -75,6 +75,7 @@ config
 *.sln
 
 dist
+.tmp
 debugger_app
 
 lib

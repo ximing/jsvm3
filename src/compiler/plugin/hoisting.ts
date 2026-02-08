@@ -24,7 +24,7 @@ function isHoisted(path: any, parentFn: any) {
   return path.scope.parent === parentFn.scope;
 }
 
-module.exports = () => {
+export default function hoistingPlugin() {
   return {
     visitor: {
       VariableDeclaration: {

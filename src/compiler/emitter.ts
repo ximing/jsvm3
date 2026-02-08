@@ -63,6 +63,13 @@ import { binaryOp, unaryOp } from './opMap';
 import { regexpFromString } from '../utils/convert';
 import { Guard } from '../vm/types';
 
+export interface CompileGuard {
+  start: Label;
+  handler: Label | null;
+  finalizer: Label | null;
+  end: Label;
+}
+
 type EmitterLabel = {
   name: string | null;
   stmt: any;
@@ -86,7 +93,7 @@ export class Emitter extends Visitor {
   globalNames: any[];
   localNames: any[];
   varIndex: number;
-  guards: Guard[];
+  guards: CompileGuard[];
   currentLine: number;
   currentColumn: number;
   stringIds: Map<string, number>;
@@ -351,15 +358,14 @@ export class Emitter extends Visitor {
         return l.ip;
       });
     }
+    const guards: Guard[] = [];
     for (const guard of Array.from(this.guards)) {
-      guard.start = (guard.start as Label).ip;
-      if (guard.handler) {
-        guard.handler = (guard.handler as Label).ip;
-      }
-      if (guard.finalizer) {
-        guard.finalizer = (guard.finalizer as Label).ip;
-      }
-      guard.end = (guard.end as Label).ip;
+      guards.push({
+        start: guard.start.ip,
+        handler: guard.handler ? guard.handler.ip : null,
+        finalizer: guard.finalizer ? guard.finalizer.ip : null,
+        end: guard.end.ip,
+      });
     }
     // calculate the maximum evaluation stack size
     // at least 2 stack size is needed for the arguments object
@@ -382,7 +388,7 @@ export class Emitter extends Visitor {
       this.localNames,
       localLength,
       this.globalNames,
-      this.guards,
+      guards,
       max,
       this.strings,
       this.regexps,
