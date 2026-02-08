@@ -2,6 +2,14 @@
   "name": "jsvm3",
   "version": "1.4.0",
   "description": "Javascript Interpreter implemented by Javascript",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ximing/jsvm3"
+  },
+  "bugs": {
+    "url": "https://github.com/ximing/jsvm3/issues"
+  },
+  "homepage": "https://github.com/ximing/jsvm3#readme",
   "main": "./dist/index.js",
   "module": "./dist/es.es6.js",
   "types": "./dist/runtime.d.ts",
