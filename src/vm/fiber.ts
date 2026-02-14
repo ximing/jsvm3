@@ -27,6 +27,8 @@ export class Fiber {
   rv: any;
   yielded: any;
   suspended: boolean;
+  asyncResolve: ((value: any) => void) | null;
+  asyncReject: ((reason: any) => void) | null;
   insMap = new Map();
 
   constructor(realm: Realm, timeout = -1) {
@@ -40,6 +42,7 @@ export class Fiber {
     t.depth = -1;
     t.yielded = t.rv = undefined;
     t.suspended = false;
+    t.asyncResolve = t.asyncReject = null;
     // fiber-specific registers temporary registers
     t.r1 = t.r2 = t.r3 = null;
     // expression register(last evaluated expression statement)
