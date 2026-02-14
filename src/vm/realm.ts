@@ -16,6 +16,9 @@ import { StopIteration } from './builtin';
 * */
 export class Realm {
   globalObj: any;
+  defaultTimeout = -1;
+  maxDepth = 1000;
+  private snapshot: Record<string, any>;
   constructor(merge: Record<string, any> = {}) {
     // @if CURRENT != 'all'
     this.globalObj = {};
@@ -61,5 +64,25 @@ export class Realm {
     const $module = { exports: $exports };
     (this.globalObj as any).module = $module;
     (this.globalObj as any).exports = $exports;
+    this.snapshot = Object.create(null);
+    for (const k of Object.keys(this.globalObj)) {
+      this.snapshot[k] = this.globalObj[k];
+    }
+  }
+
+  reset() {
+    const $exports = {};
+    const $module = { exports: $exports };
+    const next: Record<string, any> = {};
+    for (const k of Object.keys(this.snapshot)) {
+      if (k === 'module') {
+        next.module = $module;
+      } else if (k === 'exports') {
+        next.exports = $exports;
+      } else {
+        next[k] = this.snapshot[k];
+      }
+    }
+    this.globalObj = next;
   }
 }

@@ -60,7 +60,7 @@ const exports = run(userScript, {
 
 | Import                    | Has                                                    | Does not have                 |
 | ------------------------- | ------------------------------------------------------ | ----------------------------- |
-| `jsvm3` / `jsvm3/runtime` | `JSVM`, `loadArtifact`, `fromJson`, `exec`             | `compile`, `run`, `transform` |
+| `jsvm3` / `jsvm3/runtime` | `JSVM`, `loadArtifact`, `fromJson`, `exec`, `reset`    | `compile`, `run`, `transform` |
 | `jsvm3/compiler`          | `compile` → JSON, `dumpArtifact`, `transform` (compat) | `JSVM`, `compileToScript`     |
 | `jsvm3/full`              | `run`, `FullJSVM`                                      | —                             |
 | `jsvm3/artifact`          | types, version constants, error classes                | execution, Babel              |
@@ -82,7 +82,7 @@ One bin, `COMPILER: true`. Installing / starting the CLI can pull the compiler g
 
 | Artifact                            | Typical (this tree)     | Budget                |
 | ----------------------------------- | ----------------------- | --------------------- |
-| `dist/runtime.js` / `dist/index.js` | ~14 KB raw / ~5 KB gzip | ≤ 15 KB / ≤ 6 KB gzip |
+| `dist/runtime.js` / `dist/index.js` | ~16 KB raw / ~5.5 KB gzip | ≤ 16 KB / ≤ 6 KB gzip |
 | `dist/exp.js`                       | ~10 KB                  | ≤ 10 KB               |
 | compiler / full                     | Babel is external       | no cap                |
 
@@ -166,6 +166,12 @@ The custom opcode system defines over 80 instructions across several categories:
 | Feature               | Status |
 | --------------------- | ------ |
 | `**` (Exponentiation) | ✅     |
+
+### ✅ ES2017
+
+| Feature           | Status          |
+| ----------------- | --------------- |
+| `async` / `await` | ✅ Fiber-native |
 
 ### 🧪 Experimental
 

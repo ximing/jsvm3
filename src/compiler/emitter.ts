@@ -5,6 +5,7 @@ import { hasProp } from '../utils/helper';
 import { Instruction } from '../opcodes/types';
 import {
   ARRAY_LITERAL,
+  AWAIT,
   CALL,
   CALLM,
   CID,
@@ -288,7 +289,7 @@ export class Emitter extends Visitor {
     return this.tryStatements.map((tryStatement) => tryStatement.hooks.push(cleanup));
   }
 
-  declareFunction(name, index, generator = false) {
+  declareFunction(name, index, kind = 0) {
     let opcode;
     this.declareVar(name);
     const scope = this.scope(name);
@@ -299,7 +300,7 @@ export class Emitter extends Visitor {
       opcode = SETG([idx]);
     }
     // 通过将名称绑定到函数 ref 来声明函数,  在其他不是函数声明的语句之前
-    const codes = [FUNCTION([index, generator === false ? 0 : 1]), opcode, POP(null)];
+    const codes = [FUNCTION([index, kind]), opcode, POP(null)];
     this.instructions = codes.concat(this.instructions);
     const processedLabels = {};
     const result: any[] = [];
@@ -1323,13 +1324,14 @@ export class Emitter extends Visitor {
     };
     const functionIndex = this.children.length;
     this.children.push(emit);
+    const kind = node.async ? 2 : node.generator ? 1 : 0;
     if (node.isExpression) {
       // push function on the stack
-      this.createINS(FUNCTION, functionIndex, node.generator === false ? 0 : 1);
+      this.createINS(FUNCTION, functionIndex, kind);
     }
     if (node.declare) {
       // 声明以便函数可以绑定到最开始的context上
-      this.declareFunction(node.declare, functionIndex, node.generator);
+      this.declareFunction(node.declare, functionIndex, kind);
     }
     return node;
   }
@@ -1392,6 +1394,12 @@ export class Emitter extends Visitor {
   WithStatement(_) {
     throw new Error('not implemented');
     return _;
+  }
+
+  AwaitExpression(node) {
+    this.visit(node.argument);
+    this.createINS(AWAIT);
+    return node;
   }
 
   YieldExpression(node) {

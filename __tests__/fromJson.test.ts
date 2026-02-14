@@ -48,7 +48,7 @@ describe('fromJson', function () {
     expect(Array.isArray(envelope)).toBe(false);
     expect(envelope.magic).toBe(ARTIFACT_MAGIC);
     expect(envelope.format).toBe(1);
-    expect(envelope.opcode).toBe(1);
+    expect(envelope.opcode).toBe(2);
     expect(Array.isArray(envelope.body)).toBe(true);
 
     const restored = loadArtifact(JSON.parse(JSON.stringify(envelope)));
@@ -74,7 +74,7 @@ describe('fromJson', function () {
     } catch (err) {
       expect(err).toBeInstanceOf(ArtifactVersionError);
       expect((err as ArtifactVersionError).field).toBe('opcode');
-      expect((err as ArtifactVersionError).expected).toBe('1-1');
+      expect((err as ArtifactVersionError).expected).toBe('1-2');
       expect((err as ArtifactVersionError).actual).toBe('99');
     }
   });

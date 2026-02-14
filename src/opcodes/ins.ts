@@ -4,13 +4,12 @@ import { throwErr } from '../utils/opcodes';
 import { JSVMReferenceError, JSVMTypeError } from '../utils/errors';
 import { Scope } from '../vm/scope';
 import { del, enumerateKeys, has, set } from './op';
-import { call, callm, createFunction, createOP, ret } from './utils';
+import { call, callm, createFunction, createOP, ret, settleAsync } from './utils';
 // @if CURRENT != 'exp'
 import { StopIteration } from '../vm/builtin';
 // @endif
 // @ifdef COMPILER
 import { OPCodeIdx } from './opIdx';
-import { Cannot, property } from './contants';
 // @endif
 export const InsMap = new Map();
 
@@ -115,7 +114,7 @@ export const GET = createOP(OPCodeIdx.GET, function (frame, evalStack, scope, re
   // console.log('--->GET', obj, key);
   if (obj == null) {
     // console.trace();
-    throwErr(frame, new JSVMTypeError(`[JSVM] ${Cannot} get ${property} ${key} of ${obj}`));
+    throwErr(frame, new JSVMTypeError(`[JSVM] Cannot get property ${key} of ${obj}`));
   } else {
     evalStack.push(obj[key]);
   }
@@ -133,7 +132,7 @@ export const SET = createOP(OPCodeIdx.SET, function (frame, evalStack, scope, re
   // const val = evalStack.pop();
   const [val, key, obj] = evalStack.tail(3);
   if (obj == null) {
-    throwErr(frame, new JSVMTypeError(`${Cannot} set ${property} ${key} of ${obj}`));
+    throwErr(frame, new JSVMTypeError(`Cannot set property ${key} of ${obj}`));
   } else {
     evalStack.push(set(obj, key, val));
   }
@@ -147,7 +146,7 @@ export const DEL = createOP(OPCodeIdx.DEL, function (frame, evalStack, scope, re
   // const key = evalStack.pop();
   const [key, obj] = evalStack.tail(2);
   if (obj == null) {
-    throwErr(frame, new JSVMTypeError(`${Cannot} convert null to object`));
+    throwErr(frame, new JSVMTypeError(`Cannot convert null to object`));
   } else {
     evalStack.push(del(obj, key));
   }
@@ -644,6 +643,33 @@ export const COLUMN = createOP(OPCodeIdx.COLUMN, function (frame, evalStack, sco
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DEBUG = createOP(OPCodeIdx.DEBUG, function (frame, evalStack, scope, realm, args) {});
+
+export const AWAIT = createOP(OPCodeIdx.AWAIT, function (frame, evalStack, scope, realm, args) {
+  const value = evalStack.pop();
+  const then = value != null ? value.then : undefined;
+  if (typeof then !== 'function') {
+    evalStack.push(value);
+    return;
+  }
+  const fiber = frame.fiber;
+  const remaining = fiber.timeout;
+  fiber.suspend();
+  try {
+    then.call(
+      value,
+      function (v) {
+        settleAsync(fiber, v, null, remaining);
+      },
+      function (e) {
+        settleAsync(fiber, undefined, e, remaining);
+      }
+    );
+  } catch (err) {
+    frame.evalError = err;
+    fiber.suspended = false;
+    frame.suspended = false;
+  }
+});
 
 /**
  * Pin this module from the runtime entry so bundlers keep every
