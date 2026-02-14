@@ -135,6 +135,8 @@ const runtimeTerser = terser({
         'realm',
         'globalObj',
         'createFiber',
+        'reset',
+        'resetOnExec',
         'defaultTimeout',
         'maxDepth',
         'module',
