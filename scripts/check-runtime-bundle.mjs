@@ -33,6 +33,7 @@ const REQUIRED_OPCODES = [
   'CALL',
   'ENTER_GUARD',
   'DEBUG',
+  'AWAIT',
   'SR1',
   'POP',
   'JMP',
@@ -43,7 +44,7 @@ const REQUIRED_OPCODES = [
 const FORBIDDEN = [/@babel\//, /compiler\/emitter/, /compiler\/visitor/, /compiler\/plugin/];
 
 const GZIP_BUDGET = 6 * 1024;
-const RAW_BUDGET = 15 * 1024;
+const RAW_BUDGET = 16 * 1024;
 
 function rel(file) {
   return path.relative(repoRoot, file);
@@ -136,6 +137,13 @@ if (runtimeBuf && indexBuf) {
   }
   if (gzipSize > GZIP_BUDGET) {
     fail(`runtime gzip size ${gzipSize} > ${GZIP_BUDGET}`);
+  }
+
+  if (/\$\{Cannot\}/.test(runtimeText) || /\$\{property\}/.test(runtimeText)) {
+    fail(`${rel(runtimeJs)} interpolates stripped COMPILER constants`);
+  }
+  if (!/Cannot get property/.test(runtimeText)) {
+    fail(`${rel(runtimeJs)} missing inlined "Cannot get property" message`);
   }
 
   if (!/\.set\s*\(/.test(runtimeText)) {

@@ -13,7 +13,6 @@ import { InsMap } from './ins';
 // @ifdef COMPILER
 import { OPCodeIdx } from './opIdx';
 import { Label } from './label';
-import { Cannot } from './contants';
 
 const OPCodeMap: any = Object.keys(OPCodeIdx).reduce((total: any, cur: string) => {
   total[OPCodeIdx[cur]] = cur;
@@ -149,26 +148,86 @@ export const createOP = function (
 //   return rv;
 // };
 
+const fiberBudget = function (realm: Realm) {
+  return {
+    timeout: realm.defaultTimeout ?? -1,
+    maxDepth: realm.maxDepth ?? 1000,
+  };
+};
+
+const runAsyncFiber = function (fiber: Fiber) {
+  try {
+    fiber.run();
+    if (!fiber.suspended && fiber.asyncResolve) {
+      fiber.asyncResolve(fiber.rv);
+      fiber.asyncResolve = fiber.asyncReject = null;
+    }
+  } catch (err) {
+    if (fiber.asyncReject) {
+      fiber.asyncReject(err);
+      fiber.asyncResolve = fiber.asyncReject = null;
+    } else {
+      throw err;
+    }
+  }
+};
+
+export const settleAsync = function (fiber: Fiber, value: any, err: any, remaining: number) {
+  const frame = fiber.callStack[fiber.depth];
+  if (err != null) {
+    frame.evalError = err;
+  } else {
+    frame.evalStack.push(value);
+  }
+  try {
+    fiber.resume(remaining);
+    if (!fiber.suspended && fiber.asyncResolve) {
+      fiber.asyncResolve(fiber.rv);
+      fiber.asyncResolve = fiber.asyncReject = null;
+    }
+  } catch (e) {
+    if (fiber.asyncReject) {
+      fiber.asyncReject(e);
+      fiber.asyncResolve = fiber.asyncReject = null;
+    } else {
+      throw e;
+    }
+  }
+};
+
 export const createFunction = function (
   script: Script,
   scope: Scope | null,
   realm: Realm,
-  generator = false
+  kind = 0
 ) {
   let fun;
-  if (generator) {
+  if (kind === 1) {
     throw new Error('generator function not support');
-    // fun = function (this: any) {
-    //   let fiber;
-    //   const name = fun.__cname__ || script.name;
-    //   const gen = createGenerator(fun.__fiber__, script, scope, realm, this, arguments, fun, name);
-    //   if (!(fiber = fun.__fiber__)) {
-    //     return gen;
-    //   }
-    //   fiber.callStack[fiber.depth].evalStack.push(gen);
-    //   fun.__fiber__ = null;
-    //   return (fun.__cname__ = null);
-    // };
+  } else if (kind === 2) {
+    fun = function (this: any) {
+      const caller = fun.__fiber__;
+      fun.__fiber__ = null;
+      fun.__con__ = null;
+      if (caller) {
+        caller.callStack[caller.depth].suspended = false;
+      }
+      const name = fun.__cname__ || script.name;
+      fun.__cname__ = null;
+      const { timeout, maxDepth } = fiberBudget(realm);
+      const fiber = new Fiber(realm, timeout);
+      fiber.maxDepth = maxDepth;
+      fiber.pushFrame(script, this, scope, arguments, fun, name, false);
+      const promise = new Promise(function (resolve, reject) {
+        fiber.asyncResolve = resolve;
+        fiber.asyncReject = reject;
+      });
+      runAsyncFiber(fiber);
+      if (caller) {
+        caller.callStack[caller.depth].evalStack.push(promise);
+      }
+      return promise;
+    };
   } else {
     fun = function (this: any) {
       let construct, fiber: Fiber;
@@ -180,12 +239,13 @@ export const createFunction = function (
         construct = fun.__con__;
         fun.__con__ = null;
       } else {
-        fiber = new Fiber(realm);
+        const { timeout, maxDepth } = fiberBudget(realm);
+        fiber = new Fiber(realm, timeout);
+        fiber.maxDepth = maxDepth;
         run = true;
       }
       const name = fun.__cname__ || script.name;
       fun.__cname__ = null;
-      // console.log('arguments', arguments, name);
       fiber.pushFrame(script, this, scope, arguments, fun, name, construct);
       if (run) {
         fiber.run();
@@ -326,7 +386,7 @@ export const callm = function (
     if (target === undefined) {
       id = 'undefined';
     }
-    return throwErr(frame, new JSVMTypeError(`${Cannot} cal method '${key}' of ${id}`));
+    return throwErr(frame, new JSVMTypeError(`Cannot cal method '${key}' of ${id}`));
   }
   const { constructor } = target;
   const targetName = constructor.__name__ || constructor.name || 'Object';

@@ -339,6 +339,11 @@ export class Visitor {
     return node;
   }
 
+  AwaitExpression(node: t.AwaitExpression) {
+    node.argument = this.visit(node.argument);
+    return node;
+  }
+
   // esprima
   // ComprehensionExpression(node: t.CompletionStatement) {
   //   node.body = this.visit(node.body);
