@@ -13,6 +13,7 @@ export class Fiber {
   maxDepth: number;
   constructor(realm: Realm, timeout?: number);
   run(): void;
+  resume(timeout?: number): unknown;
 }
 
 export type Guard = {
@@ -61,6 +62,32 @@ export class JSVM {
   reset(): void;
   exec(input: Script | import('./artifact').ArtifactInput, timeout?: number): unknown;
   createFiber(script: Script, timeout?: number): Fiber;
+}
+
+export class JSVMError extends Error {
+  display: string;
+  constructor(message?: string);
+}
+
+export class JSVMTimeoutError extends JSVMError {
+  display: 'JSVMTimeoutError';
+  constructor();
+}
+
+export class JSVMTypeError extends JSVMError {
+  display: 'JSVMTypeError';
+}
+
+export class JSVMRangeError extends JSVMError {
+  display: 'JSVMRangeError';
+}
+
+export class JSVMReferenceError extends JSVMError {
+  display: 'JSVMReferenceError';
+}
+
+export class JSVMSyntaxError extends JSVMError {
+  display: 'JSVMSyntaxError';
 }
 
 export function loadArtifact(input: unknown): Script;

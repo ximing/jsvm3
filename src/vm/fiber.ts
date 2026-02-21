@@ -95,7 +95,7 @@ export class Fiber {
       }
     }
     if (this.timedOut()) {
-      err = new JSVMTimeoutError(this);
+      err = new JSVMTimeoutError();
       this.injectStackTrace(err);
     }
     if (err) {
