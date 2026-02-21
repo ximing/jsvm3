@@ -78,6 +78,26 @@ describeDist('published dist entries', () => {
     await expect(vm.realm.globalObj.module.exports).resolves.toBe(8);
   });
 
+  it('timed-out exec on dist/runtime is an Error without a fiber field', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { compile } = require(compilerPath);
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const runtime = require(runtimePath);
+    const { JSVM, JSVMTimeoutError } = runtime;
+    expect(typeof JSVMTimeoutError).toBe('function');
+    const vm = new JSVM({}, { timeout: 20 });
+    try {
+      vm.exec(
+        compile('var i = 0; while (i < 10000) { i = i + 1; } module.exports = i;', { convertES5: false })
+      );
+      throw new Error('expected timeout');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Error);
+      expect(err).toBeInstanceOf(JSVMTimeoutError);
+      expect((err as { fiber?: unknown }).fiber).toBeUndefined();
+    }
+  });
+
   it('null.foo on dist/runtime is JSVMTypeError, not ReferenceError', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { compile } = require(compilerPath);

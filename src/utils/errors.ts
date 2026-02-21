@@ -27,13 +27,15 @@ function printTrace(trace: Trace[], indent?: string) {
   return rv;
 }
 
-export class JSVMError {
-  message: string;
+export class JSVMError extends Error {
+  display = 'JSVMError';
   _trace: null | Trace[];
 
-  constructor(message) {
-    this.message = message;
+  constructor(message?: string) {
+    super(message);
+    this.name = 'JSVMError';
     this._trace = null;
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 
   toString() {
@@ -57,18 +59,34 @@ export class JSVMError {
 
 export class JSVMRangeError extends JSVMError {
   display = 'JSVMRangeError';
+  constructor(message?: string) {
+    super(message);
+    this.name = 'JSVMRangeError';
+  }
 }
 
 export class JSVMReferenceError extends JSVMError {
   display = 'JSVMReferenceError';
+  constructor(message?: string) {
+    super(message);
+    this.name = 'JSVMReferenceError';
+  }
 }
 
 export class JSVMSyntaxError extends JSVMError {
   display = 'JSVMSyntaxError';
+  constructor(message?: string) {
+    super(message);
+    this.name = 'JSVMSyntaxError';
+  }
 }
 
 export class JSVMTypeError extends JSVMError {
   display = 'JSVMTypeError';
+  constructor(message?: string) {
+    super(message);
+    this.name = 'JSVMTypeError';
+  }
 }
 
 // export class JSVMURIError extends JSVMError {
@@ -77,10 +95,9 @@ export class JSVMTypeError extends JSVMError {
 
 export class JSVMTimeoutError extends JSVMError {
   display = 'JSVMTimeoutError';
-  fiber: any;
 
-  constructor(fiber) {
+  constructor() {
     super('timed out');
-    this.fiber = fiber;
+    this.name = 'JSVMTimeoutError';
   }
 }

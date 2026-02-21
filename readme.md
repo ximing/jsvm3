@@ -41,6 +41,18 @@ jsvm3 compile app.js -o app.json --format 1
 
 Device Path A **does not use the CLI**. The `jsvm3` bin is a **full** CLI (it may resolve Babel).
 
+Old React Native / Metro that ignores `exports` should `require('jsvm3')` (the `main` CJS runtime). Do not deep-import `lib/` or `jsvm3/full` on device. Compile in CI with `{ format: 1 }`. After `exec`, read `module.exports` — `exec`'s return is the last expression, not exports. Production: pass a finite `timeout`, `resetOnExec: true`, and only the host functions the script is allowed to call.
+
+```js
+const { JSVM, loadArtifact } = require('jsvm3');
+const vm = new JSVM(
+  { console: console, Map: Map },
+  { timeout: 200000, maxDepth: 64, resetOnExec: true }
+);
+vm.exec(loadArtifact(json));
+return vm.realm.globalObj.module.exports;
+```
+
 ### Path B — send a JS source string
 
 Use `jsvm3/full`. `run()` compiles, hydrates via the runtime `InsMap`, executes, and returns **`module.exports`** (not `exec`'s last expression).
@@ -60,7 +72,7 @@ const exports = run(userScript, {
 
 | Import                    | Has                                                    | Does not have                 |
 | ------------------------- | ------------------------------------------------------ | ----------------------------- |
-| `jsvm3` / `jsvm3/runtime` | `JSVM`, `loadArtifact`, `fromJson`, `exec`, `reset`    | `compile`, `run`, `transform` |
+| `jsvm3` / `jsvm3/runtime` | `JSVM`, `loadArtifact`, `fromJson`, `exec`, `reset`, error classes | `compile`, `run`, `transform` |
 | `jsvm3/compiler`          | `compile` → JSON, `dumpArtifact`, `transform` (compat) | `JSVM`, `compileToScript`     |
 | `jsvm3/full`              | `run`, `FullJSVM`                                      | —                             |
 | `jsvm3/artifact`          | types, version constants, error classes                | execution, Babel              |
