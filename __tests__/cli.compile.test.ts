@@ -54,6 +54,25 @@ describe('cli compile', () => {
     expect(execRestored(envelope)).toEqual(4);
   });
 
+  it('run executes a Path A JSON artifact', () => {
+    const input = path.join(dir, 'in.js');
+    const artifact = path.join(dir, 'out.json');
+    fs.writeFileSync(input, 'module.exports = 7;');
+    expect(main(['compile', input, '-o', artifact])).toBe(0);
+
+    const logs: unknown[] = [];
+    const orig = console.log;
+    console.log = (value?: unknown) => {
+      logs.push(value);
+    };
+    try {
+      expect(main(['run', artifact])).toBe(0);
+    } finally {
+      console.log = orig;
+    }
+    expect(logs).toEqual([7]);
+  });
+
   it('run compiles and prints module.exports', () => {
     const input = path.join(dir, 'in.js');
     fs.writeFileSync(input, 'module.exports = { ok: true };');
