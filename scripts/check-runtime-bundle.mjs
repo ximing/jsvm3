@@ -68,6 +68,7 @@ const fullJs = path.join(distRoot, 'full.js');
 const compilerJs = path.join(distRoot, 'compiler.js');
 const artifactJs = path.join(distRoot, 'artifact.js');
 const expJs = path.join(distRoot, 'exp.js');
+const cliJs = path.join(distRoot, 'cli.js');
 
 const runtimeBuf = mustExist(runtimeJs);
 const indexBuf = mustExist(indexJs);
@@ -186,6 +187,38 @@ if (fullText) {
 const compilerText = fs.existsSync(compilerJs) ? fs.readFileSync(compilerJs, 'utf8') : '';
 if (compilerText && /compileToScript/.test(compilerText)) {
   fail(`${rel(compilerJs)} must not export compileToScript`);
+}
+
+const CLI_MARKER = 'Device path A does not use the CLI';
+if (runtimeBuf && runtimeBuf.toString('utf8').includes(CLI_MARKER)) {
+  fail(`${rel(runtimeJs)} must not include the CLI`);
+}
+if (indexBuf && indexBuf.toString('utf8').includes(CLI_MARKER)) {
+  fail(`${rel(indexJs)} must not include the CLI`);
+}
+
+const cliBuf = mustExist(cliJs);
+if (cliBuf) {
+  const cliText = cliBuf.toString('utf8');
+  if (!cliText.startsWith('#!/usr/bin/env node')) {
+    fail(`${rel(cliJs)} must start with a node shebang`);
+  }
+  if (!cliText.includes(CLI_MARKER)) {
+    fail(`${rel(cliJs)} is missing the path-A warning`);
+  }
+  const hasRuntime =
+    /require\(['"]jsvm3\/runtime['"]\)/.test(cliText) ||
+    /from ['"]jsvm3\/runtime['"]/.test(cliText);
+  const hasCompiler =
+    /require\(['"]jsvm3\/compiler['"]\)/.test(cliText) ||
+    /from ['"]jsvm3\/compiler['"]/.test(cliText);
+  if (!hasRuntime || !hasCompiler) {
+    fail(`${rel(cliJs)} must externalize jsvm3/runtime and jsvm3/compiler`);
+  }
+  if (/@babel\//.test(cliText)) {
+    fail(`${rel(cliJs)} must not bundle @babel/*`);
+  }
+  console.log(`ok: ${rel(cliJs)} is a separate full bin (not in runtime)`);
 }
 
 if (process.exitCode) {
