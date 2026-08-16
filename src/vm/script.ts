@@ -1,10 +1,10 @@
 // convert compiled children from/to json-compatible structure
 import { Instruction } from '../opcodes/types';
+import { Guard } from './types';
 // @ifdef COMPILER
 
 import { scriptToJson } from '../utils/convert';
 import { scriptToJsonObject } from '../utils/convert';
-import { Guard } from './types';
 // @endif
 
 export class Script {
