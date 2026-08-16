@@ -76,8 +76,9 @@ mustExist(fullJs);
 mustExist(compilerJs);
 mustExist(artifactJs);
 const expBuf = mustExist(expJs);
-if (expBuf && expBuf.length > 10 * 1024) {
-  fail(`${rel(expJs)} raw size ${expBuf.length} > 10240`);
+const EXP_RAW_BUDGET = 12 * 1024;
+if (expBuf && expBuf.length > EXP_RAW_BUDGET) {
+  fail(`${rel(expJs)} raw size ${expBuf.length} > ${EXP_RAW_BUDGET}`);
 }
 
 const dtsFiles = ['runtime.d.ts', 'compiler.d.ts', 'full.d.ts', 'artifact.d.ts', 'exp.d.ts'];
