@@ -1,9 +1,9 @@
 export const ARTIFACT_MAGIC: 'JSVM3';
 export const ARTIFACT_FORMAT: 1;
-export const OPCODE_VERSION: 1;
+export const OPCODE_VERSION: 2;
 export const COMPILER_VERSION: string;
 export const OPCODE_MIN: 1;
-export const OPCODE_MAX: 1;
+export const OPCODE_MAX: 2;
 export const FORMAT_MIN: 0;
 export const FORMAT_MAX: 1;
 

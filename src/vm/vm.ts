@@ -10,6 +10,8 @@ export interface JSVMOptions {
   timeout?: number;
   /** Default 1000. */
   maxDepth?: number;
+  /** Restore realm globals and module.exports before each exec(). */
+  resetOnExec?: boolean;
 }
 
 function isArtifact(input: unknown): boolean {
@@ -30,18 +32,29 @@ export class JSVM {
   realm: Realm;
   readonly defaultTimeout: number;
   readonly maxDepth: number;
+  readonly resetOnExec: boolean;
 
   constructor(host?: Record<string, unknown>, options?: JSVMOptions) {
     this.realm = new Realm(host ?? {});
     this.defaultTimeout = options?.timeout ?? -1;
     this.maxDepth = options?.maxDepth ?? 1000;
+    this.resetOnExec = options?.resetOnExec ?? false;
+    this.realm.defaultTimeout = this.defaultTimeout;
+    this.realm.maxDepth = this.maxDepth;
     // if (allowEval) {
     //   this.realm.compileFunction = Vm.compileFunction;
     //   this.realm.eval = this.realm.global.eval = Vm.compileEval;
     // }
   }
 
+  reset() {
+    this.realm.reset();
+  }
+
   exec(input: Script | ArtifactInput, timeout?: number) {
+    if (this.resetOnExec) {
+      this.realm.reset();
+    }
     if (typeof input === 'string') {
       throw new TypeError(
         'JSVM.exec does not accept source strings; use jsvm3/full run() or compile() + loadArtifact()'

@@ -48,7 +48,7 @@ describe('cli compile', () => {
     expect(Array.isArray(envelope)).toBe(false);
     expect(envelope.magic).toBe(ARTIFACT_MAGIC);
     expect(envelope.format).toBe(1);
-    expect(envelope.opcode).toBe(1);
+    expect(envelope.opcode).toBe(2);
     expect(Array.isArray(envelope.body)).toBe(true);
 
     expect(execRestored(envelope)).toEqual(4);
