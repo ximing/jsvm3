@@ -1,8 +1,28 @@
 import { Script } from '../vm/script';
 import { Instruction } from '../opcodes/types';
 import { InsMap } from '../opcodes/ins';
+import {
+  ARTIFACT_FORMAT,
+  ARTIFACT_MAGIC,
+  COMPILER_VERSION,
+  FORMAT_MAX,
+  FORMAT_MIN,
+  OPCODE_MAX,
+  OPCODE_MIN,
+  OPCODE_VERSION,
+} from '../artifact/version';
+import { Artifact, DumpableScript, ScriptJson } from '../artifact/types';
+import { ArtifactFormatError, ArtifactLoadError, ArtifactVersionError } from '../artifact/errors';
 
-export const fromJson = function (json: any) {
+const assertScriptJson = function (json: unknown): any {
+  if (!Array.isArray(json) || json.length < 9) {
+    throw new ArtifactLoadError('invalid script json: expected a 10-tuple array');
+  }
+  return json;
+};
+
+const scriptFromJson = function (json: any) {
+  json = assertScriptJson(json);
   const fName = json[0] !== 0 ? json[0] : null;
   const name = json[1] !== 0 ? json[1] : null;
   const instructions = instructionsFromJson(json[2]);
@@ -14,7 +34,7 @@ export const fromJson = function (json: any) {
   const strings = json[7];
   const regexps: any = [];
   for (const s of json[3]) {
-    children.push(fromJson(s));
+    children.push(scriptFromJson(s));
   }
   for (const guard of json[5]) {
     guards.push({
@@ -45,6 +65,53 @@ export const fromJson = function (json: any) {
   return script;
 };
 
+const versionRange = (min: number, max: number) => `${min}-${max}`;
+
+const assertVersion = function (
+  field: 'format' | 'opcode',
+  value: unknown,
+  min: number,
+  max: number
+) {
+  if (typeof value !== 'number' || value < min || value > max) {
+    throw new ArtifactVersionError(
+      `unsupported artifact ${field} ${String(value)}`,
+      field,
+      versionRange(min, max),
+      String(value)
+    );
+  }
+};
+
+export const loadArtifact = function (input: unknown) {
+  if (Array.isArray(input)) {
+    return scriptFromJson(input);
+  }
+  if (
+    input !== null &&
+    typeof input === 'object' &&
+    (input as { magic?: unknown }).magic === ARTIFACT_MAGIC
+  ) {
+    const artifact = input as Artifact;
+    assertVersion('format', artifact.format, FORMAT_MIN, FORMAT_MAX);
+    assertVersion('opcode', artifact.opcode, OPCODE_MIN, OPCODE_MAX);
+    if (!Array.isArray(artifact.body)) {
+      throw new ArtifactLoadError('invalid artifact body: expected ScriptJson array');
+    }
+    return scriptFromJson(artifact.body);
+  }
+  throw new ArtifactFormatError(
+    'invalid artifact: expected ScriptJson array or JSVM3 envelope',
+    ARTIFACT_MAGIC,
+    input !== null && typeof input === 'object'
+      ? (input as { magic?: unknown }).magic
+      : typeof input
+  );
+};
+
+/** @deprecated Use loadArtifact. */
+export const fromJson = loadArtifact;
+
 export const regexpFromString = function (str: string) {
   const sliceIdx = str.lastIndexOf('/');
   const source = str.slice(0, sliceIdx);
@@ -56,11 +123,14 @@ export const instructionsFromJson = function (instructions: any[][]) {
   const rv: Instruction[] = [];
   for (const inst of instructions) {
     const insFun = InsMap.get(inst[0]);
+    if (!insFun) {
+      throw new ArtifactLoadError(`unknown instruction id ${inst[0]}`);
+    }
     const args: any[] = [];
     for (let i = 1, end = inst.length; i < end; i++) {
       args.push(inst[i]);
     }
-    const opcode = insFun!(args.length ? args : null);
+    const opcode = insFun(args.length ? args : null);
     rv.push(opcode);
   }
   return rv;
@@ -154,4 +224,40 @@ export const scriptToJson = function (script: Script) {
   // rv[9] = script.source || 0;
   // rv[10] = script.source || 0;
   return rv;
+};
+
+export const dumpArtifact = function (
+  // Script.guards are numeric ips; DumpableScript is the JSON shape.
+  script: DumpableScript | Script,
+  options?: { format?: 0 | 1; filename?: string; debug?: boolean; compiler?: string }
+): ScriptJson | Artifact {
+  const format = options?.format ?? 0;
+  if (format !== 0 && format !== 1) {
+    throw new ArtifactVersionError(
+      `unsupported artifact format ${String(format)}`,
+      'format',
+      versionRange(FORMAT_MIN, FORMAT_MAX),
+      String(format)
+    );
+  }
+  const body = scriptToJson(script as Script) as ScriptJson;
+  if (format === 0) {
+    return body;
+  }
+  const artifact: Artifact = {
+    magic: ARTIFACT_MAGIC,
+    format: ARTIFACT_FORMAT,
+    opcode: OPCODE_VERSION,
+    compiler: options?.compiler ?? COMPILER_VERSION,
+    body,
+  };
+  if (options?.filename !== undefined) {
+    (artifact as { filename?: string }).filename = options.filename;
+  }
+  if (options?.debug) {
+    (artifact as { debug?: { source?: string } }).debug = {
+      source: (script as { source?: string }).source,
+    };
+  }
+  return artifact;
 };
