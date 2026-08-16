@@ -644,3 +644,11 @@ export const COLUMN = createOP(OPCodeIdx.COLUMN, function (frame, evalStack, sco
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DEBUG = createOP(OPCodeIdx.DEBUG, function (frame, evalStack, scope, realm, args) {});
+
+/**
+ * Pin this module from the runtime entry so bundlers keep every
+ * top-level createOP() → InsMap.set() registration.
+ */
+export function registerOpcodes() {
+  return InsMap;
+}

@@ -15,7 +15,15 @@
     "strictNullChecks": true,
     "resolveJsonModule": true,
     "sourceMap": true,
-    "lib": ["es2015"]
+    "lib": ["es2015"],
+    "baseUrl": ".",
+    "paths": {
+      "jsvm3/runtime": ["src/index.ts"],
+      "jsvm3/compiler": ["src/compiler/index.ts"],
+      "jsvm3/artifact": ["src/artifact/index.ts"],
+      "jsvm3/full": ["src/full/index.ts"],
+      "jsvm3/exp": ["src/exp.ts"]
+    }
   },
   "include": [
     "src"
