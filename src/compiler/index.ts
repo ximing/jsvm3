@@ -47,6 +47,11 @@ export const transform = (
               browsers: ['safari >= 9', 'android >= 4.4'],
             },
             useBuiltIns: false,
+            exclude: [
+              'transform-async-to-generator',
+              'transform-regenerator',
+              'transform-async-generator-functions',
+            ],
           },
         ],
       ],

@@ -100,4 +100,5 @@ export const OPCodeIdx = {
   EXIT_SCOPE: 87,
 
   DEBUG: 88,
+  AWAIT: 89,
 };
