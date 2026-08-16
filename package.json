@@ -1,5 +1,5 @@
 {
-  "name": "jsvm2",
+  "name": "jsvm3",
   "version": "1.2.5",
   "description": "Javascript Interpreter implemented by Javascript",
   "main": "dist/index.js",

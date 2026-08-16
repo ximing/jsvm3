@@ -1,2 +1,8 @@
 export * from './vm';
-export { fromJson } from './utils/convert';
+export { fromJson, loadArtifact } from './utils/convert';
+export {
+  ArtifactFormatError,
+  ArtifactVersionError,
+  ArtifactLoadError,
+  CompileError,
+} from './artifact';
