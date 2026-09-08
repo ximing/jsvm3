@@ -145,26 +145,27 @@ const runtimeTerser = terser({
         'format',
         'opcode',
         'body',
+        'artifactId',
       ],
     },
   },
 });
 
-function cjsOutput(file) {
+function cjsOutput(file, sourcemap = true) {
   return {
     file,
     format: 'cjs',
     exports: 'named',
-    sourcemap: true,
+    sourcemap,
   };
 }
 
-function esmOutput(file) {
+function esmOutput(file, sourcemap = true) {
   return {
     file,
     format: 'es',
     exports: 'named',
-    sourcemap: true,
+    sourcemap,
   };
 }
 
@@ -331,10 +332,11 @@ export default [
   {
     input: 'src/index.ts',
     output: [
-      cjsOutput('dist/runtime.js'),
-      cjsOutput(pkg.main.replace(/^\.\//, '')),
-      esmOutput('dist/runtime.es.js'),
-      esmOutput(pkg.module.replace(/^\.\//, '')),
+      // Hidden maps stay on disk; the comment would push runtime.js over the raw budget.
+      cjsOutput('dist/runtime.js', 'hidden'),
+      cjsOutput(pkg.main.replace(/^\.\//, ''), 'hidden'),
+      esmOutput('dist/runtime.es.js', 'hidden'),
+      esmOutput(pkg.module.replace(/^\.\//, ''), 'hidden'),
     ],
     plugins: runtimePlugins,
   },

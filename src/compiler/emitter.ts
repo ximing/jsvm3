@@ -393,6 +393,7 @@ export class Emitter extends Visitor {
       max,
       this.strings,
       this.regexps,
+      0,
       this.source
     );
   }

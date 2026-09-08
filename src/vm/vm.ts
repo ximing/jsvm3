@@ -60,9 +60,13 @@ export class JSVM {
         'JSVM.exec does not accept source strings; use jsvm3/full run() or compile() + loadArtifact()'
       );
     }
+    const stamp = input && (input as { artifactId?: string }).artifactId;
     const script =
       isArtifact(input) || Array.isArray(input) ? loadArtifact(input) : (input as Script);
     const fiber = this.createFiber(script, timeout ?? this.defaultTimeout);
+    if (stamp) {
+      (fiber as { aid?: string }).aid = stamp;
+    }
     fiber.run();
     if (!fiber.suspended) {
       return fiber.rexp;

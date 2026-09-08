@@ -21,7 +21,10 @@ const assertScriptJson = function (json: unknown): any {
   return json;
 };
 
+let nextScriptId = 0;
+
 const scriptFromJson = function (json: any) {
+  const scriptId = nextScriptId++;
   json = assertScriptJson(json);
   const fName = json[0] !== 0 ? json[0] : null;
   const name = json[1] !== 0 ? json[1] : null;
@@ -60,6 +63,7 @@ const scriptFromJson = function (json: any) {
     stackSize,
     strings,
     regexps,
+    scriptId,
     source
   );
   return script;
@@ -84,6 +88,7 @@ const assertVersion = function (
 };
 
 export const loadArtifact = function (input: unknown) {
+  nextScriptId = 0;
   if (Array.isArray(input)) {
     return scriptFromJson(input);
   }

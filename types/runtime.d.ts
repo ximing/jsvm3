@@ -64,8 +64,27 @@ export class JSVM {
   createFiber(script: Script, timeout?: number): Fiber;
 }
 
+export interface CrashFrame {
+  script: number;
+  name: string;
+  fName: string;
+  ip: number;
+  line: number;
+  column: number;
+}
+
+export interface CrashReport {
+  artifactId?: string;
+  error: { name: string; message: string };
+  frames: CrashFrame[];
+}
+
 export class JSVMError extends Error {
   display: string;
+  /**
+   * `stack` carries `#<artifactId>` when the envelope had one, and each
+   * frame ends with `~<script>:<ip>`. There is no separate report method.
+   */
   constructor(message?: string);
 }
 

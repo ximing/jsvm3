@@ -1,7 +1,7 @@
 import { Trace } from '../vm/types';
 import { isArray } from './helper';
 
-function printTrace(trace: Trace[], indent?: string) {
+function printTrace(trace: Array<Trace | Trace[]>, indent?: string) {
   if (indent == null) {
     indent = '';
   }
@@ -18,10 +18,12 @@ function printTrace(trace: Trace[], indent?: string) {
     const c = frame.column;
     const name = frame.at.name;
     const fName = frame.at.fName;
+    // ` ~script:ip` is the symbol address. One tail keeps it out of a second serializer.
+    const tail = `:${l}:${c} ~${frame.script}:${frame.ip}`;
     if (name) {
-      rv += `\n${indent}at ${name} (${fName}:${l}:${c})`;
+      rv += `\n${indent}at ${name} (${fName}${tail})`;
     } else {
-      rv += `\n${indent}at ${fName}:${l}:${c}`;
+      rv += `\n${indent}at ${fName}${tail}`;
     }
   }
   return rv;
@@ -29,7 +31,7 @@ function printTrace(trace: Trace[], indent?: string) {
 
 export class JSVMError extends Error {
   display = 'JSVMError';
-  _trace: null | Trace[];
+  _trace: null | Array<Trace | Trace[]>;
 
   constructor(message?: string) {
     super(message);
@@ -42,6 +44,9 @@ export class JSVMError extends Error {
     // @ts-ignore
     const errName = this.display;
     let rv = `${errName}: ${this.message}`;
+    if ((this as { aid?: string }).aid) {
+      rv += `\n#${(this as { aid?: string }).aid}`;
+    }
     if (this._trace) {
       rv += printTrace(this._trace);
     }

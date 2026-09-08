@@ -38,6 +38,7 @@ export class Script {
     stackSize,
     strings,
     regexps,
+    scriptId,
     // @ifdef COMPILER
     source?
     // @endif
@@ -54,6 +55,7 @@ export class Script {
     t.stackSize = stackSize;
     t.strings = strings;
     t.regexps = regexps;
+    (t as { scriptId?: number }).scriptId = scriptId;
     // @ifdef COMPILER
     t.source = source;
     // @endif

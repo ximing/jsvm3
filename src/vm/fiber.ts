@@ -170,7 +170,12 @@ export class Fiber {
         },
         line: frame.line,
         column: frame.column,
+        ip: frame.ip ? frame.ip - 1 : 0,
+        script: (frame.script as { scriptId?: number }).scriptId || 0,
       });
+    }
+    if ((this as { aid?: string }).aid) {
+      (err as { aid?: string }).aid = (this as { aid?: string }).aid;
     }
     if (err._trace) {
       let t: any = err._trace;
