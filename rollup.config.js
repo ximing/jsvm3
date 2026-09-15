@@ -185,7 +185,7 @@ function keepBabelExternal() {
   return {
     name: 'keep-babel-external',
     resolveId(source) {
-      if (isBabelish(source) || source === 'chalk') {
+      if (isBabelish(source) || source === 'chalk' || source === '@jridgewell/trace-mapping') {
         return { id: source, external: true };
       }
       return null;
@@ -211,6 +211,7 @@ function isNodeBuiltin(id) {
     id === 'util' ||
     id === 'module' ||
     id === 'process' ||
+    id === 'crypto' ||
     id.startsWith('node:')
   );
 }
@@ -347,7 +348,11 @@ export default [
   },
   {
     input: 'src/compiler/index.ts',
-    external: (id) => isBabelish(id) || isSelfEntry(id),
+    external: (id) =>
+      isBabelish(id) ||
+      isSelfEntry(id) ||
+      isNodeBuiltin(id) ||
+      id === '@jridgewell/trace-mapping',
     output: [cjsOutput('dist/compiler.js'), esmOutput('dist/compiler.es.js')],
     plugins: compilerPlugins,
   },

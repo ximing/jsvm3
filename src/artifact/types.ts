@@ -18,7 +18,13 @@ export interface Artifact {
   readonly format: number;
   readonly opcode: number;
   readonly compiler: string;
+  /** SHA-256 prefix of `body`. Present on format 1 artifacts from compile(). */
+  readonly artifactId?: string;
   readonly filename?: string;
+  /**
+   * Local/debug only. Production device payloads omit this.
+   * `source` is the author's source. `maps` is the symbol map (ip → original).
+   */
   readonly debug?: { source?: string; maps?: unknown };
   readonly body: ScriptJson;
 }
@@ -29,7 +35,13 @@ export interface CompileOptions {
   filename?: string;
   hoisting?: boolean;
   convertES5?: boolean;
+  /**
+   * Format 1 only: embed author's source and the symbol map on `artifact.debug`.
+   * Do not ship that object to devices.
+   */
   debug?: boolean;
+  /** Build a symbol map (returned by compileWithMap / `--map`). Does not embed it. */
+  sourceMap?: boolean;
   format?: 0 | 1;
 }
 

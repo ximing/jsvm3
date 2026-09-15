@@ -166,6 +166,7 @@
     "@babel/parser": "^7.29.8",
     "@babel/preset-env": "^7.29.7",
     "@babel/types": "^7.29.8",
+    "@jridgewell/trace-mapping": "^0.3.31",
     "babel-plugin-minify-constant-folding": "^0.5.0",
     "babel-plugin-minify-dead-code-elimination": "^0.5.2",
     "babel-plugin-minify-guarded-expressions": "^0.4.4"

@@ -83,10 +83,13 @@ const exports = run(userScript, {
 ### CLI (full bin)
 
 ```
-jsvm3 compile <input.js> -o <out.json> [--format 0|1] [--no-hoisting] [--no-es5] [--debug] [--filename name]
+jsvm3 compile <input.js> -o <out.json> [--format 0|1] [--no-hoisting] [--no-es5] [--debug] [--map file] [--filename name]
 jsvm3 run <artifact.json|input.js>
 jsvm3 eval <expr>
+jsvm3 symbolicate <report.json> --map <map.json>
 ```
+
+Format 1 envelopes include `artifactId` (SHA-256 prefix of `body`). `--map` writes a sidecar that maps each instruction pointer back to the author's line, including through Babel's ES5 transform. `--debug` on format 1 also embeds that map; do not ship `artifact.debug` to devices. A crash's `error.stack` carries a `#artifactId` line and `~script:ip` on each frame (`at name (file:line:col ~script:ip)`). `reportFromError(error)` reads that into a report; `symbolicate(report, map)` turns it into the author's file:line.
 
 One bin, `COMPILER: true`. Installing / starting the CLI can pull the compiler graph. Path A devices use the library, not this binary.
 

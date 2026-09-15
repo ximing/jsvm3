@@ -5,17 +5,26 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
-import { compile, dumpArtifact, transformEXP } from 'jsvm3/compiler';
+import {
+  compile,
+  compileWithMap,
+  dumpArtifact,
+  formatSymbolicated,
+  symbolicate,
+  transformEXP,
+} from 'jsvm3/compiler';
 import { JSVM } from 'jsvm3/runtime';
 
 export const USAGE = `Usage:
-  jsvm3 compile <input.js> -o <out.json> [--format 0|1] [--no-hoisting] [--no-es5] [--debug] [--filename name]
+  jsvm3 compile <input.js> -o <out.json> [--format 0|1] [--no-hoisting] [--no-es5] [--debug] [--map file] [--filename name]
   jsvm3 run <artifact.json|input.js> [--no-hoisting] [--no-es5] [--debug] [--filename name]
   jsvm3 eval <expr>
+  jsvm3 symbolicate <report.json> --map <map.json>
 
-compile defaults to --format 0 (bare ScriptJson array). --format 1 writes a JSVM3 envelope.
-run executes a Path A JSON artifact, or compiles a JS source file and prints module.exports.
-eval compiles an expression via transformEXP and prints exec's rexp.
+compile defaults to --format 0 (bare ScriptJson array). --format 1 writes a JSVM3 envelope
+with artifactId. --map writes a symbol map (ip → author line) and does not embed it.
+--debug on format 1 also embeds source and the map under artifact.debug; do not ship that.
+symbolicate prints the report against a map.
 
 Device path A does not use the CLI.`;
 
@@ -29,6 +38,7 @@ interface ParsedArgs {
   convertES5: boolean;
   debug: boolean;
   filename?: string;
+  map?: string;
   help: boolean;
 }
 
@@ -100,6 +110,12 @@ export function parseArgs(argv: string[]): ParsedArgs {
       i = taken.next;
       continue;
     }
+    if (arg === '--map' || arg.startsWith('--map=')) {
+      const taken = takeValue(argv, i, '--map');
+      result.map = taken.value;
+      i = taken.next;
+      continue;
+    }
     if (arg.startsWith('-')) {
       throw new Error(`unknown option: ${arg}`);
     }
@@ -122,6 +138,7 @@ function compileOptions(parsed: ParsedArgs, inputPath?: string) {
     hoisting: parsed.hoisting,
     convertES5: parsed.convertES5,
     debug: parsed.debug,
+    sourceMap: parsed.map !== undefined || parsed.debug,
     filename: parsed.filename ?? (inputPath ? path.basename(inputPath) : undefined),
   };
 }
@@ -139,9 +156,33 @@ function cmdCompile(parsed: ParsedArgs): number {
     throw new Error('compile requires -o <out.json>');
   }
   const source = fs.readFileSync(input, 'utf8');
-  const json = compile(source, compileOptions(parsed, input));
-  fs.mkdirSync(path.dirname(parsed.out), { recursive: true });
-  fs.writeFileSync(parsed.out, `${JSON.stringify(json, null, 2)}\n`);
+  const { artifact, map } = compileWithMap(source, compileOptions(parsed, input));
+  fs.mkdirSync(path.dirname(path.resolve(parsed.out)), { recursive: true });
+  fs.writeFileSync(parsed.out, `${JSON.stringify(artifact, null, 2)}\n`);
+  if (parsed.map) {
+    if (!map) {
+      throw new Error('--map was set but the compiler did not return a symbol map');
+    }
+    fs.mkdirSync(path.dirname(path.resolve(parsed.map)), { recursive: true });
+    fs.writeFileSync(parsed.map, `${JSON.stringify(map, null, 2)}\n`);
+  } else if (parsed.debug && parsed.format !== 1) {
+    console.error('debug payload is embedded only with --format 1');
+  }
+  return 0;
+}
+
+function cmdSymbolicate(parsed: ParsedArgs): number {
+  if (parsed.help) {
+    console.log(USAGE);
+    return 0;
+  }
+  const reportPath = parsed.positionals[0];
+  if (!reportPath || !parsed.map) {
+    throw new Error('symbolicate requires <report.json> --map <map.json>');
+  }
+  const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+  const map = JSON.parse(fs.readFileSync(parsed.map, 'utf8'));
+  console.log(formatSymbolicated(symbolicate(report, map)));
   return 0;
 }
 
@@ -220,6 +261,9 @@ export function main(argv: string[]): number {
     }
     if (command === 'eval') {
       return cmdEval(parsed);
+    }
+    if (command === 'symbolicate') {
+      return cmdSymbolicate(parsed);
     }
     throw new Error(`unknown command: ${command}`);
   } catch (err) {
