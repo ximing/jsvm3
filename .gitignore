@@ -83,3 +83,4 @@ lib
 compiler
 
 .worktrees/
+.jsvm3-admin/

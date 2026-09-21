@@ -87,9 +87,10 @@ jsvm3 compile <input.js> -o <out.json> [--format 0|1] [--no-hoisting] [--no-es5]
 jsvm3 run <artifact.json|input.js>
 jsvm3 eval <expr>
 jsvm3 symbolicate <report.json> --map <map.json>
+jsvm3 admin [--port 4174] [--dir .jsvm3-admin]
 ```
 
-Format 1 envelopes include `artifactId` (SHA-256 prefix of `body`). `--map` writes a sidecar that maps each instruction pointer back to the author's line, including through Babel's ES5 transform. `--debug` on format 1 also embeds that map; do not ship `artifact.debug` to devices. A crash's `error.stack` carries a `#artifactId` line and `~script:ip` on each frame (`at name (file:line:col ~script:ip)`). `reportFromError(error)` reads that into a report; `symbolicate(report, map)` turns it into the author's file:line.
+Format 1 envelopes include `artifactId` (SHA-256 prefix of `body`). `--map` writes a sidecar that maps each instruction pointer back to the author's line, including through Babel's ES5 transform. `--debug` on format 1 also embeds that map; do not ship `artifact.debug` to devices. A crash's `error.stack` carries a `#artifactId` line and `~script:ip` on each frame (`at name (file:line:col ~script:ip)`). `reportFromError(error)` reads that into a report; `symbolicate(report, map)` turns it into the author's file:line. `jsvm3 admin` is a local console for drafts, published versions, and that stack. It binds `127.0.0.1`.
 
 One bin, `COMPILER: true`. Installing / starting the CLI can pull the compiler graph. Path A devices use the library, not this binary.
 

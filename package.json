@@ -180,7 +180,8 @@
   },
   "files": [
     "lib",
-    "dist"
+    "dist",
+    "admin/public"
   ],
   "pnpm": {
     "overrides": {

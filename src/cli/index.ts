@@ -14,17 +14,20 @@ import {
   transformEXP,
 } from 'jsvm3/compiler';
 import { JSVM } from 'jsvm3/runtime';
+import { startAdmin } from '../admin/server';
 
 export const USAGE = `Usage:
   jsvm3 compile <input.js> -o <out.json> [--format 0|1] [--no-hoisting] [--no-es5] [--debug] [--map file] [--filename name]
   jsvm3 run <artifact.json|input.js> [--no-hoisting] [--no-es5] [--debug] [--filename name]
   jsvm3 eval <expr>
   jsvm3 symbolicate <report.json> --map <map.json>
+  jsvm3 admin [--port 4174] [--dir .jsvm3-admin]
 
 compile defaults to --format 0 (bare ScriptJson array). --format 1 writes a JSVM3 envelope
 with artifactId. --map writes a symbol map (ip → author line) and does not embed it.
 --debug on format 1 also embeds source and the map under artifact.debug; do not ship that.
-symbolicate prints the report against a map.
+symbolicate prints the report against a map. admin serves a local script console on
+127.0.0.1.
 
 Device path A does not use the CLI.`;
 
@@ -39,6 +42,8 @@ interface ParsedArgs {
   debug: boolean;
   filename?: string;
   map?: string;
+  port?: number;
+  dir?: string;
   help: boolean;
 }
 
@@ -116,6 +121,22 @@ export function parseArgs(argv: string[]): ParsedArgs {
       i = taken.next;
       continue;
     }
+    if (arg === '--port' || arg.startsWith('--port=')) {
+      const taken = takeValue(argv, i, '--port');
+      const port = Number(taken.value);
+      if (!Number.isInteger(port) || port < 0 || port > 65535) {
+        throw new Error(`--port must be an integer from 0 to 65535, got ${taken.value}`);
+      }
+      result.port = port;
+      i = taken.next;
+      continue;
+    }
+    if (arg === '--dir' || arg.startsWith('--dir=')) {
+      const taken = takeValue(argv, i, '--dir');
+      result.dir = taken.value;
+      i = taken.next;
+      continue;
+    }
     if (arg.startsWith('-')) {
       throw new Error(`unknown option: ${arg}`);
     }
@@ -184,6 +205,32 @@ function cmdSymbolicate(parsed: ParsedArgs): number {
   const map = JSON.parse(fs.readFileSync(parsed.map, 'utf8'));
   console.log(formatSymbolicated(symbolicate(report, map)));
   return 0;
+}
+
+let keepAlive = false;
+
+function cmdAdmin(parsed: ParsedArgs): number {
+  if (parsed.help) {
+    console.log(USAGE);
+    return 0;
+  }
+  const port = parsed.port ?? 4174;
+  const dir = path.resolve(parsed.dir ?? '.jsvm3-admin');
+  keepAlive = true;
+  startAdmin({ port, dir })
+    .then((handle) => {
+      console.log(`脚本台 http://127.0.0.1:${handle.port}  (${dir})`);
+    })
+    .catch((err) => {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message);
+      process.exit(1);
+    });
+  return 0;
+}
+
+export function shouldKeepAlive(): boolean {
+  return keepAlive;
 }
 
 function isArtifactPayload(value: unknown): boolean {
@@ -265,6 +312,9 @@ export function main(argv: string[]): number {
     if (command === 'symbolicate') {
       return cmdSymbolicate(parsed);
     }
+    if (command === 'admin') {
+      return cmdAdmin(parsed);
+    }
     throw new Error(`unknown command: ${command}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -274,5 +324,8 @@ export function main(argv: string[]): number {
 }
 
 if (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) {
-  process.exit(main(process.argv.slice(2)));
+  const code = main(process.argv.slice(2));
+  if (!shouldKeepAlive()) {
+    process.exit(code);
+  }
 }

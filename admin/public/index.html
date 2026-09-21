@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>脚本台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --sheet: #e3ebf2;
+        --ink: #152033;
+        --rule: #b9c9d8;
+        --panel: #f6f9fb;
+        --teal: #0f6f68;
+        --teal-ink: #f4fffd;
+        --fault: #a33b2b;
+        --fault-wash: #f8e4df;
+        --quiet: #526277;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--sheet);
+        color: var(--ink);
+        font-family: Outfit, "Avenir Next", "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.45;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1rem;
+        padding: 1.1rem 1.25rem 0.85rem;
+        border-bottom: 1px solid var(--rule);
+      }
+      .mark {
+        margin: 0;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 0.78rem;
+        color: var(--quiet);
+      }
+      h1 {
+        margin: 0;
+        font-family: Fraunces, "Iowan Old Style", Palatino, serif;
+        font-size: 1.85rem;
+        font-weight: 560;
+        letter-spacing: -0.03em;
+        line-height: 1;
+      }
+      .where {
+        margin: 0;
+        color: var(--quiet);
+        font-size: 0.92rem;
+      }
+      .shell {
+        display: grid;
+        grid-template-columns: 12.5rem minmax(0, 1fr) minmax(18rem, 24rem);
+        height: calc(100% - 4.6rem);
+        min-height: 0;
+      }
+      aside, main, .outcome {
+        min-height: 0;
+        min-width: 0;
+      }
+      aside {
+        border-right: 1px solid var(--rule);
+        padding: 0.85rem 0.75rem;
+        overflow: auto;
+      }
+      .new-script, button, .name {
+        font: inherit;
+      }
+      .new-script, button {
+        border: 1px solid var(--ink);
+        background: transparent;
+        color: var(--ink);
+        border-radius: 2px;
+        padding: 0.35rem 0.7rem;
+        cursor: pointer;
+      }
+      .new-script { width: 100%; }
+      button.primary {
+        background: var(--teal);
+        border-color: var(--teal);
+        color: var(--teal-ink);
+      }
+      button:focus-visible, .name:focus-visible, textarea:focus-visible, .script:focus-visible {
+        outline: 2px solid var(--teal);
+        outline-offset: 2px;
+      }
+      .scripts { list-style: none; margin: 0.8rem 0 0; padding: 0; }
+      .script {
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        padding: 0.45rem 0.35rem;
+        color: var(--ink);
+        cursor: pointer;
+      }
+      .script[aria-current="true"] {
+        background: var(--panel);
+        box-shadow: inset 3px 0 0 var(--teal);
+      }
+      main {
+        display: flex;
+        flex-direction: column;
+        background: var(--panel);
+      }
+      .editor-bar {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.65rem 0.75rem;
+        border-bottom: 1px solid var(--rule);
+      }
+      .name {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: var(--ink);
+        font-family: Fraunces, Palatino, serif;
+        font-size: 1.15rem;
+        padding: 0.2rem 0.1rem;
+      }
+      textarea {
+        flex: 1;
+        width: 100%;
+        resize: none;
+        border: 0;
+        margin: 0;
+        padding: 0.9rem 1rem 2rem;
+        background: transparent;
+        color: var(--ink);
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+      .outcome {
+        border-left: 1px solid var(--rule);
+        padding: 0.9rem 1rem 1.4rem;
+        overflow: auto;
+      }
+      .hero {
+        margin: 0;
+        font-size: 1.05rem;
+        color: var(--quiet);
+      }
+      .hero.fault {
+        color: var(--fault);
+        background: var(--fault-wash);
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 1.28rem;
+        line-height: 1.35;
+        padding: 0.75rem 0.8rem;
+      }
+      .hero.ok {
+        color: var(--ink);
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 1.2rem;
+      }
+      .meta {
+        margin: 0.75rem 0 0;
+        color: var(--quiet);
+        font-size: 0.92rem;
+        word-break: break-all;
+      }
+      .stack { list-style: none; margin: 1rem 0 0; padding: 0; }
+      .stack li { margin: 0 0 0.7rem; }
+      .stack .at { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.86rem; }
+      .stack .src { color: var(--quiet); font-size: 0.88rem; }
+      .versions { list-style: none; margin: 1.4rem 0 0; padding: 0; }
+      .versions button {
+        border: 0;
+        border-radius: 0;
+        padding: 0.35rem 0;
+        color: var(--quiet);
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 0.78rem;
+      }
+      .versions button[aria-current="true"] { color: var(--ink); }
+      .listing {
+        margin: 1rem 0 0;
+        white-space: pre-wrap;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 0.75rem;
+        color: var(--quiet);
+      }
+      .status { min-height: 1.2rem; margin: 0.4rem 0 0; color: var(--fault); font-size: 0.92rem; }
+      @media (max-width: 860px) {
+        .shell { grid-template-columns: 1fr; height: auto; }
+        aside, .outcome { border: 0; border-top: 1px solid var(--rule); }
+        textarea { min-height: 18rem; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * { scroll-behavior: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <p class="mark">jsvm3</p>
+        <h1>脚本台</h1>
+      </div>
+      <p class="where">本机保存源码和映射。发给设备的包只有字节码。</p>
+    </header>
+    <div class="shell">
+      <aside>
+        <button class="new-script" id="new-script" type="button">新建脚本</button>
+        <ul class="scripts" id="scripts"></ul>
+      </aside>
+      <main>
+        <div class="editor-bar">
+          <input class="name" id="name" aria-label="脚本名" placeholder="脚本名" />
+          <button id="save" type="button">保存</button>
+          <button id="publish" class="primary" type="button">发布</button>
+          <button id="run" type="button">运行</button>
+        </div>
+        <textarea id="source" spellcheck="false" aria-label="源码"></textarea>
+      </main>
+      <section class="outcome">
+        <p class="hero" id="hero">写好脚本后发布。运行出错时，这里是作者源码上的那一行。</p>
+        <p class="meta" id="meta"></p>
+        <p class="status" id="status" role="status"></p>
+        <ol class="stack" id="stack"></ol>
+        <ul class="versions" id="versions"></ul>
+        <pre class="listing" id="listing"></pre>
+      </section>
+    </div>
+    <script>
+      var current = null;
+      var versions = [];
+      var selected = null;
+
+      var el = function (id) { return document.getElementById(id); };
+
+      function say(text) {
+        el('status').textContent = text || '';
+      }
+
+      function api(path, options) {
+        return fetch(path, options).then(function (res) {
+          return res.json().then(function (body) {
+            if (!res.ok) {
+              throw new Error(body && body.error ? body.error : res.statusText);
+            }
+            return body;
+          });
+        });
+      }
+
+      function renderScripts(scripts) {
+        var list = el('scripts');
+        list.innerHTML = '';
+        scripts.forEach(function (script) {
+          var item = document.createElement('li');
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'script';
+          button.textContent = script.name || script.id;
+          if (current && current.id === script.id) button.setAttribute('aria-current', 'true');
+          button.addEventListener('click', function () { openScript(script.id); });
+          item.appendChild(button);
+          list.appendChild(item);
+        });
+      }
+
+      function loadScripts() {
+        return api('/api/scripts').then(function (body) {
+          renderScripts(body.scripts || []);
+          return body.scripts || [];
+        });
+      }
+
+      function fillEditor(script) {
+        current = script;
+        el('name').value = script.name || '';
+        el('source').value = script.source || '';
+      }
+
+      function openScript(id) {
+        return api('/api/scripts/' + id).then(function (script) {
+          fillEditor(script);
+          selected = null;
+          say('');
+          el('hero').className = 'hero';
+          el('hero').textContent = '写好脚本后发布。运行出错时，这里是作者源码上的那一行。';
+          el('meta').textContent = '';
+          el('stack').innerHTML = '';
+          el('listing').textContent = '';
+          return loadScripts().then(loadVersions);
+        });
+      }
+
+      function loadVersions() {
+        if (!current) return Promise.resolve();
+        return api('/api/versions?scriptId=' + current.id).then(function (body) {
+          versions = body.versions || [];
+          var list = el('versions');
+          list.innerHTML = '';
+          versions.forEach(function (version) {
+            var item = document.createElement('li');
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = version.artifactId.slice(0, 12) + '  ' + version.createdAt.slice(11, 19);
+            if (selected && selected.artifactId === version.artifactId) {
+              button.setAttribute('aria-current', 'true');
+            }
+            button.addEventListener('click', function () {
+              selected = version;
+              loadVersions();
+            });
+            item.appendChild(button);
+            list.appendChild(item);
+          });
+        });
+      }
+
+      function save() {
+        if (!current) return Promise.resolve();
+        return api('/api/scripts/' + current.id, {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: el('name').value, source: el('source').value }),
+        }).then(function (script) {
+          fillEditor(script);
+          say('已保存');
+          return loadScripts();
+        }).catch(function (err) {
+          say(err.message);
+        });
+      }
+
+      function showResult(body) {
+        var hero = el('hero');
+        var stack = el('stack');
+        stack.innerHTML = '';
+        hero.className = 'hero';
+        if (body.ok) {
+          hero.className = 'hero ok';
+          hero.textContent = JSON.stringify(body.exports);
+          el('meta').textContent = selected ? '运行的是已发布的这一版，不是编辑器里还没发布的草稿。' : '';
+          return;
+        }
+        var symbolicated = body.symbolicated;
+        var fault = symbolicated && symbolicated.frames
+          ? symbolicated.frames.filter(function (frame) { return frame.mapped && frame.lineText; })[0]
+          : null;
+        if (fault) {
+          hero.className = 'hero fault';
+          hero.textContent = fault.lineText.trim();
+        } else {
+          hero.className = 'hero';
+          hero.textContent = (body.report && body.report.error && body.report.error.message) || '运行失败';
+        }
+        var note = symbolicated && symbolicated.error ? symbolicated.error.name + ': ' + symbolicated.error.message : '';
+        if (symbolicated && symbolicated.mismatch) note += ' 映射和报告不是同一版。';
+        el('meta').textContent = note;
+        if (!symbolicated) return;
+        symbolicated.frames.forEach(function (frame) {
+          var item = document.createElement('li');
+          var at = document.createElement('div');
+          at.className = 'at';
+          at.textContent = (frame.name || '<anonymous>') + '  ' + (frame.source || '') + ':' + frame.line + ':' + frame.column;
+          var src = document.createElement('div');
+          src.className = 'src';
+          src.textContent = frame.mapped ? 'ip ' + frame.ip : '未能反解，ip ' + frame.ip;
+          item.appendChild(at);
+          item.appendChild(src);
+          stack.appendChild(item);
+        });
+      }
+
+      el('new-script').addEventListener('click', function () {
+        var source = [
+          'function price(qty) {',
+          '  return qty * 2;',
+          '}',
+          '',
+          'module.exports = price(21);',
+          ''
+        ].join('\n');
+        api('/api/scripts', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: 'price.js', source: source }),
+        }).then(function (script) {
+          return openScript(script.id);
+        }).catch(function (err) { say(err.message); });
+      });
+
+      el('save').addEventListener('click', function () {
+        save();
+      });
+
+      el('publish').addEventListener('click', function () {
+        save().then(function () {
+          if (!current) return;
+          return api('/api/scripts/' + current.id + '/publish', { method: 'POST' });
+        }).then(function (version) {
+          if (!version) return;
+          selected = version;
+          el('listing').textContent = version.listing || '';
+          el('meta').textContent = '已发布 ' + version.artifactId;
+          say('');
+          return loadVersions();
+        }).catch(function (err) { say(err.message); });
+      });
+
+      el('run').addEventListener('click', function () {
+        var version = selected || versions[0];
+        if (!version) {
+          say('先发布一版，再运行。');
+          return;
+        }
+        selected = version;
+        api('/api/versions/' + version.artifactId + '/run', { method: 'POST' })
+          .then(function (body) {
+            say('');
+            showResult(body);
+            return loadVersions();
+          })
+          .catch(function (err) { say(err.message); });
+      });
+
+      loadScripts().then(function (scripts) {
+        if (scripts[0]) return openScript(scripts[0].id);
+      }).catch(function (err) { say(err.message); });
+    </script>
+  </body>
+</html>

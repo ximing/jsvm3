@@ -212,6 +212,8 @@ function isNodeBuiltin(id) {
     id === 'module' ||
     id === 'process' ||
     id === 'crypto' ||
+    id === 'http' ||
+    id === 'https' ||
     id.startsWith('node:')
   );
 }
