@@ -92,21 +92,26 @@ export class Frame {
   run() {
     let len;
     const frame = this;
+    const clock = frame.fiber as { timeout: number; dl?: number; suspended: boolean };
     const { instructions } = frame.script;
-    while (frame.ip !== frame.exitIp && !frame.suspended && frame.fiber.timeout !== 0) {
-      frame.fiber.timeout--;
+    while (frame.ip !== frame.exitIp && !frame.suspended && clock.timeout !== 0) {
+      clock.timeout--;
       const ins = instructions[frame.ip++];
       // const iii = this.calc(ins);
       // const now = Date.now();
       ins.run(frame, frame.evalStack, this._scope!, frame.realm, ins.args);
+      // Sample the deadline. One host call can still run past wallMs.
+      if (clock.dl && (clock.timeout & 31) === 0 && Date.now() > clock.dl) {
+        clock.timeout = 0;
+      }
       // iii.count += 1;
       // const diff = Date.now() - now;
       // iii.time += diff;
       // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args, this.evalError, this.suspended, ins.id);
       // console.log(`\x1B[36m${ins.name}\x1B[0m`, ins.args !== null ? ins.args : '');
     }
-    if (frame.fiber.timeout === 0) {
-      frame.suspended = frame.fiber.suspended = true;
+    if (clock.timeout === 0) {
+      frame.suspended = clock.suspended = true;
     }
     if (!frame.suspended && !frame.evalError && (len = frame.evalStack.len()) !== 0) {
       // debug assertion

@@ -8,6 +8,8 @@ import { loadArtifact } from '../utils/convert';
 export interface JSVMOptions {
   /** Instruction budget, not wall-clock. Default -1 (unlimited). */
   timeout?: number;
+  /** Wall-clock milliseconds. 0 or omitted is off. Checked between instructions. */
+  wallMs?: number;
   /** Default 1000. */
   maxDepth?: number;
   /** Restore realm globals and module.exports before each exec(). */
@@ -27,18 +29,22 @@ function isArtifact(input: unknown): boolean {
  * Not a sandbox: the default Realm injects host Object/Function/Promise/console.
  * Path B (JS strings) is equivalent to running JS in the current process.
  * `timeout` is an instruction budget, not wall-clock time.
+ * `wallMs` is a deadline in milliseconds, checked between instructions.
+ * One host call can run past it. resume() does not move the deadline.
  */
 export class JSVM {
   realm: Realm;
   readonly defaultTimeout: number;
   readonly maxDepth: number;
   readonly resetOnExec: boolean;
+  readonly wallMs: number;
 
   constructor(host?: Record<string, unknown>, options?: JSVMOptions) {
     this.realm = new Realm(host ?? {});
     this.defaultTimeout = options?.timeout ?? -1;
     this.maxDepth = options?.maxDepth ?? 1000;
     this.resetOnExec = options?.resetOnExec ?? false;
+    this.wallMs = (options && options.wallMs) || 0;
     this.realm.defaultTimeout = this.defaultTimeout;
     this.realm.maxDepth = this.maxDepth;
     // if (allowEval) {
@@ -56,9 +62,7 @@ export class JSVM {
       this.realm.reset();
     }
     if (typeof input === 'string') {
-      throw new TypeError(
-        'JSVM.exec does not accept source strings; use jsvm3/full run() or compile() + loadArtifact()'
-      );
+      throw new TypeError('JSVM.exec rejects source strings');
     }
     const stamp = input && (input as { artifactId?: string }).artifactId;
     const script =
@@ -66,6 +70,9 @@ export class JSVM {
     const fiber = this.createFiber(script, timeout ?? this.defaultTimeout);
     if (stamp) {
       (fiber as { aid?: string }).aid = stamp;
+    }
+    if (this.wallMs) {
+      (fiber as { dl?: number }).dl = Date.now() + this.wallMs;
     }
     fiber.run();
     if (!fiber.suspended) {

@@ -49,6 +49,8 @@ export class Script {
 
 export interface JSVMOptions {
   timeout?: number;
+  /** Wall-clock milliseconds. 0 or omitted is off. Checked between instructions. */
+  wallMs?: number;
   maxDepth?: number;
   resetOnExec?: boolean;
 }
@@ -58,6 +60,7 @@ export class JSVM {
   readonly defaultTimeout: number;
   readonly maxDepth: number;
   readonly resetOnExec: boolean;
+  readonly wallMs: number;
   constructor(host?: Record<string, unknown>, options?: JSVMOptions);
   reset(): void;
   exec(input: Script | import('./artifact').ArtifactInput, timeout?: number): unknown;

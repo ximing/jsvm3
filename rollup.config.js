@@ -146,6 +146,7 @@ const runtimeTerser = terser({
         'opcode',
         'body',
         'artifactId',
+        'wallMs',
       ],
     },
   },

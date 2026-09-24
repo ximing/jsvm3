@@ -124,7 +124,7 @@ export default {
         module: true,
         reserved: [],
         properties: {
-          reserved: ['exec', 'artifactId'],
+          reserved: ['exec', 'artifactId', 'wallMs'],
         },
       },
     }),

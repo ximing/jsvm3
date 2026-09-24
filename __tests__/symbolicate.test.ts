@@ -246,4 +246,14 @@ describe('admin console', () => {
     const okRun = await call(`/api/versions/${okPub.body.artifactId}/run`, 'POST', {});
     expect(okRun.body).toEqual({ ok: true, exports: 7 });
   });
+
+  it('stops a tight loop with the admin wall clock', async () => {
+    const created = await call('/api/scripts', 'POST', { name: 'loop.js', source: 'while (true) {}' });
+    const published = await call(`/api/scripts/${created.body.id}/publish`, 'POST', {});
+    const started = Date.now();
+    const ran = await call(`/api/versions/${published.body.artifactId}/run`, 'POST', {});
+    expect(Date.now() - started).toBeLessThan(4000);
+    expect(ran.body.ok).toBe(false);
+    expect(ran.body.report.error.name).toBe('JSVMTimeoutError');
+  });
 });

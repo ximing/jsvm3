@@ -16,7 +16,7 @@ import { ArtifactFormatError, ArtifactLoadError, ArtifactVersionError } from '..
 
 const assertScriptJson = function (json: unknown): any {
   if (!Array.isArray(json) || json.length < 9) {
-    throw new ArtifactLoadError('invalid script json: expected a 10-tuple array');
+    throw new ArtifactLoadError('expected a 10-tuple array');
   }
   return json;
 };
@@ -101,12 +101,12 @@ export const loadArtifact = function (input: unknown) {
     assertVersion('format', artifact.format, FORMAT_MIN, FORMAT_MAX);
     assertVersion('opcode', artifact.opcode, OPCODE_MIN, OPCODE_MAX);
     if (!Array.isArray(artifact.body)) {
-      throw new ArtifactLoadError('invalid artifact body: expected ScriptJson array');
+      throw new ArtifactLoadError('expected ScriptJson array');
     }
     return scriptFromJson(artifact.body);
   }
   throw new ArtifactFormatError(
-    'invalid artifact: expected ScriptJson array or JSVM3 envelope',
+    'expected ScriptJson array or JSVM3 envelope',
     ARTIFACT_MAGIC,
     input !== null && typeof input === 'object'
       ? (input as { magic?: unknown }).magic

@@ -200,7 +200,7 @@ function publish(dir: string, id: string) {
 
 function runVersion(dir: string, id: string) {
   const version = readVersion(dir, id);
-  const vm = new JSVM({}, { timeout: 1_000_000, maxDepth: 64, resetOnExec: true });
+  const vm = new JSVM({}, { timeout: 1_000_000, maxDepth: 64, resetOnExec: true, wallMs: 1000 });
   try {
     vm.exec(version.artifact as Parameters<JSVM['exec']>[0]);
     return {

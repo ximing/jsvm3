@@ -11,7 +11,7 @@
 The published package name is **`jsvm3`** (the previous `jsvm2@1.2.5` line is frozen).  
 Install with `npm i jsvm3` / `pnpm add jsvm3`. 1.4 still lists Babel in `dependencies`; only **2.0** moves Babel to an optional peer. What 1.4 _does_ give you is a **runtime module graph with no Babel** (`jsvm3/runtime`) and a separate compiler / full entry.
 
-**This is not a sandbox.** The default Realm injects host `Object` / `Function` / `Promise` / `console`. Path B (`run(source)`) is equivalent to running JavaScript in the current process. `timeout` is an **instruction budget**, not wall-clock time. Do not inject `Function` / `eval` / `process` / `require` into `host`; set a budget in production; validate Path A artifacts at the transport layer.
+**This is not a sandbox.** The default Realm injects host `Object` / `Function` / `Promise` / `console`. Path B (`run(source)`) is equivalent to running JavaScript in the current process. `timeout` is an **instruction budget**, not wall-clock time. `wallMs` is optional wall-clock milliseconds (`0` or omitted is off), checked between instructions; one host call can run past the deadline. Do not inject `Function` / `eval` / `process` / `require` into `host`; set a budget in production; validate Path A artifacts at the transport layer.
 
 ---
 
@@ -41,13 +41,13 @@ jsvm3 compile app.js -o app.json --format 1
 
 Device Path A **does not use the CLI**. The `jsvm3` bin is a **full** CLI (it may resolve Babel).
 
-Old React Native / Metro that ignores `exports` should `require('jsvm3')` (the `main` CJS runtime). Do not deep-import `lib/` or `jsvm3/full` on device. Compile in CI with `{ format: 1 }`. After `exec`, read `module.exports` — `exec`'s return is the last expression, not exports. Production: pass a finite `timeout`, `resetOnExec: true`, and only the host functions the script is allowed to call.
+Old React Native / Metro that ignores `exports` should `require('jsvm3')` (the `main` CJS runtime). Do not deep-import `lib/` or `jsvm3/full` on device. Compile in CI with `{ format: 1 }`. After `exec`, read `module.exports` — `exec`'s return is the last expression, not exports. Production: pass a finite `timeout`, `wallMs` when a clock is required, `resetOnExec: true`, and only the host functions the script is allowed to call.
 
 ```js
 const { JSVM, loadArtifact } = require('jsvm3');
 const vm = new JSVM(
   { console: console, Map: Map },
-  { timeout: 200000, maxDepth: 64, resetOnExec: true }
+  { timeout: 200000, wallMs: 1000, maxDepth: 64, resetOnExec: true }
 );
 vm.exec(loadArtifact(json));
 return vm.realm.globalObj.module.exports;
