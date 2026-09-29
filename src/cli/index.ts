@@ -21,13 +21,14 @@ export const USAGE = `Usage:
   jsvm3 run <artifact.json|input.js> [--no-hoisting] [--no-es5] [--debug] [--filename name]
   jsvm3 eval <expr>
   jsvm3 symbolicate <report.json> --map <map.json>
-  jsvm3 admin [--port 4174] [--dir .jsvm3-admin]
+  jsvm3 admin [--port 4174] [--host 127.0.0.1] [--dir .jsvm3-admin]
 
 compile defaults to --format 0 (bare ScriptJson array). --format 1 writes a JSVM3 envelope
 with artifactId. --map writes a symbol map (ip → author line) and does not embed it.
 --debug on format 1 also embeds source and the map under artifact.debug; do not ship that.
 symbolicate prints the report against a map. admin serves a local script console on
-127.0.0.1.
+127.0.0.1 unless --host is set. Devices pull bytecode at GET /api/devices/artifact.
+POST /api/crashes symbolicates a stack against the stored map.
 
 Device path A does not use the CLI.`;
 
@@ -43,6 +44,7 @@ interface ParsedArgs {
   filename?: string;
   map?: string;
   port?: number;
+  host?: string;
   dir?: string;
   help: boolean;
 }
@@ -137,6 +139,12 @@ export function parseArgs(argv: string[]): ParsedArgs {
       i = taken.next;
       continue;
     }
+    if (arg === '--host' || arg.startsWith('--host=')) {
+      const taken = takeValue(argv, i, '--host');
+      result.host = taken.value;
+      i = taken.next;
+      continue;
+    }
     if (arg.startsWith('-')) {
       throw new Error(`unknown option: ${arg}`);
     }
@@ -215,11 +223,12 @@ function cmdAdmin(parsed: ParsedArgs): number {
     return 0;
   }
   const port = parsed.port ?? 4174;
+  const host = parsed.host ?? '127.0.0.1';
   const dir = path.resolve(parsed.dir ?? '.jsvm3-admin');
   keepAlive = true;
-  startAdmin({ port, dir })
+  startAdmin({ port, dir, host })
     .then((handle) => {
-      console.log(`脚本台 http://127.0.0.1:${handle.port}  (${dir})`);
+      console.log(`脚本台 http://${host}:${handle.port}  (${dir})`);
     })
     .catch((err) => {
       const message = err instanceof Error ? err.message : String(err);

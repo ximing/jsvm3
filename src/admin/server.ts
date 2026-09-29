@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
 import { randomBytes } from 'crypto';
-import { compileWithMap, reportFromError, symbolicate } from 'jsvm3/compiler';
+import { compileWithMap, formatSymbolicated, reportFromError, symbolicate } from 'jsvm3/compiler';
 import type { SymbolMap } from 'jsvm3/compiler';
 import { JSVM, JSVMError } from 'jsvm3/runtime';
 import { listRoot } from '../debug/listing';
@@ -10,11 +10,13 @@ import type { ScriptJson } from '../artifact/types';
 
 const SCRIPT_ID = /^s_[a-f0-9]{16}$/;
 const ARTIFACT_ID = /^[a-f0-9]{32}$/;
+const CHANNEL_NAME = /^[a-z0-9][a-z0-9-]{0,31}$/;
 const BODY_LIMIT = 2_000_000;
 
 export interface AdminOptions {
   port?: number;
   dir: string;
+  host?: string;
 }
 
 export interface AdminHandle {
@@ -45,6 +47,15 @@ interface VersionRecord {
     filename?: string;
   };
   map: SymbolMap;
+}
+
+interface ChannelRecord {
+  name: string;
+  scriptId: string;
+  live: string;
+  previous: string | null;
+  gray: { artifactId: string; percent: number } | null;
+  updatedAt: string;
 }
 
 function pageFile(): string {
@@ -101,6 +112,13 @@ function scriptPath(dir: string, id: string) {
 
 function versionPath(dir: string, id: string) {
   return path.join(dir, 'versions', `${id}.json`);
+}
+
+function channelPath(dir: string, name: string) {
+  if (!CHANNEL_NAME.test(name)) {
+    throw new HttpError(400, 'invalid channel name');
+  }
+  return path.join(dir, 'channels', `${name}.json`);
 }
 
 function readScript(dir: string, id: string): ScriptRecord {
@@ -196,6 +214,180 @@ function publish(dir: string, id: string) {
     createdAt: record.createdAt,
     listing: listRoot(artifact.body),
   };
+}
+
+function readChannel(dir: string, name: string): ChannelRecord {
+  const file = channelPath(dir, name);
+  if (!fs.existsSync(file)) {
+    throw new HttpError(404, 'channel not found');
+  }
+  return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+function writeChannel(dir: string, record: ChannelRecord) {
+  fs.writeFileSync(channelPath(dir, record.name), `${JSON.stringify(record, null, 2)}\n`);
+}
+
+function listChannels(dir: string, scriptId?: string): ChannelRecord[] {
+  const folder = path.join(dir, 'channels');
+  if (!fs.existsSync(folder)) {
+    return [];
+  }
+  return fs
+    .readdirSync(folder)
+    .filter((name) => name.endsWith('.json'))
+    .map((name) => JSON.parse(fs.readFileSync(path.join(folder, name), 'utf8')) as ChannelRecord)
+    .filter((channel) => !scriptId || channel.scriptId === scriptId)
+    .sort((a, b) => (a.name < b.name ? -1 : 1));
+}
+
+function versionForScript(dir: string, artifactId: string, scriptId: string): VersionRecord {
+  const version = readVersion(dir, artifactId);
+  if (version.scriptId !== scriptId) {
+    throw new HttpError(400, 'script mismatch');
+  }
+  return version;
+}
+
+function setLive(dir: string, name: string, scriptId: string, artifactId: string): ChannelRecord {
+  if (!SCRIPT_ID.test(scriptId)) {
+    throw new HttpError(400, 'invalid script id');
+  }
+  readScript(dir, scriptId);
+  versionForScript(dir, artifactId, scriptId);
+  const now = new Date().toISOString();
+  const file = channelPath(dir, name);
+  if (!fs.existsSync(file)) {
+    const created: ChannelRecord = {
+      name,
+      scriptId,
+      live: artifactId,
+      previous: null,
+      gray: null,
+      updatedAt: now,
+    };
+    writeChannel(dir, created);
+    return created;
+  }
+  const current = readChannel(dir, name);
+  if (current.scriptId !== scriptId) {
+    throw new HttpError(400, 'script mismatch');
+  }
+  if (current.live === artifactId) {
+    current.updatedAt = now;
+    writeChannel(dir, current);
+    return current;
+  }
+  current.previous = current.live;
+  current.live = artifactId;
+  current.gray = null;
+  current.updatedAt = now;
+  writeChannel(dir, current);
+  return current;
+}
+
+function setGray(dir: string, name: string, body: { artifactId?: unknown; percent?: unknown }): ChannelRecord {
+  const channel = readChannel(dir, name);
+  const percent = body.percent;
+  if (typeof percent !== 'number' || !Number.isInteger(percent) || percent < 0 || percent > 100) {
+    throw new HttpError(400, 'percent must be an integer from 0 to 100');
+  }
+  if (percent === 0) {
+    channel.gray = null;
+    channel.updatedAt = new Date().toISOString();
+    writeChannel(dir, channel);
+    return channel;
+  }
+  const artifactId = typeof body.artifactId === 'string' ? body.artifactId : '';
+  versionForScript(dir, artifactId, channel.scriptId);
+  channel.gray = { artifactId, percent };
+  channel.updatedAt = new Date().toISOString();
+  writeChannel(dir, channel);
+  return channel;
+}
+
+function rollback(dir: string, name: string): ChannelRecord {
+  const channel = readChannel(dir, name);
+  if (channel.gray) {
+    channel.gray = null;
+  } else if (channel.previous) {
+    channel.live = channel.previous;
+    channel.previous = null;
+  } else {
+    throw new HttpError(400, 'nothing to roll back');
+  }
+  channel.updatedAt = new Date().toISOString();
+  writeChannel(dir, channel);
+  return channel;
+}
+
+function deviceBucket(device: string): number {
+  let hash = 0;
+  for (let i = 0; i < device.length; i++) {
+    hash = (hash * 33 + device.charCodeAt(i)) >>> 0;
+  }
+  return hash % 100;
+}
+
+function pullArtifact(dir: string, channelName: string, device: string) {
+  if (!CHANNEL_NAME.test(channelName)) {
+    throw new HttpError(400, 'invalid channel name');
+  }
+  if (!device || device.length > 128) {
+    throw new HttpError(400, 'invalid device');
+  }
+  const channel = readChannel(dir, channelName);
+  const bucket = deviceBucket(device);
+  const useGray = !!(channel.gray && bucket < channel.gray.percent);
+  const artifactId = useGray && channel.gray ? channel.gray.artifactId : channel.live;
+  const version = readVersion(dir, artifactId);
+  const env = version.artifact;
+  return {
+    channel: channel.name,
+    scriptId: channel.scriptId,
+    rollout: useGray ? ('gray' as const) : ('live' as const),
+    bucket,
+    magic: env.magic,
+    format: env.format,
+    opcode: env.opcode,
+    compiler: env.compiler,
+    filename: env.filename || version.filename,
+    artifactId: env.artifactId || version.artifactId,
+    body: env.body,
+  };
+}
+
+function ingestCrash(dir: string, body: any) {
+  let report: ReturnType<typeof reportFromError>;
+  if (body && body.report && typeof body.report === 'object') {
+    report = body.report;
+  } else if (body && typeof body.stack === 'string') {
+    report = reportFromError({
+      name: typeof body.name === 'string' ? body.name : undefined,
+      message: typeof body.message === 'string' ? body.message : undefined,
+      stack: body.stack,
+    });
+  } else {
+    throw new HttpError(400, 'stack or report required');
+  }
+  if (typeof body.artifactId === 'string' && body.artifactId) {
+    report = { ...report, artifactId: body.artifactId };
+  }
+  if ((typeof body.name === 'string' || typeof body.message === 'string') && report.error) {
+    report = {
+      ...report,
+      error: {
+        name: typeof body.name === 'string' ? body.name : report.error.name,
+        message: typeof body.message === 'string' ? body.message : report.error.message,
+      },
+    };
+  }
+  if (!report.artifactId) {
+    throw new HttpError(400, 'artifact id required');
+  }
+  const version = readVersion(dir, report.artifactId);
+  const symbolicated = symbolicate(report, version.map);
+  return { report, symbolicated, text: formatSymbolicated(symbolicated) };
 }
 
 function runVersion(dir: string, id: string) {
@@ -308,6 +500,51 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse, dir: s
       send(res, 200, symbolicate(body.report, version.map));
       return;
     }
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'channels' && parts.length === 2) {
+      const scriptId = url.searchParams.get('scriptId') || undefined;
+      if (scriptId && !SCRIPT_ID.test(scriptId)) {
+        throw new HttpError(400, 'invalid script id');
+      }
+      send(res, 200, { channels: listChannels(dir, scriptId) });
+      return;
+    }
+    if (method === 'PUT' && parts[0] === 'api' && parts[1] === 'channels' && parts.length === 3) {
+      const body = await readJson(req);
+      send(res, 200, setLive(dir, parts[2], String(body.scriptId || ''), String(body.artifactId || '')));
+      return;
+    }
+    if (
+      method === 'POST' &&
+      parts[0] === 'api' &&
+      parts[1] === 'channels' &&
+      parts[3] === 'gray' &&
+      parts.length === 4
+    ) {
+      send(res, 200, setGray(dir, parts[2], await readJson(req)));
+      return;
+    }
+    if (
+      method === 'POST' &&
+      parts[0] === 'api' &&
+      parts[1] === 'channels' &&
+      parts[3] === 'rollback' &&
+      parts.length === 4
+    ) {
+      send(res, 200, rollback(dir, parts[2]));
+      return;
+    }
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'devices' && parts[2] === 'artifact') {
+      send(
+        res,
+        200,
+        pullArtifact(dir, url.searchParams.get('channel') || '', url.searchParams.get('device') ?? '')
+      );
+      return;
+    }
+    if (method === 'POST' && parts[0] === 'api' && parts[1] === 'crashes' && parts.length === 2) {
+      send(res, 200, ingestCrash(dir, await readJson(req)));
+      return;
+    }
     send(res, 404, { error: 'not found' });
   } catch (err) {
     if (err instanceof HttpError) {
@@ -325,8 +562,10 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse, dir: s
 
 export function startAdmin(options: AdminOptions): Promise<AdminHandle> {
   const dir = options.dir;
+  const host = options.host ?? '127.0.0.1';
   fs.mkdirSync(path.join(dir, 'scripts'), { recursive: true });
   fs.mkdirSync(path.join(dir, 'versions'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'channels'), { recursive: true });
   const server = http.createServer((req, res) => {
     route(req, res, dir).catch((err) => {
       if (res.headersSent) {
@@ -338,7 +577,7 @@ export function startAdmin(options: AdminOptions): Promise<AdminHandle> {
   });
   return new Promise((resolve, reject) => {
     server.once('error', reject);
-    server.listen(options.port ?? 0, '127.0.0.1', () => {
+    server.listen(options.port ?? 0, host, () => {
       const address = server.address();
       const port = typeof address === 'object' && address ? address.port : options.port ?? 0;
       resolve({

@@ -91,7 +91,7 @@
         border-color: var(--teal);
         color: var(--teal-ink);
       }
-      button:focus-visible, .name:focus-visible, textarea:focus-visible, .script:focus-visible {
+      button:focus-visible, .name:focus-visible, textarea:focus-visible, .script:focus-visible, .channel input:focus-visible {
         outline: 2px solid var(--teal);
         outline-offset: 2px;
       }
@@ -197,6 +197,24 @@
         color: var(--quiet);
       }
       .status { min-height: 1.2rem; margin: 0.4rem 0 0; color: var(--fault); font-size: 0.92rem; }
+      .channel {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+        margin-top: 0.9rem;
+      }
+      .channel input {
+        border: 1px solid var(--rule);
+        background: transparent;
+        color: var(--ink);
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 0.82rem;
+        padding: 0.3rem 0.4rem;
+        width: 6.2rem;
+      }
+      .channel input[type="number"] { width: 4.2rem; }
+      .channel button { padding: 0.3rem 0.45rem; font-size: 0.88rem; }
       @media (max-width: 860px) {
         .shell { grid-template-columns: 1fr; height: auto; }
         aside, .outcome { border: 0; border-top: 1px solid var(--rule); }
@@ -233,6 +251,15 @@
         <p class="hero" id="hero">写好脚本后发布。运行出错时，这里是作者源码上的那一行。</p>
         <p class="meta" id="meta"></p>
         <p class="status" id="status" role="status"></p>
+        <div class="channel">
+          <input id="channel-name" aria-label="频道" value="stable" />
+          <input id="channel-percent" aria-label="灰度比例" type="number" min="0" max="100" value="10" />
+          <button id="channel-live" type="button">设为线上</button>
+          <button id="channel-gray" type="button">灰度</button>
+          <button id="channel-stop" type="button">停止灰度</button>
+          <button id="channel-rollback" type="button">回滚</button>
+        </div>
+        <p class="meta" id="channel-meta"></p>
         <ol class="stack" id="stack"></ol>
         <ul class="versions" id="versions"></ul>
         <pre class="listing" id="listing"></pre>
@@ -299,7 +326,7 @@
           el('meta').textContent = '';
           el('stack').innerHTML = '';
           el('listing').textContent = '';
-          return loadScripts().then(loadVersions);
+          return loadScripts().then(loadVersions).then(loadChannel);
         });
       }
 
@@ -337,9 +364,48 @@
           fillEditor(script);
           say('已保存');
           return loadScripts();
-        }).catch(function (err) {
-          say(err.message);
         });
+      }
+
+      function channelName() {
+        var name = (el('channel-name').value || '').replace(/^\s+|\s+$/g, '');
+        return name || 'stable';
+      }
+
+      function paintChannel(channel) {
+        if (!channel) {
+          el('channel-meta').textContent = '这个频道还没有线上版本。';
+          return;
+        }
+        var text = channel.name + ' 线上 ' + channel.live.slice(0, 12);
+        if (channel.gray) {
+          text += '  灰度 ' + channel.gray.percent + '% ' + channel.gray.artifactId.slice(0, 12);
+        }
+        if (channel.previous) {
+          text += '  上一版 ' + channel.previous.slice(0, 12);
+        }
+        el('channel-meta').textContent = text;
+      }
+
+      function loadChannel() {
+        if (!current) return Promise.resolve();
+        return api('/api/channels?scriptId=' + encodeURIComponent(current.id)).then(function (body) {
+          var name = channelName();
+          var found = null;
+          (body.channels || []).forEach(function (channel) {
+            if (channel.name === name) found = channel;
+          });
+          paintChannel(found);
+        });
+      }
+
+      function versionForRelease() {
+        var version = selected || versions[0];
+        if (!current || !version) {
+          say('先发布一版');
+          return null;
+        }
+        return version;
       }
 
       function showResult(body) {
@@ -401,7 +467,7 @@
       });
 
       el('save').addEventListener('click', function () {
-        save();
+        save().catch(function (err) { say(err.message); });
       });
 
       el('publish').addEventListener('click', function () {
@@ -415,6 +481,63 @@
           el('meta').textContent = '已发布 ' + version.artifactId;
           say('');
           return loadVersions();
+        }).catch(function (err) { say(err.message); });
+      });
+
+      el('channel-name').addEventListener('change', function () {
+        loadChannel().catch(function (err) { say(err.message); });
+      });
+
+      el('channel-live').addEventListener('click', function () {
+        var version = versionForRelease();
+        if (!version) return;
+        api('/api/channels/' + encodeURIComponent(channelName()), {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ scriptId: current.id, artifactId: version.artifactId }),
+        }).then(function (channel) {
+          say('');
+          paintChannel(channel);
+        }).catch(function (err) { say(err.message); });
+      });
+
+      el('channel-gray').addEventListener('click', function () {
+        var version = versionForRelease();
+        if (!version) return;
+        var percent = Number(el('channel-percent').value);
+        if (percent !== Math.floor(percent) || percent < 0 || percent > 100) {
+          say('灰度比例要是 0 到 100 的整数');
+          return;
+        }
+        api('/api/channels/' + encodeURIComponent(channelName()) + '/gray', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ artifactId: version.artifactId, percent: percent }),
+        }).then(function (channel) {
+          say('');
+          paintChannel(channel);
+        }).catch(function (err) { say(err.message); });
+      });
+
+      el('channel-stop').addEventListener('click', function () {
+        if (!current) return;
+        api('/api/channels/' + encodeURIComponent(channelName()) + '/gray', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ percent: 0 }),
+        }).then(function (channel) {
+          say('');
+          paintChannel(channel);
+        }).catch(function (err) { say(err.message); });
+      });
+
+      el('channel-rollback').addEventListener('click', function () {
+        if (!current) return;
+        api('/api/channels/' + encodeURIComponent(channelName()) + '/rollback', {
+          method: 'POST',
+        }).then(function (channel) {
+          say('');
+          paintChannel(channel);
         }).catch(function (err) { say(err.message); });
       });
 

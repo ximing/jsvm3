@@ -5,7 +5,7 @@ import * as path from 'path';
 import { compile, compileWithMap, formatSymbolicated, reportFromError, symbolicate } from '../src/compiler';
 import { JSVM } from '../src/vm/vm';
 import { JSVMError } from '../src/utils/errors';
-import { main } from '../src/cli';
+import { main, parseArgs } from '../src/cli';
 import { startAdmin } from '../src/admin/server';
 
 const BLOW = ['function blow(x) {', '  return x.missingProp;', '}', 'module.exports = blow(null);'].join(
@@ -220,7 +220,7 @@ describe('admin console', () => {
   it('publishes a version, runs it, and symbolicates the crash', async () => {
     const page = await call('/');
     expect(page.text).toContain('脚本台');
-    expect(page.text).toContain('发布');
+    expect(page.text).toContain('设为线上');
 
     const created = await call('/api/scripts', 'POST', { name: 'rule.js', source: BLOW });
     expect(created.status).toBe(201);
@@ -245,6 +245,114 @@ describe('admin console', () => {
     const okPub = await call(`/api/scripts/${okScript.body.id}/publish`, 'POST', {});
     const okRun = await call(`/api/versions/${okPub.body.artifactId}/run`, 'POST', {});
     expect(okRun.body).toEqual({ ok: true, exports: 7 });
+  });
+
+  it('releases a channel to devices and symbolicates a device stack', async () => {
+    expect(parseArgs(['--host', '0.0.0.0', '--port', '9']).host).toBe('0.0.0.0');
+
+    const created = await call('/api/scripts', 'POST', { name: 'rule.js', source: BLOW });
+    const id = created.body.id as string;
+    const first = await call(`/api/scripts/${id}/publish`, 'POST', {});
+    const liveId = first.body.artifactId as string;
+
+    const other = await call('/api/scripts', 'POST', {
+      name: 'other.js',
+      source: 'module.exports = 1;',
+    });
+    const crossed = await call('/api/channels/stable', 'PUT', {
+      scriptId: other.body.id,
+      artifactId: liveId,
+    });
+    expect(crossed.status).toBe(400);
+    expect(crossed.body.error).toBe('script mismatch');
+
+    const named = await call('/api/channels/Bad_Name', 'PUT', { scriptId: id, artifactId: liveId });
+    expect(named.status).toBe(400);
+
+    const set = await call('/api/channels/stable', 'PUT', { scriptId: id, artifactId: liveId });
+    expect(set.status).toBe(200);
+    expect(set.body.previous).toBeNull();
+    expect(set.body.gray).toBeNull();
+
+    const again = await call('/api/channels/stable', 'PUT', { scriptId: id, artifactId: liveId });
+    expect(again.body.live).toBe(liveId);
+    expect(again.body.previous).toBeNull();
+
+    const otherPub = await call(`/api/scripts/${other.body.id}/publish`, 'POST', {});
+    const owned = await call('/api/channels/stable', 'PUT', {
+      scriptId: other.body.id,
+      artifactId: otherPub.body.artifactId,
+    });
+    expect(owned.status).toBe(400);
+    expect(owned.body.error).toBe('script mismatch');
+
+    await call(`/api/scripts/${id}`, 'PUT', { source: 'module.exports = 9;' });
+    const second = await call(`/api/scripts/${id}/publish`, 'POST', {});
+    const nextId = second.body.artifactId as string;
+    const promoted = await call('/api/channels/stable', 'PUT', { scriptId: id, artifactId: nextId });
+    expect(promoted.body.live).toBe(nextId);
+    expect(promoted.body.previous).toBe(liveId);
+    expect(promoted.body.gray).toBeNull();
+
+    const gray = await call('/api/channels/stable/gray', 'POST', { artifactId: liveId, percent: 100 });
+    expect(gray.status).toBe(200);
+    const device = 'phone-a';
+    const pulled = await call(`/api/devices/artifact?channel=stable&device=${device}`);
+    expect(pulled.status).toBe(200);
+    expect(pulled.body.rollout).toBe('gray');
+    expect(pulled.body.artifactId).toBe(liveId);
+    expect(pulled.body.scriptId).toBe(id);
+    expect(pulled.body.bucket).toBeGreaterThanOrEqual(0);
+    expect(pulled.body.bucket).toBeLessThan(100);
+    expect(pulled.body.debug).toBeUndefined();
+    expect(pulled.body.map).toBeUndefined();
+    expect(pulled.body.source).toBeUndefined();
+    expect(pulled.body.magic).toBe('JSVM3');
+    expect(pulled.body.body).toBeTruthy();
+
+    const cleared = await call('/api/channels/stable/gray', 'POST', { percent: 0 });
+    expect(cleared.body.gray).toBeNull();
+    const livePull = await call(`/api/devices/artifact?channel=stable&device=${device}`);
+    expect(livePull.body.rollout).toBe('live');
+    expect(livePull.body.artifactId).toBe(nextId);
+
+    const fraction = await call('/api/channels/stable/gray', 'POST', { percent: 1.5, artifactId: liveId });
+    expect(fraction.status).toBe(400);
+
+    const half = await call('/api/channels/stable/gray', 'POST', { artifactId: liveId, percent: 50 });
+    expect(half.status).toBe(200);
+    const firstPull = await call(`/api/devices/artifact?channel=stable&device=${device}`);
+    const secondPull = await call(`/api/devices/artifact?channel=stable&device=${device}`);
+    expect(firstPull.body.bucket).toBe(secondPull.body.bucket);
+    expect(firstPull.body.artifactId).toBe(secondPull.body.artifactId);
+    expect(firstPull.body.rollout).toBe(secondPull.body.rollout);
+
+    const rolledGray = await call('/api/channels/stable/rollback', 'POST', {});
+    expect(rolledGray.body.gray).toBeNull();
+    expect(rolledGray.body.live).toBe(nextId);
+    const rolled = await call('/api/channels/stable/rollback', 'POST', {});
+    expect(rolled.body.live).toBe(liveId);
+    expect(rolled.body.previous).toBeNull();
+    const stuck = await call('/api/channels/stable/rollback', 'POST', {});
+    expect(stuck.status).toBe(400);
+    expect(stuck.body.error).toBe('nothing to roll back');
+
+    const badDevice = await call('/api/devices/artifact?channel=stable&device=');
+    expect(badDevice.status).toBe(400);
+
+    const ran = await call(`/api/versions/${liveId}/run`, 'POST', {});
+    expect(ran.body.report.artifactId).toBe(liveId);
+    const frame = ran.body.report.frames.find((item: { name: string }) => item.name === 'blow');
+    const stack = [
+      `${ran.body.report.error.name}: ${ran.body.report.error.message}`,
+      `#${ran.body.report.artifactId}`,
+      `at ${frame.name} (${frame.fName}:${frame.line}:${frame.column} ~${frame.script}:${frame.ip})`,
+    ].join('\n');
+    const crash = await call('/api/crashes', 'POST', { stack });
+    expect(crash.status).toBe(200);
+    const blow = crash.body.symbolicated.frames.find((item: { name: string }) => item.name === 'blow');
+    expect(blow.line).toBe(2);
+    expect(crash.body.text).toContain('missingProp');
   });
 
   it('stops a tight loop with the admin wall clock', async () => {
